@@ -1,0 +1,867 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="color-scheme" content="light only" />
+  <meta name="theme-color" content="#5b5ce2" />
+  <meta name="referrer" content="no-referrer" />
+  <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
+  <title>函数求导与反求导</title>
+  <link
+    rel="icon"
+    href="https://user-assets.sxlcdn.com/images/1209238/FlWuslNmGTHt1EipxUtq2GI6zqnN.png?imageMogr2/strip/auto-orient/thumbnail/1200x9000%3E/quality/90!/format/png"
+    type="image/png"
+  />
+  <style>
+    :root {
+      --bg:#f7f7fd;
+      --panel:#ffffff;
+      --text:#171d31;
+      --muted:#6f778d;
+      --muted2:#9299aa;
+      --line:#e4e6f0;
+      --lineSoft:#eff0f6;
+      --primary:#5b5ce2;
+      --primary2:#7257e8;
+      --primarySoft:#f0f0ff;
+      --danger:#b42318;
+      --dangerSoft:#fff4f2;
+      --warning:#8a6300;
+      --warningSoft:#fff9e8;
+      --shadow:0 14px 38px rgba(57,60,118,.08);
+      --radius:22px;
+      --radiusSm:14px;
+      --max:1260px;
+    }
+    *{box-sizing:border-box}
+    html{min-width:320px;background:var(--bg)}
+    body{
+      margin:0;
+      min-height:100vh;
+      color:var(--text);
+      background:
+        radial-gradient(circle at 10% 0%,rgba(91,92,226,.08),transparent 27rem),
+        linear-gradient(180deg,#fdfdff 0%,var(--bg) 100%);
+      font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"PingFang SC","Hiragino Sans GB","Microsoft YaHei","Noto Sans CJK SC",sans-serif;
+      -webkit-font-smoothing:antialiased;
+    }
+    button,input,textarea{font:inherit}
+    button{-webkit-tap-highlight-color:transparent}
+    .page{width:min(calc(100% - 36px),var(--max));margin:0 auto;padding:26px 0 20px}
+    .topbar{
+      display:flex;align-items:center;justify-content:space-between;gap:22px;
+      margin-bottom:16px;padding:22px 24px;border:1px solid var(--line);
+      border-radius:var(--radius);background:rgba(255,255,255,.92);box-shadow:var(--shadow)
+    }
+    .brand{display:flex;align-items:center;gap:15px;min-width:0}
+    .logo{
+      width:54px;height:54px;flex:0 0 auto;display:grid;place-items:center;border-radius:17px;color:#fff;
+      background:linear-gradient(145deg,#696bed,var(--primary2));box-shadow:0 10px 24px rgba(91,92,226,.23)
+    }
+    .logo svg{width:29px;height:29px}
+    h1{margin:0;font-size:clamp(25px,3.5vw,36px);line-height:1.12;letter-spacing:-.025em}
+    .intro{margin:7px 0 0;color:var(--muted);font-size:13px;line-height:1.65}
+    .system-status{
+      display:flex;align-items:center;gap:9px;flex:0 0 auto;padding:9px 12px;border:1px solid var(--line);
+      border-radius:999px;background:#fff;color:#616a81;font-size:11px;font-weight:750;white-space:nowrap
+    }
+    .status-dot{width:8px;height:8px;border-radius:50%;background:#e1a52d;box-shadow:0 0 0 4px rgba(225,165,45,.12)}
+    .system-status[data-state="ready"] .status-dot{background:#2ba866;box-shadow:0 0 0 4px rgba(43,168,102,.12)}
+    .system-status[data-state="error"] .status-dot{background:#df5548;box-shadow:0 0 0 4px rgba(223,85,72,.11)}
+
+    .workspace{display:grid;grid-template-columns:minmax(340px,430px) minmax(0,1fr);gap:16px;align-items:start}
+    .panel{border:1px solid var(--line);border-radius:var(--radius);background:var(--panel);box-shadow:0 9px 28px rgba(57,60,118,.055);overflow:hidden}
+    .panel-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 18px;border-bottom:1px solid var(--lineSoft)}
+    .panel-head h2{margin:0;font-size:15px}
+    .panel-head p{margin:3px 0 0;color:var(--muted2);font-size:10px}
+    .body{padding:17px}
+
+    .tabs{display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:4px;margin-bottom:15px;border:1px solid #e1e2ef;border-radius:13px;background:#f7f7fc}
+    .tab{min-height:39px;border:0;border-radius:10px;background:transparent;color:#727a90;font-weight:800;cursor:pointer;transition:.17s}
+    .tab.active{color:#fff;background:linear-gradient(135deg,var(--primary),var(--primary2));box-shadow:0 7px 16px rgba(91,92,226,.18)}
+
+    .label-row{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:7px;color:#3e475e;font-size:11px;font-weight:800}
+    #charCount{color:var(--muted2);font-weight:600}
+    .input-shell{border:1.5px solid #dcdfea;border-radius:16px;background:#fff;transition:.17s}
+    .input-shell:focus-within{border-color:#8a8bf0;box-shadow:0 0 0 4px rgba(91,92,226,.09)}
+    textarea{width:100%;min-height:128px;display:block;resize:vertical;border:0;outline:0;padding:14px;color:#161c30;background:transparent;font:650 15px/1.7 ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace}
+    textarea::placeholder{color:#a2a8b7;font-weight:500}
+    .hint{padding:0 14px 12px;color:#858da0;font-size:10px;line-height:1.6}
+    .hint code{color:#555dc0}
+
+    .preview{margin-top:12px;border:1px solid #e2e3ef;border-radius:15px;background:#fbfbff;overflow:hidden}
+    .preview-top{display:flex;justify-content:space-between;gap:10px;padding:8px 11px;border-bottom:1px solid #eeeeF5;color:#757d91;font-size:10px;font-weight:750}
+    .preview-math{min-height:70px;display:grid;place-items:center;padding:12px;overflow-x:auto;font-size:17px}
+    .preview-error{color:var(--danger);font-size:11px;line-height:1.55;text-align:center}
+
+    .controls{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:13px}
+    .control label{display:block;margin-bottom:6px;color:#4b5369;font-size:10px;font-weight:800}
+    .control input{width:100%;min-height:40px;border:1px solid #dde0ea;border-radius:11px;outline:0;padding:8px 10px;color:#252c40;background:#fff}
+    .control input:focus{border-color:#898aef;box-shadow:0 0 0 3px rgba(91,92,226,.08)}
+
+    .numeric-option{grid-column:1/-1;border:1px solid #e3e5ef;border-radius:13px;background:#fbfbfe;padding:10px 11px;transition:.18s}
+    .numeric-main{display:flex;align-items:center;justify-content:space-between;gap:12px}
+    .numeric-switch{display:flex;align-items:center;gap:8px;color:#485068;font-size:11px;font-weight:800;cursor:pointer}
+    .numeric-switch input{width:17px;height:17px;accent-color:var(--primary)}
+    .numeric-note{color:#989faf;font-size:9px;white-space:nowrap}
+    .precision-reveal{display:grid;grid-template-rows:0fr;opacity:0;margin-top:0;transition:grid-template-rows .2s ease,opacity .18s ease,margin-top .2s ease}
+    .numeric-option.enabled .precision-reveal{grid-template-rows:1fr;opacity:1;margin-top:10px}
+    .precision-inner{overflow:hidden}
+    .precision-box{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-top:10px;border-top:1px solid #eceef5}
+    .precision-box label{color:#636c82;font-size:10px;font-weight:750}
+    #digits{width:104px;min-height:36px;border:1px solid #dbdeea;border-radius:10px;padding:7px 9px;outline:0;background:#fff;color:#283047}
+    #digits:focus{border-color:#898aef;box-shadow:0 0 0 3px rgba(91,92,226,.07)}
+
+    .examples{display:flex;gap:6px;flex-wrap:wrap;margin-top:12px}
+    .chip{border:1px solid #e0e2eb;border-radius:999px;padding:6px 9px;background:#fff;color:#626b80;cursor:pointer;font:650 10px/1.2 ui-monospace,monospace;transition:.15s}
+    .chip:hover{border-color:#c3c4f4;color:#5052ca;background:#f8f8ff}
+
+    .actions{display:flex;gap:8px;margin-top:14px}
+    .btn{min-height:41px;display:inline-flex;align-items:center;justify-content:center;gap:7px;border:1px solid #dde0e9;border-radius:11px;padding:8px 12px;background:#fff;color:#444c62;font-size:11px;font-weight:800;cursor:pointer;transition:.16s}
+    .btn:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 7px 16px rgba(50,53,103,.07)}
+    .btn:disabled{opacity:.48;cursor:not-allowed}
+    .primary{flex:1;color:#fff;border-color:var(--primary);background:linear-gradient(135deg,var(--primary),var(--primary2));box-shadow:0 9px 19px rgba(91,92,226,.19)}
+    .stop{color:var(--danger);border-color:#f0cbc7;background:var(--dangerSoft)}
+    .shortcut{margin-top:8px;color:#9aa0af;font-size:9px;text-align:center}
+
+    .result-panel{min-height:590px;display:flex;flex-direction:column}
+    .copy-actions{display:flex;gap:7px}
+    .copy-actions .btn{min-height:34px;padding:6px 9px;font-size:10px}
+    .result-area{flex:1;min-height:524px;overflow:auto}
+    .result-content{width:min(100%,880px);margin:0 auto;padding:24px 26px 30px}
+    .empty{min-height:470px;display:grid;place-items:center;text-align:center;color:var(--muted);padding:30px}
+    .empty-inner{max-width:380px}
+    .empty-icon{width:62px;height:62px;display:grid;place-items:center;margin:0 auto 14px;border:1px solid #e0e2f1;border-radius:20px;color:var(--primary);background:var(--primarySoft)}
+    .empty-icon svg{width:29px;height:29px}
+    .empty h3{margin:0 0 7px;color:#333b52;font-size:16px}
+    .empty p{margin:0;font-size:11px;line-height:1.7}
+    .loader{width:29px;height:29px;margin:0 auto 13px;border:3px solid #e7e8f8;border-top-color:var(--primary);border-radius:50%;animation:spin .75s linear infinite}
+    @keyframes spin{to{transform:rotate(360deg)}}
+
+    .result-heading{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:15px}
+    .result-heading h3{margin:0;font-size:18px}
+    .tag{padding:5px 8px;border:1px solid #e0e2eb;border-radius:999px;color:#697187;background:#fff;font-size:9px;font-weight:800}
+    .formula{margin:10px 0;padding:18px 13px;border:1px solid #e2e4ee;border-radius:16px;background:#fff;overflow-x:auto;text-align:center}
+    .formula.main{border-color:#d8d9fb;background:linear-gradient(135deg,#fff,#f8f8ff)}
+    .formula-label{margin-top:15px;color:#858da0;font-size:9px;font-weight:850;letter-spacing:.04em}
+    .approx{margin-top:14px;padding:13px;border:1px dashed #d8dbe8;border-radius:13px;background:#fcfcfe;overflow-x:auto;text-align:center}
+    .notice{margin-top:14px;padding:11px 12px;border:1px solid #eddfa9;border-radius:12px;background:var(--warningSoft);color:#755900;font-size:10px;line-height:1.65}
+    .timing{margin-top:14px;color:#9aa0af;font-size:9px;text-align:right}
+    .error{padding:16px;border:1px solid #efcbc6;border-radius:14px;background:var(--dangerSoft);color:#7a2b22}
+    .error h3{margin:0 0 7px;color:var(--danger);font-size:14px}
+    .error p{margin:0;font-size:11px;line-height:1.7}
+
+    .footer{display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap;padding:14px 3px 0;color:#8a91a3;font-size:9px;line-height:1.65}
+    .toast{position:fixed;z-index:20;left:50%;bottom:max(20px,env(safe-area-inset-bottom));transform:translate(-50%,12px);padding:9px 13px;border:1px solid #d9dcef;border-radius:11px;background:rgba(255,255,255,.97);box-shadow:0 12px 30px rgba(50,53,103,.14);color:#454d65;font-size:10px;font-weight:800;opacity:0;pointer-events:none;transition:.18s}
+    .toast.show{opacity:1;transform:translate(-50%,0)}
+    mjx-container[jax="SVG"][display="true"]{margin:.25em 0!important;max-width:100%;overflow-x:auto;overflow-y:hidden}
+
+    @media(max-width:980px){
+      .workspace{grid-template-columns:1fr}
+      .result-panel{min-height:500px}.result-area{min-height:430px}.empty{min-height:390px}
+    }
+    @media(max-width:640px){
+      .page{width:min(calc(100% - 18px),var(--max));padding-top:9px}
+      .topbar{display:block;padding:17px 15px;border-radius:19px}
+      .brand{align-items:flex-start}.logo{width:48px;height:48px;border-radius:15px}.intro{font-size:11px}
+      .system-status{width:max-content;max-width:100%;margin-top:13px}
+      .panel{border-radius:19px}.panel-head{align-items:flex-start;padding:13px 14px}.body{padding:14px}
+      textarea{min-height:118px;font-size:14px}
+      .controls{grid-template-columns:1fr}
+      .numeric-option{grid-column:1}
+      .numeric-main{align-items:flex-start;flex-direction:column;gap:5px}.numeric-note{white-space:normal;padding-left:25px}
+      .actions{flex-wrap:wrap}.primary{flex-basis:100%}
+      .copy-actions{width:100%;margin-top:8px}.copy-actions .btn{flex:1}
+      .panel-head.result-head{display:block}
+      .result-content{padding:18px 12px 24px}.formula{text-align:left;padding:15px 9px}
+      .result-heading{align-items:flex-start;flex-direction:column}
+      .footer{display:block}
+    }
+    @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important;animation-duration:.01ms!important}}
+  </style>
+</head>
+<body>
+<div class="page">
+  <header class="topbar">
+    <div class="brand">
+      <div class="logo" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M5 4h4l2 16H7L5 4Z"/><path d="M13 8h6M16 5v6M13 16c1.5-2 4.5-2 6 0"/>
+        </svg>
+      </div>
+      <div>
+        <h1>函数求导与反求导</h1>
+        <p class="intro">精确符号计算、高阶导数、多阶反求导、根式与超大整数。输入函数会实时以 LaTeX 显示，便于校准。</p>
+      </div>
+    </div>
+    <div class="system-status" id="systemStatus" data-state="loading" aria-live="polite"><span class="status-dot"></span><span id="systemStatusText">正在准备计算环境</span></div>
+  </header>
+
+  <main class="workspace">
+    <section class="panel" aria-labelledby="inputTitle">
+      <div class="panel-head">
+        <div><h2 id="inputTitle">输入与设置</h2><p>仅保留计算所需选项</p></div>
+      </div>
+      <div class="body">
+        <div class="tabs" role="tablist" aria-label="计算模式">
+          <button class="tab active" type="button" data-mode="diff">求导</button>
+          <button class="tab" type="button" data-mode="integrate">反求导</button>
+        </div>
+
+        <div class="label-row"><label for="expression">函数表达式</label><span id="charCount">0 / 2400</span></div>
+        <div class="input-shell">
+          <textarea id="expression" maxlength="2400" spellcheck="false" autocapitalize="off" autocomplete="off" placeholder="例如：sqrt(2)*x^5 + sin(x)"></textarea>
+          <div class="hint">支持 <code>2x</code>、<code>x^3</code>、<code>sqrt(2)</code>、<code>pi</code>、<code>e</code>、<code>sin(x)</code>、<code>log(x)</code> 等精确表达式。</div>
+        </div>
+
+        <div class="preview">
+          <div class="preview-top"><span>实时 LaTeX</span><span id="previewState">等待输入</span></div>
+          <div class="preview-math" id="previewMath"><span style="color:#a0a7b8;font-size:11px">输入后显示 f(x)=…</span></div>
+        </div>
+
+        <div class="controls">
+          <div class="control">
+            <label for="variable">计算变量（留空自动识别）</label>
+            <input id="variable" list="variableList" placeholder="自动 / x" maxlength="40" autocomplete="off" />
+            <datalist id="variableList"></datalist>
+          </div>
+          <div class="control" id="orderControl">
+            <label for="order" id="orderLabel">求导阶数（1–1000）</label>
+            <input id="order" type="number" min="1" max="1000" step="1" value="1" inputmode="numeric" autocomplete="off" />
+          </div>
+
+          <div class="numeric-option" id="numericOption">
+            <div class="numeric-main">
+              <label class="numeric-switch"><input id="wantNumeric" type="checkbox" />同时显示高精度数值近似</label>
+              <span class="numeric-note">精确结果始终保留</span>
+            </div>
+            <div class="precision-reveal" id="precisionReveal" aria-hidden="true">
+              <div class="precision-inner">
+                <div class="precision-box">
+                  <label for="digits">近似精度（有效数字）</label>
+                  <input id="digits" type="number" min="15" max="300" step="1" value="50" inputmode="numeric" autocomplete="off" />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="examples" aria-label="示例">
+          <button class="chip" type="button" data-example="sqrt(2)*x^8 + pi*x^3 - 7/9">根式</button>
+          <button class="chip" type="button" data-example="sin(x)^3*exp(x)">复合函数</button>
+          <button class="chip" type="button" data-example="1/(1+x^2)">反求导</button>
+          <button class="chip" type="button" data-example="123456789012345678901234567890*x^12">超大整数</button>
+        </div>
+
+        <div class="actions">
+          <button class="btn primary" id="calcBtn" type="button" disabled><span id="calcBtnText">正在准备计算核心</span></button>
+          <button class="btn stop" id="stopBtn" type="button" hidden>停止</button>
+          <button class="btn" id="clearBtn" type="button">清空</button>
+        </div>
+        <div class="shortcut">Ctrl / ⌘ + Enter 计算</div>
+      </div>
+    </section>
+
+    <section class="panel result-panel" aria-labelledby="resultTitle">
+      <div class="panel-head result-head">
+        <div><h2 id="resultTitle">计算结果</h2><p>只显示原函数、精确结果与可选近似值</p></div>
+        <div class="copy-actions">
+          <button class="btn" id="copyLatexBtn" type="button" disabled>复制 LaTeX</button>
+          <button class="btn" id="copyPlainBtn" type="button" disabled>复制表达式</button>
+        </div>
+      </div>
+      <div class="result-area" id="resultArea">
+        <article class="result-content" id="result" aria-live="polite">
+          <div class="empty">
+            <div class="empty-inner">
+              <div class="empty-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M5 6h14M7 11h10M9 16h6"/><path d="M18 3v6M15 6h6"/>
+                </svg>
+              </div>
+              <h3>等待计算</h3>
+              <p>输入函数并选择求导或反求导。结果将直接使用 f(x)、f′(x)、f⁽ⁿ⁾(x)、F(x) 或 Fₙ(x) 的形式显示。</p>
+            </div>
+          </div>
+        </article>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <span>符号计算：Pyodide + SymPy；支持 1–1000 阶求导与多阶反求导；公式渲染：MathJax SVG。</span>
+    <span>不向浏览器存储写入输入或运算结果；符号结果按原函数的实数定义域解释。</span>
+  </footer>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+'use strict';
+
+const PYTHON_SOURCE = "import json\nimport re\nimport time\nimport unicodedata\nimport sympy as sp\nfrom sympy.parsing.sympy_parser import (\n    parse_expr,\n    standard_transformations,\n    convert_xor,\n    implicit_multiplication_application,\n    rationalize,\n)\n\nMAX_INPUT_LENGTH = 2400\nMAX_VARIABLES = 20\nMAX_ORDER = 1000\nMAX_PRECISION = 300\nMAX_VERIFY_OPS = 6000\n\nTRANSFORMS = standard_transformations + (\n    convert_xor,\n    implicit_multiplication_application,\n    rationalize,\n)\n\nFUNCS = {\n    \"sin\": sp.sin, \"cos\": sp.cos, \"tan\": sp.tan,\n    \"cot\": sp.cot, \"sec\": sp.sec, \"csc\": sp.csc,\n    \"asin\": sp.asin, \"acos\": sp.acos, \"atan\": sp.atan,\n    \"acot\": sp.acot, \"asec\": sp.asec, \"acsc\": sp.acsc,\n    \"sinh\": sp.sinh, \"cosh\": sp.cosh, \"tanh\": sp.tanh,\n    \"asinh\": sp.asinh, \"acosh\": sp.acosh, \"atanh\": sp.atanh,\n    \"exp\": sp.exp, \"log\": sp.log, \"ln\": sp.log,\n    \"sqrt\": sp.sqrt, \"root\": sp.root,\n    \"Abs\": sp.Abs, \"abs\": sp.Abs, \"sign\": sp.sign,\n    \"floor\": sp.floor, \"ceiling\": sp.ceiling,\n    \"erf\": sp.erf, \"erfc\": sp.erfc, \"gamma\": sp.gamma,\n}\nCONSTS = {\"pi\": sp.pi, \"E\": sp.E, \"e\": sp.E}\nRESERVED = set(FUNCS) | set(CONSTS)\nFORBIDDEN = {\n    \"I\", \"oo\", \"inf\", \"nan\", \"zoo\", \"Infinity\", \"NaN\",\n    \"ComplexInfinity\", \"True\", \"False\", \"None\",\n}\nGLOBAL_DICT = {\n    \"__builtins__\": {},\n    \"Symbol\": sp.Symbol,\n    \"Integer\": sp.Integer,\n    \"Rational\": sp.Rational,\n    \"Float\": sp.Float,\n    \"Number\": sp.Number,\n}\n\n_SUPERSCRIPT_MAP = {\n    \"⁰\": \"0\", \"¹\": \"1\", \"²\": \"2\", \"³\": \"3\", \"⁴\": \"4\",\n    \"⁵\": \"5\", \"⁶\": \"6\", \"⁷\": \"7\", \"⁸\": \"8\", \"⁹\": \"9\",\n    \"⁺\": \"+\", \"⁻\": \"-\",\n}\n_SUPERSCRIPT_RE = re.compile(r\"[⁰¹²³⁴⁵⁶⁷⁸⁹⁺⁻]+\")\n\n\ndef _replace_superscripts(text):\n    def repl(match):\n        body = \"\".join(_SUPERSCRIPT_MAP[ch] for ch in match.group(0))\n        return f\"^({body})\"\n    return _SUPERSCRIPT_RE.sub(repl, text)\n\n\ndef _normalize(source):\n    # Superscripts must be converted before NFKC, otherwise x² becomes x2.\n    text = _replace_superscripts(str(source or \"\"))\n    text = unicodedata.normalize(\"NFKC\", text)\n    rep = {\n        \"×\": \"*\", \"·\": \"*\", \"∙\": \"*\", \"⋅\": \"*\", \"÷\": \"/\",\n        \"−\": \"-\", \"–\": \"-\", \"—\": \"-\", \"﹣\": \"-\",\n        \"（\": \"(\", \"）\": \")\", \"，\": \",\", \"π\": \"pi\",\n    }\n    for a, b in rep.items():\n        text = text.replace(a, b)\n    return text.strip()\n\n\ndef _local_dict(text):\n    d = dict(FUNCS)\n    d.update(CONSTS)\n    tokens = re.findall(r\"[A-Za-z_][A-Za-z0-9_]*\", text)\n    for token in tokens:\n        if token in RESERVED:\n            continue\n        if token in FORBIDDEN:\n            raise ValueError(f\"不允许使用常量或名称：{token}\")\n        if token.startswith(\"_\") or \"__\" in token:\n            raise ValueError(\"变量名不能以下划线开头，也不能包含双下划线。\")\n        if len(token) > 40:\n            raise ValueError(f\"变量名过长：{token}\")\n        d[token] = sp.Symbol(token, real=True)\n    return d\n\n\ndef parse_expression(source):\n    text = _normalize(source)\n    if not text:\n        raise ValueError(\"请输入函数表达式。\")\n    if len(text) > MAX_INPUT_LENGTH:\n        raise ValueError(f\"输入过长，最多允许 {MAX_INPUT_LENGTH} 个字符。\")\n    if \"=\" in text or \";\" in text or \"[\" in text or \"]\" in text or \"{\" in text or \"}\" in text:\n        raise ValueError(\"请输入单个函数表达式，不要包含等号、分号或方括号。\")\n    if not re.fullmatch(r\"[A-Za-z0-9_+\\-*/^().,\\s]+\", text):\n        raise ValueError(\"检测到不支持的字符。请使用英文字母、数字、括号及 + - * / ^ 运算符。\")\n    for m in re.finditer(r\"([A-Za-z_][A-Za-z0-9_]*)\\s*\\(\", text):\n        name = m.group(1)\n        if name not in FUNCS:\n            raise ValueError(f\"不支持函数 {name}(...)。\")\n    local = _local_dict(text)\n    try:\n        expr = parse_expr(\n            text,\n            local_dict=local,\n            global_dict=GLOBAL_DICT,\n            transformations=TRANSFORMS,\n            evaluate=True,\n        )\n    except Exception as exc:\n        raise ValueError(f\"表达式无法解析：{exc}\") from None\n\n    if len(expr.free_symbols) > MAX_VARIABLES:\n        raise ValueError(f\"变量过多，最多支持 {MAX_VARIABLES} 个变量。\")\n    if expr.has(sp.oo, -sp.oo, sp.zoo, sp.nan, sp.I):\n        raise ValueError(\"当前工具按实变量函数设计，请不要输入复数或无穷量。\")\n    if not expr.free_symbols and expr.is_real is False:\n        raise ValueError(\"输入在实数范围内没有实值结果。\")\n    return text, expr\n\n\ndef choose_variable(expr, requested):\n    requested = _normalize(requested or \"\")\n    if requested:\n        if not re.fullmatch(r\"[A-Za-z_][A-Za-z0-9_]*\", requested):\n            raise ValueError(\"计算变量格式无效。\")\n        if requested in RESERVED or requested in FORBIDDEN:\n            raise ValueError(\"该名称不能作为计算变量。\")\n        return sp.Symbol(requested, real=True)\n\n    symbols = sorted(expr.free_symbols, key=lambda s: s.name)\n    if len(symbols) == 1:\n        return symbols[0]\n    for s in symbols:\n        if s.name == \"x\":\n            return s\n    if symbols:\n        return symbols[0]\n    return sp.Symbol(\"x\", real=True)\n\n\ndef latex(expr):\n    text = sp.latex(\n        expr,\n        fold_short_frac=False,\n        fold_frac_powers=False,\n        root_notation=True,\n    )\n    text = text.replace(r\"\\text{for}\\:\", r\"\\text{当 }\")\n    text = text.replace(r\"\\text{otherwise}\", r\"\\text{其他情况}\")\n    return text\n\n\ndef style_result(raw):\n    # Never run global simplify across Piecewise: it can rewrite a clean\n    # condition such as n != -1 into n > -1 or n < -1 and can alter nested\n    # conditions in sums. The raw branches from SymPy/custom formulas are exact.\n    if raw.has(sp.Piecewise):\n        return raw\n    try:\n        return sp.trigsimp(sp.simplify(raw))\n    except Exception:\n        return raw\n\n\ndef _rewrite_real_logs(expr):\n    try:\n        return expr.replace(\n            lambda z: (\n                getattr(z, \"func\", None) == sp.log\n                and len(z.args) == 1\n                and not isinstance(z.args[0], sp.Abs)\n                and z.args[0].is_positive is not True\n                and z.args[0].is_real is not False\n            ),\n            lambda z: sp.log(sp.Abs(z.args[0])),\n        )\n    except Exception:\n        return expr\n\n\ndef numeric_latex(expr, digits):\n    try:\n        return latex(sp.N(expr, digits))\n    except Exception:\n        return \"\"\n\n\ndef function_label_latex(var, order=0, antiderivative=False):\n    v = latex(var)\n    if antiderivative:\n        if order <= 1:\n            return rf\"F\\left({v}\\right)\"\n        return rf\"F_{{{order}}}\\left({v}\\right)\"\n    if order <= 0:\n        return rf\"f\\left({v}\\right)\"\n    if order == 1:\n        return rf\"f'\\left({v}\\right)\"\n    if order == 2:\n        return rf\"f''\\left({v}\\right)\"\n    if order == 3:\n        return rf\"f'''\\left({v}\\right)\"\n    return rf\"f^{{({order})}}\\left({v}\\right)\"\n\n\ndef function_label_plain(var, order=0, antiderivative=False):\n    v = var.name\n    if antiderivative:\n        return f\"F({v})\" if order <= 1 else f\"F_{order}({v})\"\n    if order <= 0:\n        return f\"f({v})\"\n    if order <= 3:\n        return \"f\" + (\"'\" * order) + f\"({v})\"\n    return f\"f^({order})({v})\"\n\n\ndef _constants_latex(var, order):\n    v = latex(var)\n    if order <= 1:\n        return \"C\"\n    if order <= 4:\n        parts = [\"C_{1}\"]\n        for power in range(1, order):\n            if power == 1:\n                parts.append(rf\"C_{{{power + 1}}}{v}\")\n            else:\n                parts.append(rf\"C_{{{power + 1}}}{v}^{{{power}}}\")\n        return \" + \".join(parts)\n    return rf\"\\sum_{{k=0}}^{{{order - 1}}} C_k {v}^k\"\n\n\ndef _constants_plain(var, order):\n    v = var.name\n    if order <= 1:\n        return \"C\"\n    if order <= 4:\n        parts = [\"C1\"]\n        for power in range(1, order):\n            parts.append(f\"C{power + 1}*{v}\" if power == 1 else f\"C{power + 1}*{v}^{power}\")\n        return \" + \".join(parts)\n    return f\"sum(C_k*{v}^k, k=0..{order - 1})\"\n\n\ndef _power_term_antiderivative(term, var, order):\n    term = sp.sympify(term)\n    coeff, exponent = term.as_coeff_exponent(var)\n    if coeff.has(var) or exponent.has(var):\n        return None\n    try:\n        if sp.simplify(term - coeff * var**exponent) != 0:\n            return None\n    except Exception:\n        if term != coeff * var**exponent:\n            return None\n\n    if exponent.is_number:\n        hit = None\n        for j in range(1, order + 1):\n            try:\n                if sp.simplify(exponent + j) == 0:\n                    hit = j\n                    break\n            except Exception:\n                pass\n        if hit is None:\n            return coeff * var**(exponent + order) / sp.rf(exponent + 1, order)\n\n        r = hit\n        q = order - r\n        harmonic = sp.harmonic(q) if q > 0 else sp.Integer(0)\n        return (\n            coeff\n            * sp.Integer(-1)**(r - 1)\n            * var**q\n            * (sp.log(sp.Abs(var)) - harmonic)\n            / (sp.factorial(r - 1) * sp.factorial(q))\n        )\n\n    # For a small order, list every exceptional exponent explicitly. This gives\n    # the clearest textbook-style answer (e.g. n != -1 / n = -1).\n    if order <= 12:\n        conditions = [sp.Ne(exponent, -j) for j in range(1, order + 1)]\n        generic_cond = conditions[0] if order == 1 else sp.And(*conditions, evaluate=False)\n        generic = coeff * var**(exponent + order) / sp.rf(exponent + 1, order)\n        branches = [(generic, generic_cond)]\n\n        for r in range(1, order + 1):\n            q = order - r\n            harmonic = sp.harmonic(q) if q > 0 else sp.Integer(0)\n            special = (\n                coeff\n                * sp.Integer(-1)**(r - 1)\n                * var**q\n                * (sp.log(sp.Abs(var)) - harmonic)\n                / (sp.factorial(r - 1) * sp.factorial(q))\n            )\n            branches.append((special, sp.Eq(exponent, -r)))\n        return sp.Piecewise(*branches, evaluate=False)\n\n    # For large orders, keep the same exact exceptional cases compact instead\n    # of generating hundreds of Piecewise branches.\n    exceptional = sp.Contains(exponent, sp.Range(-order, 0))\n    generic_den = sp.RisingFactorial(exponent + 1, order, evaluate=False)\n    generic = coeff * var**(exponent + order) / generic_den\n    special = (\n        coeff\n        * sp.Pow(-1, -exponent - 1, evaluate=False)\n        * var**(order + exponent)\n        * (sp.log(sp.Abs(var)) - sp.harmonic(order + exponent))\n        / (sp.gamma(-exponent) * sp.gamma(order + exponent + 1))\n    )\n    return sp.Piecewise(\n        (special, exceptional),\n        (generic, True),\n        evaluate=False,\n    )\n\n\ndef _try_power_sum_antiderivative(expr, var, order):\n    terms = sp.Add.make_args(expr)\n    results = []\n    for term in terms:\n        item = _power_term_antiderivative(term, var, order)\n        if item is None:\n            return None\n        results.append(item)\n    if not results:\n        return None\n    return sp.Add(*results, evaluate=False)\n\n\ndef _nth_antiderivative(expr, var, order):\n    direct = _try_power_sum_antiderivative(expr, var, order)\n    if direct is not None:\n        # Cheap silent verification for manageable smooth cases. Piecewise/Abs\n        # cases are intentionally skipped because their equality is interval-\n        # dependent at singular boundaries.\n        verified = None\n        try:\n            if (\n                order <= 12\n                and not direct.has(sp.Piecewise, sp.Abs, sp.Integral)\n                and sp.count_ops(direct) + sp.count_ops(expr) <= MAX_VERIFY_OPS\n            ):\n                verified = _safe_equivalent(sp.diff(direct, var, order), expr)\n        except Exception:\n            verified = None\n        if verified is not False:\n            return direct, False\n\n    current = expr\n    unevaluated = False\n    for step in range(order):\n        try:\n            current = sp.integrate(current, var, conds=\"piecewise\")\n        except TypeError:\n            current = sp.integrate(current, var)\n\n        if current.has(sp.Integral):\n            unevaluated = True\n            for _ in range(step + 1, order):\n                current = sp.Integral(current, var)\n            break\n\n    return current, unevaluated\n\n\ndef _safe_equivalent(a, b):\n    if a == b:\n        return True\n    try:\n        if sp.count_ops(a) + sp.count_ops(b) > MAX_VERIFY_OPS:\n            return None\n        delta = sp.trigsimp(sp.simplify(a - b))\n        return delta == 0\n    except Exception:\n        return None\n\n\ndef preview_payload(source):\n    try:\n        normalized, expr = parse_expression(source)\n        symbols = sorted(expr.free_symbols, key=lambda s: s.name)\n        return json.dumps({\n            \"ok\": True,\n            \"normalized\": normalized,\n            \"latex\": latex(expr),\n            \"plain\": sp.sstr(expr),\n            \"variables\": [s.name for s in symbols],\n        }, ensure_ascii=False)\n    except Exception as exc:\n        return json.dumps({\"ok\": False, \"error\": str(exc)}, ensure_ascii=False)\n\n\ndef calculate_payload(source, mode, variable, order, digits, want_numeric):\n    started = time.perf_counter()\n    try:\n        normalized, expr = parse_expression(source)\n        var = choose_variable(expr, variable)\n        digits = max(15, min(int(digits or 50), MAX_PRECISION))\n        variables = sorted(expr.free_symbols, key=lambda s: s.name)\n        mode = str(mode or \"diff\")\n        n = int(order or 1)\n        if n < 1 or n > MAX_ORDER:\n            raise ValueError(f\"阶数必须在 1 到 {MAX_ORDER} 之间。\")\n\n        input_relation = rf\"{function_label_latex(var)}={latex(expr)}\"\n\n        if mode == \"diff\":\n            raw = sp.diff(expr, var, n)\n            result = style_result(raw)\n            eq = _safe_equivalent(raw, result)\n            if eq is False:\n                result = raw\n\n            result_label = function_label_latex(var, n)\n            result_relation = rf\"{result_label}={latex(result)}\"\n            display_plain = f\"{function_label_plain(var, n)} = {sp.sstr(result)}\"\n            numeric_relation = \"\"\n            if want_numeric:\n                nlatex = numeric_latex(result, digits)\n                if nlatex:\n                    numeric_relation = rf\"{result_label}\\approx {nlatex}\"\n            unevaluated = bool(result.has(sp.Derivative))\n            title = f\"{n} 阶导数\" if n > 1 else \"一阶导数\"\n\n        elif mode == \"integrate\":\n            raw, unevaluated = _nth_antiderivative(expr, var, n)\n\n            if unevaluated:\n                result = raw\n            else:\n                result = style_result(raw)\n                result = _rewrite_real_logs(result)\n\n            result_label = function_label_latex(var, n, antiderivative=True)\n            constants_latex = _constants_latex(var, n)\n            constants_plain = _constants_plain(var, n)\n            result_relation = rf\"{result_label}={latex(result)}+{constants_latex}\"\n            display_plain = f\"{function_label_plain(var, n, antiderivative=True)} = {sp.sstr(result)} + {constants_plain}\"\n\n            numeric_relation = \"\"\n            if want_numeric and not unevaluated:\n                nlatex = numeric_latex(result, digits)\n                if nlatex:\n                    numeric_relation = rf\"{result_label}\\approx {nlatex}+{constants_latex}\"\n            title = f\"{n} 阶反求导\" if n > 1 else \"反求导\"\n\n        else:\n            raise ValueError(\"未知计算模式。\")\n\n        return json.dumps({\n            \"ok\": True,\n            \"mode\": mode,\n            \"title\": title,\n            \"normalized\": normalized,\n            \"inputLatex\": latex(expr),\n            \"inputRelationLatex\": input_relation,\n            \"resultLatex\": latex(result),\n            \"resultRelationLatex\": result_relation,\n            \"resultPlain\": sp.sstr(result),\n            \"displayPlain\": display_plain,\n            \"unevaluated\": bool(unevaluated),\n            \"variable\": var.name,\n            \"variables\": [s.name for s in variables],\n            \"order\": n,\n            \"numericRelationLatex\": numeric_relation,\n            \"digits\": digits,\n            \"elapsedMs\": round((time.perf_counter() - started) * 1000),\n        }, ensure_ascii=False)\n\n    except Exception as exc:\n        return json.dumps({\n            \"ok\": False,\n            \"error\": str(exc),\n            \"elapsedMs\": round((time.perf_counter() - started) * 1000),\n        }, ensure_ascii=False)";
+const PYODIDE_BASES = [
+  'https://jsd.onmicrosoft.cn/pyodide/v0.29.3/full/',
+  'https://cdn.jsdmirror.cn/pyodide/v0.29.3/full/'
+];
+const MATHJAX_URLS = [
+  'https://jsd.onmicrosoft.cn/npm/mathjax@3.2.2/es5/tex-svg.js',
+  'https://cdn.jsdmirror.cn/npm/mathjax@3.2.2/es5/tex-svg.js'
+];
+
+const $ = id => document.getElementById(id);
+const expression = $('expression');
+const charCount = $('charCount');
+const variable = $('variable');
+const variableList = $('variableList');
+const order = $('order');
+const orderControl = $('orderControl');
+const orderLabel = $('orderLabel');
+const wantNumeric = $('wantNumeric');
+const numericOption = $('numericOption');
+const precisionReveal = $('precisionReveal');
+const digits = $('digits');
+const calcBtn = $('calcBtn');
+const calcBtnText = $('calcBtnText');
+const stopBtn = $('stopBtn');
+const clearBtn = $('clearBtn');
+const previewMath = $('previewMath');
+const previewState = $('previewState');
+const result = $('result');
+const resultArea = $('resultArea');
+const copyLatexBtn = $('copyLatexBtn');
+const copyPlainBtn = $('copyPlainBtn');
+const systemStatus = $('systemStatus');
+const systemStatusText = $('systemStatusText');
+const toast = $('toast');
+
+let mode = 'diff';
+let worker = null;
+let engineReady = false;
+let renderReady = false;
+let calculating = false;
+let requestId = 0;
+let activeRequest = 0;
+let previewId = 0;
+let previewTimer = null;
+let toastTimer = null;
+let lastPreview = null;
+let lastLatex = '';
+let lastPlain = '';
+
+function escapeHtml(value) {
+  return String(value).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;');
+}
+
+function setSystemStatus() {
+  if (!engineReady && !renderReady) {
+    systemStatus.dataset.state = 'loading';
+    systemStatusText.textContent = '正在准备计算环境';
+  } else if (!engineReady) {
+    systemStatus.dataset.state = 'loading';
+    systemStatusText.textContent = '正在加载精确计算核心';
+  } else if (!renderReady) {
+    systemStatus.dataset.state = 'loading';
+    systemStatusText.textContent = '正在加载 LaTeX 渲染';
+  } else {
+    systemStatus.dataset.state = 'ready';
+    systemStatusText.textContent = '计算环境已就绪';
+  }
+}
+
+function setSystemError(text) {
+  systemStatus.dataset.state = 'error';
+  systemStatusText.textContent = text;
+}
+
+function showToast(text) {
+  clearTimeout(toastTimer);
+  toast.textContent = text;
+  toast.classList.add('show');
+  toastTimer = setTimeout(() => toast.classList.remove('show'), 1600);
+}
+
+function loadScriptFallback(urls, globalCheck) {
+  return new Promise((resolve, reject) => {
+    let index = 0;
+    const attempt = () => {
+      if (index >= urls.length) {
+        reject(new Error('资源加载失败'));
+        return;
+      }
+      const script = document.createElement('script');
+      const src = urls[index++];
+      const timer = setTimeout(() => {
+        script.remove();
+        attempt();
+      }, 18000);
+      script.src = src;
+      script.onload = () => {
+        clearTimeout(timer);
+        if (globalCheck() === false) {
+          script.remove();
+          attempt();
+        } else {
+          resolve(src);
+        }
+      };
+      script.onerror = () => {
+        clearTimeout(timer);
+        script.remove();
+        attempt();
+      };
+      document.head.appendChild(script);
+    };
+    attempt();
+  });
+}
+
+async function initMathJax() {
+  try {
+    window.MathJax = {
+      tex: {inlineMath:[['\\(','\\)']], displayMath:[['\\[','\\]']], processEscapes:true},
+      svg: {fontCache:'global'},
+      startup: {typeset:false}
+    };
+    await loadScriptFallback(
+      MATHJAX_URLS,
+      () => typeof window.MathJax?.typesetPromise === 'function' || !!window.MathJax?.startup?.promise
+    );
+    if (window.MathJax?.startup?.promise) await window.MathJax.startup.promise;
+    if (typeof window.MathJax?.typesetPromise !== 'function') throw new Error('MathJax 初始化失败');
+    renderReady = true;
+    setSystemStatus();
+    schedulePreview(0);
+  } catch (error) {
+    renderReady = false;
+    setSystemError('LaTeX 渲染加载失败');
+    console.error(error);
+  }
+}
+
+async function typesetElement(el, latex) {
+  if (!el) return;
+  if (!renderReady || typeof window.MathJax?.typesetPromise !== 'function') {
+    el.textContent = latex;
+    return;
+  }
+  try {
+    if (typeof window.MathJax.typesetClear === 'function') window.MathJax.typesetClear([el]);
+    el.textContent = `\\[${latex}\\]`;
+    await window.MathJax.typesetPromise([el]);
+  } catch (error) {
+    el.textContent = latex;
+  }
+}
+
+function previewVariable() {
+  const requested = variable.value.trim();
+  if (requested) return requested;
+  if (lastPreview?.variables?.length) return lastPreview.variables.includes('x') ? 'x' : lastPreview.variables[0];
+  return 'x';
+}
+
+function renderCachedPreview() {
+  if (!lastPreview?.ok) return;
+  const v = previewVariable().replace(/[^A-Za-z0-9_]/g,'') || 'x';
+  typesetElement(previewMath, `f\\left(${v}\\right)=${lastPreview.latex}`);
+}
+
+function fastPreview() {
+  const raw = expression.value.trim();
+  if (!raw) {
+    lastPreview = null;
+    previewState.textContent = '等待输入';
+    previewMath.innerHTML = '<span style="color:#a0a7b8;font-size:11px">输入后显示 f(x)=…</span>';
+    variableList.innerHTML = '';
+    return;
+  }
+  previewState.textContent = engineReady ? '正在解析…' : '计算核心加载中';
+  const safe = raw.replace(/\\/g,'\\backslash ').replace(/[<>]/g,'');
+  typesetElement(previewMath, `f\\left(${previewVariable()}\\right)=\\mathtt{${safe.replace(/([{}_])/g,'\\$1')}}`);
+}
+
+function schedulePreview(delay = 170) {
+  clearTimeout(previewTimer);
+  fastPreview();
+  previewTimer = setTimeout(requestPreview, delay);
+}
+
+function requestPreview() {
+  const source = expression.value.trim();
+  if (!source || !engineReady || !worker) return;
+  const id = ++previewId;
+  worker.postMessage({type:'preview', id, source});
+}
+
+const WORKER_SOURCE = `
+'use strict';
+let pyodide=null, readyPromise=null, installed=false;
+function status(text){self.postMessage({type:'status',text})}
+
+async function boot(pythonSource,bases){
+  let last=null;
+  for(const base of bases){
+    try{
+      status('正在加载浏览器计算运行时');
+      if(typeof self.loadPyodide!=='function') importScripts(base+'pyodide.js');
+      pyodide=await self.loadPyodide({indexURL:base});
+      status('正在加载 SymPy 精确符号库');
+      await pyodide.loadPackage('sympy');
+      status('正在初始化微积分算法');
+      await pyodide.runPythonAsync(pythonSource);
+      installed=true;
+      const version=pyodide.runPython('sp.__version__');
+      self.postMessage({type:'ready',version:String(version)});
+      return;
+    }catch(error){
+      last=error;
+      pyodide=null;
+    }
+  }
+  throw last||new Error('计算核心加载失败');
+}
+
+self.onmessage=async event=>{
+  const d=event.data||{};
+  if(d.type==='init'){
+    if(!readyPromise) readyPromise=boot(d.pythonSource,d.bases).catch(error=>{
+      self.postMessage({type:'fatal',error:String(error?.message||error)});
+      throw error;
+    });
+    return;
+  }
+  try{
+    if(!readyPromise) throw new Error('计算核心尚未初始化');
+    await readyPromise;
+    if(!installed||!pyodide) throw new Error('计算核心不可用');
+
+    if(d.type==='preview'){
+      pyodide.globals.set('__src__',String(d.source||''));
+      const payload=pyodide.runPython('preview_payload(__src__)');
+      pyodide.globals.delete('__src__');
+      self.postMessage({type:'preview-result',id:d.id,payload:String(payload)});
+      return;
+    }
+
+    if(d.type==='calculate'){
+      pyodide.globals.set('__src__',String(d.source||''));
+      pyodide.globals.set('__mode__',String(d.mode||'diff'));
+      pyodide.globals.set('__var__',String(d.variable||''));
+      pyodide.globals.set('__ord__',Number(d.order||1));
+      pyodide.globals.set('__digits__',Number(d.digits||50));
+      pyodide.globals.set('__numeric__',Boolean(d.wantNumeric));
+      const payload=pyodide.runPython('calculate_payload(__src__, __mode__, __var__, __ord__, __digits__, __numeric__)');
+      ['__src__','__mode__','__var__','__ord__','__digits__','__numeric__'].forEach(key=>pyodide.globals.delete(key));
+      self.postMessage({type:'calc-result',id:d.id,payload:String(payload)});
+    }
+  }catch(error){
+    self.postMessage({type:'compute-error',id:d.id,error:String(error?.message||error)});
+  }
+};
+`;
+
+function createWorker() {
+  if (worker) worker.terminate();
+  engineReady = false;
+  setBusy(false);
+  setSystemStatus();
+
+  const url = URL.createObjectURL(new Blob([WORKER_SOURCE], {type:'text/javascript'}));
+  worker = new Worker(url);
+  URL.revokeObjectURL(url);
+
+  worker.onmessage = event => {
+    const d = event.data || {};
+    if (d.type === 'status') {
+      systemStatus.dataset.state = 'loading';
+      systemStatusText.textContent = d.text || '正在准备计算核心';
+      return;
+    }
+    if (d.type === 'ready') {
+      engineReady = true;
+      setSystemStatus();
+      updateButton();
+      schedulePreview(0);
+      return;
+    }
+    if (d.type === 'fatal') {
+      engineReady = false;
+      setSystemError('精确计算核心加载失败');
+      updateButton();
+      showError(`计算核心加载失败：${d.error}`);
+      return;
+    }
+    if (d.type === 'preview-result' && d.id === previewId) {
+      handlePreview(d.payload);
+      return;
+    }
+    if (d.type === 'calc-result' && d.id === activeRequest) {
+      handleResult(d.payload);
+      return;
+    }
+    if (d.type === 'compute-error' && d.id === activeRequest) {
+      setBusy(false);
+      showError(`计算过程发生错误：${d.error}`);
+    }
+  };
+
+  worker.onerror = event => {
+    engineReady = false;
+    setSystemError('计算线程发生错误');
+    updateButton();
+    if (calculating) {
+      setBusy(false);
+      showError(event.message || '计算线程发生未知错误');
+    }
+  };
+
+  worker.postMessage({type:'init', pythonSource:PYTHON_SOURCE, bases:PYODIDE_BASES});
+}
+
+function handlePreview(text) {
+  let payload;
+  try { payload = JSON.parse(text); } catch (_) { return; }
+  if (!payload.ok) {
+    lastPreview = null;
+    previewState.textContent = '解析失败';
+    previewMath.innerHTML = `<div class="preview-error">${escapeHtml(payload.error)}</div>`;
+    variableList.innerHTML = '';
+    return;
+  }
+  lastPreview = payload;
+  previewState.textContent = payload.variables.length ? `变量：${payload.variables.join(', ')}` : '常数函数';
+  variableList.innerHTML = payload.variables.map(v => `<option value="${escapeHtml(v)}"></option>`).join('');
+  renderCachedPreview();
+}
+
+function updateButton() {
+  calcBtn.disabled = !engineReady || calculating;
+  calcBtnText.textContent = calculating ? '正在精确计算' : engineReady ? (mode === 'diff' ? '求导' : '反求导') : '正在准备计算核心';
+}
+
+function setBusy(value) {
+  calculating = value;
+  stopBtn.hidden = !value;
+  clearBtn.disabled = value;
+  document.querySelectorAll('.chip,.tab').forEach(el => el.disabled = value);
+  updateButton();
+}
+
+function setMode(next) {
+  mode = next === 'integrate' ? 'integrate' : 'diff';
+  document.querySelectorAll('.tab').forEach(btn => btn.classList.toggle('active', btn.dataset.mode === mode));
+  orderControl.style.display = 'block';
+  orderLabel.textContent = mode === 'diff' ? '求导阶数（1–1000）' : '反求导阶数（1–1000）';
+  order.setAttribute('aria-label', orderLabel.textContent);
+  updateButton();
+}
+
+function updateNumericUI() {
+  const enabled = wantNumeric.checked;
+  numericOption.classList.toggle('enabled', enabled);
+  precisionReveal.setAttribute('aria-hidden', enabled ? 'false' : 'true');
+  digits.tabIndex = enabled ? 0 : -1;
+}
+
+function emptyResultHtml() {
+  return `<div class="empty"><div class="empty-inner"><div class="empty-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 6h14M7 11h10M9 16h6"/><path d="M18 3v6M15 6h6"/></svg></div><h3>等待计算</h3><p>输入函数并选择求导或反求导。结果将直接使用 f(x)、f′(x)、f⁽ⁿ⁾(x)、F(x) 或 Fₙ(x) 的形式显示。</p></div></div>`;
+}
+
+function showLoading() {
+  result.innerHTML = '<div class="empty"><div class="empty-inner"><div class="loader"></div><h3>正在计算</h3><p>高阶导数、多阶反求导或复杂函数可能需要更多符号运算。</p></div></div>';
+  lastLatex = '';
+  lastPlain = '';
+  copyLatexBtn.disabled = true;
+  copyPlainBtn.disabled = true;
+}
+
+function showError(message) {
+  result.innerHTML = `<div class="error"><h3>无法完成计算</h3><p>${escapeHtml(message)}</p></div>`;
+  lastLatex = '';
+  lastPlain = '';
+  copyLatexBtn.disabled = true;
+  copyPlainBtn.disabled = true;
+}
+
+function resultHtml(payload) {
+  const modeText = payload.mode === 'diff' ? `${payload.order} 阶求导` : `${payload.order} 阶反求导`;
+  const notice = payload.unevaluated
+    ? (payload.mode === 'diff'
+      ? '<div class="notice">当前导数包含无法继续化简的符号导数，因此保留精确符号形式。</div>'
+      : '<div class="notice">当前反求导未得到完整闭式结果，因此保留精确的积分表达式。</div>')
+    : '';
+  const approx = payload.numericRelationLatex
+    ? `<div class="formula-label">${payload.digits} 位有效数字近似</div><div class="approx" id="approxMath"></div>`
+    : '';
+  return `
+    <div class="result-heading">
+      <h3>${escapeHtml(payload.title)}</h3>
+      <span class="tag">${escapeHtml(modeText)} · ${escapeHtml(payload.variable)}</span>
+    </div>
+    <div class="formula-label">原函数</div>
+    <div class="formula" id="inputMath"></div>
+    <div class="formula-label">结果</div>
+    <div class="formula main" id="mainMath"></div>
+    ${notice}
+    ${approx}
+    <div class="timing">${payload.elapsedMs} ms</div>
+  `;
+}
+
+async function handleResult(text) {
+  setBusy(false);
+  let payload;
+  try { payload = JSON.parse(text); } catch (_) {
+    showError('计算核心返回了无法识别的数据。');
+    return;
+  }
+  if (!payload.ok) {
+    showError(payload.error || '输入无法处理。');
+    return;
+  }
+
+  result.innerHTML = resultHtml(payload);
+  lastLatex = payload.resultRelationLatex || payload.resultLatex || '';
+  lastPlain = payload.displayPlain || payload.resultPlain || '';
+  copyLatexBtn.disabled = !lastLatex;
+  copyPlainBtn.disabled = !lastPlain;
+
+  await typesetElement($('inputMath'), payload.inputRelationLatex);
+  await typesetElement($('mainMath'), payload.resultRelationLatex);
+  if (payload.numericRelationLatex) await typesetElement($('approxMath'), payload.numericRelationLatex);
+
+  if (window.innerWidth <= 980) resultArea.scrollIntoView({behavior:'smooth', block:'start'});
+  else resultArea.scrollTop = 0;
+}
+
+function calculate() {
+  const source = expression.value.trim();
+  if (!source) {
+    showError('请输入函数表达式。');
+    expression.focus();
+    return;
+  }
+  if (!engineReady || calculating) return;
+
+  const calcOrder = Math.max(1, Math.min(1000, Number(order.value) || 1));
+  order.value = String(calcOrder);
+
+  const precision = wantNumeric.checked
+    ? Math.max(15, Math.min(300, Number(digits.value) || 50))
+    : 50;
+  digits.value = String(precision);
+
+  activeRequest = ++requestId;
+  setBusy(true);
+  showLoading();
+  worker.postMessage({
+    type:'calculate',
+    id:activeRequest,
+    source,
+    mode,
+    variable:variable.value.trim(),
+    order:calcOrder,
+    digits:precision,
+    wantNumeric:wantNumeric.checked
+  });
+}
+
+function stopCalculation() {
+  if (!calculating) return;
+  activeRequest = ++requestId;
+  setBusy(false);
+  showError('本次计算已停止。计算核心正在重新初始化。');
+  createWorker();
+}
+
+async function copyText(text, message) {
+  if (!text) return;
+  try {
+    await navigator.clipboard.writeText(text);
+  } catch (_) {
+    const temp = document.createElement('textarea');
+    temp.value = text;
+    temp.style.position = 'fixed';
+    temp.style.opacity = '0';
+    document.body.appendChild(temp);
+    temp.select();
+    document.execCommand('copy');
+    temp.remove();
+  }
+  showToast(message);
+}
+
+function onExpressionInput() {
+  charCount.textContent = `${expression.value.length} / 2400`;
+  schedulePreview(170);
+}
+
+function clearTransientData() {
+  expression.value = '';
+  variable.value = '';
+  order.value = '1';
+  wantNumeric.checked = false;
+  digits.value = '50';
+  updateNumericUI();
+  setMode('diff');
+  charCount.textContent = '0 / 2400';
+  lastPreview = null;
+  lastLatex = '';
+  lastPlain = '';
+  previewState.textContent = '等待输入';
+  previewMath.innerHTML = '<span style="color:#a0a7b8;font-size:11px">输入后显示 f(x)=…</span>';
+  variableList.innerHTML = '';
+  result.innerHTML = emptyResultHtml();
+  copyLatexBtn.disabled = true;
+  copyPlainBtn.disabled = true;
+}
+
+document.querySelectorAll('.tab').forEach(btn => btn.addEventListener('click', () => setMode(btn.dataset.mode)));
+document.querySelectorAll('.chip').forEach(btn => btn.addEventListener('click', () => {
+  expression.value = btn.dataset.example || '';
+  onExpressionInput();
+  expression.focus();
+}));
+expression.addEventListener('input', onExpressionInput);
+expression.addEventListener('keydown', event => {
+  if ((event.ctrlKey || event.metaKey) && event.key === 'Enter') {
+    event.preventDefault();
+    calculate();
+  }
+});
+variable.addEventListener('input', () => {
+  if (lastPreview?.ok) renderCachedPreview();
+});
+wantNumeric.addEventListener('change', updateNumericUI);
+calcBtn.addEventListener('click', calculate);
+stopBtn.addEventListener('click', stopCalculation);
+clearBtn.addEventListener('click', () => {
+  expression.value = '';
+  onExpressionInput();
+  expression.focus();
+});
+copyLatexBtn.addEventListener('click', () => copyText(lastLatex, 'LaTeX 已复制'));
+copyPlainBtn.addEventListener('click', () => copyText(lastPlain, '表达式已复制'));
+
+window.addEventListener('pagehide', () => {
+  // Explicitly remove transient user data before a page can enter the back-forward cache.
+  expression.value = '';
+  variable.value = '';
+  lastPreview = null;
+  lastLatex = '';
+  lastPlain = '';
+  result.innerHTML = emptyResultHtml();
+});
+window.addEventListener('pageshow', event => {
+  if (event.persisted) clearTransientData();
+});
+
+clearTransientData();
+createWorker();
+initMathJax();
+</script>
+</body>
+</html>

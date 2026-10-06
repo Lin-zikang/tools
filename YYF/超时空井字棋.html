@@ -1,0 +1,2438 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>超时空井字棋</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Ctext y=%22.9em%22 font-size=%2290%22%3E%E2%8F%B3%3C/text%3E%3C/svg%3E" />
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f6f8fb;
+      --bg-soft: #fbfcfe;
+      --panel: rgba(255, 255, 255, 0.92);
+      --panel-solid: #ffffff;
+      --panel-tint: #f8fafc;
+      --line: #e7edf4;
+      --line-strong: #cbd5e1;
+      --text: #111827;
+      --muted: #64748b;
+      --muted-2: #94a3b8;
+      --accent: #2563eb;
+      --accent-strong: #1d4ed8;
+      --accent-soft: rgba(37, 99, 235, 0.10);
+      --accent-soft-2: rgba(37, 99, 235, 0.16);
+      --o: #d97706;
+      --o-soft: rgba(217, 119, 6, 0.12);
+      --danger: #dc2626;
+      --danger-soft: rgba(220, 38, 38, 0.08);
+      --success: #15803d;
+      --success-soft: rgba(21, 128, 61, 0.10);
+      --warning: #b45309;
+      --warning-soft: rgba(245, 158, 11, 0.13);
+      --travel: #7c3aed;
+      --travel-soft: rgba(124, 58, 237, 0.10);
+      --imprint: #059669;
+      --imprint-soft: rgba(5, 150, 105, 0.10);
+      --mark: #0f172a;
+      --shadow: 0 16px 46px rgba(15, 23, 42, 0.08);
+      --shadow-soft: 0 8px 24px rgba(15, 23, 42, 0.06);
+      --radius-xxl: 30px;
+      --radius-xl: 24px;
+      --radius-lg: 18px;
+      --radius-md: 14px;
+      --radius-sm: 10px;
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+    }
+
+    * { box-sizing: border-box; }
+
+    html {
+      min-height: 100%;
+      background: var(--bg);
+      -webkit-text-size-adjust: 100%;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100%;
+      color: var(--text);
+      font-family: "PingFang SC", "Microsoft YaHei", "Noto Sans SC", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      background:
+        radial-gradient(circle at 8% -4%, rgba(96, 165, 250, 0.10), transparent 30%),
+        radial-gradient(circle at 94% 6%, rgba(203, 213, 225, 0.26), transparent 26%),
+        linear-gradient(180deg, #ffffff 0%, #f8fafc 52%, #f1f5f9 100%);
+      padding: clamp(10px, 2vw, 20px);
+    }
+
+    button,
+    input,
+    select { font: inherit; }
+
+    button {
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    button:disabled {
+      cursor: not-allowed;
+      opacity: 0.58;
+      transform: none !important;
+      box-shadow: none !important;
+    }
+
+    .app-shell {
+      width: min(1480px, 100%);
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .hero {
+      position: relative;
+      overflow: hidden;
+      border-radius: var(--radius-xxl);
+      background:
+        linear-gradient(135deg, rgba(255,255,255,0.98), rgba(255,255,255,0.88)),
+        radial-gradient(circle at 80% 10%, rgba(37, 99, 235, 0.14), transparent 24%);
+      border: 1px solid rgba(255,255,255,0.86);
+      box-shadow: var(--shadow);
+      padding: clamp(18px, 3vw, 28px);
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 20px;
+      align-items: start;
+      backdrop-filter: blur(14px);
+    }
+
+    .hero::after {
+      content: "";
+      position: absolute;
+      inset: auto -80px -120px auto;
+      width: 280px;
+      height: 280px;
+      border-radius: 999px;
+      background: rgba(37, 99, 235, 0.06);
+      pointer-events: none;
+    }
+
+    .eyebrow {
+      margin: 0 0 8px;
+      color: var(--accent);
+      font-size: 12px;
+      font-weight: 900;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .hero h1 {
+      margin: 0;
+      font-size: clamp(30px, 4vw, 48px);
+      line-height: 1.05;
+      letter-spacing: -0.04em;
+    }
+
+    .subtitle {
+      margin: 10px 0 0;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.8;
+      max-width: 880px;
+    }
+
+    .hero-actions {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: flex-end;
+      max-width: 460px;
+    }
+
+    .btn,
+    .ghost-btn,
+    .primary-btn,
+    .mode-btn,
+    .choice-btn,
+    .side-btn,
+    .small-btn,
+    .select-chip,
+    .board-cell,
+    .board-thumb {
+      border: 1px solid var(--line);
+      background: #fff;
+      color: var(--text);
+      cursor: pointer;
+      transition: transform .16s ease, box-shadow .16s ease, border-color .16s ease, background .16s ease, color .16s ease;
+    }
+
+    .ghost-btn,
+    .primary-btn,
+    .mode-btn,
+    .choice-btn,
+    .side-btn,
+    .small-btn {
+      border-radius: 999px;
+      padding: 10px 15px;
+      font-weight: 800;
+      box-shadow: 0 2px 10px rgba(15, 23, 42, 0.035);
+      white-space: nowrap;
+    }
+
+    .small-btn { padding: 8px 12px; font-size: 12px; }
+
+    .primary-btn {
+      border-color: rgba(37, 99, 235, 0.44);
+      background: linear-gradient(180deg, #3b82f6, #2563eb);
+      color: #fff;
+      box-shadow: 0 10px 24px rgba(37, 99, 235, 0.18);
+    }
+
+    .danger-btn {
+      border-color: rgba(220, 38, 38, 0.28);
+      color: var(--danger);
+      background: var(--danger-soft);
+    }
+
+    .ghost-btn:hover,
+    .primary-btn:hover,
+    .mode-btn:hover,
+    .choice-btn:hover,
+    .side-btn:hover,
+    .small-btn:hover,
+    .select-chip:hover,
+    .board-thumb.selectable:hover {
+      transform: translateY(-1px);
+      border-color: var(--line-strong);
+      box-shadow: var(--shadow-soft);
+    }
+
+    .mode-btn.active,
+    .choice-btn.active,
+    .side-btn.active {
+      background: var(--accent-soft);
+      border-color: rgba(37,99,235,0.32);
+      color: var(--accent-strong);
+      box-shadow: inset 0 0 0 1px rgba(37,99,235,0.08);
+    }
+
+    .choice-btn.o.active { background: var(--o-soft); border-color: rgba(217,119,6,0.28); color: var(--o); }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(320px, 390px) minmax(0, 1fr);
+      gap: 16px;
+      align-items: start;
+    }
+
+    .panel,
+    .card {
+      background: var(--panel);
+      border: 1px solid rgba(255,255,255,0.86);
+      box-shadow: var(--shadow);
+      border-radius: var(--radius-xl);
+      backdrop-filter: blur(12px);
+    }
+
+    .panel { padding: clamp(14px, 2vw, 20px); }
+
+    .control-panel {
+      position: sticky;
+      top: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .section-title {
+      margin: 0 0 12px;
+      font-size: 17px;
+      line-height: 1.2;
+      font-weight: 900;
+      letter-spacing: -0.01em;
+    }
+
+    .section-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .section-head .section-title { margin: 0; }
+
+    .info-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .info-card,
+    .action-card,
+    .notice-card,
+    .mini-card,
+    .summary-card,
+    .history-card,
+    .last-action-card,
+    .timeline-card,
+    .active-board-card,
+    .rules-card,
+    .settings-card {
+      border: 1px solid #e9eef5;
+      background: rgba(255,255,255,0.96);
+      border-radius: var(--radius-lg);
+    }
+
+    .info-card { padding: 13px; min-height: 88px; }
+    .action-card, .notice-card, .rules-card, .settings-card { padding: 14px; }
+    .mini-card { padding: 13px; }
+    .active-board-card, .summary-card, .history-card, .last-action-card, .timeline-card { padding: clamp(14px, 2vw, 18px); }
+
+    .info-label,
+    .label {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.4;
+      margin-bottom: 6px;
+    }
+
+    .info-value,
+    .value {
+      font-size: 22px;
+      font-weight: 950;
+      line-height: 1.15;
+      word-break: break-word;
+    }
+
+    .info-sub,
+    .tip-text,
+    .detail-text,
+    .muted-text,
+    .footer-note {
+      margin: 0;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.75;
+    }
+
+    .info-sub { margin-top: 6px; font-size: 12px; }
+
+    .player-x { color: var(--accent); }
+    .player-o { color: var(--o); }
+
+    .mode-group,
+    .choice-group,
+    .side-group,
+    .badge-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .choice-group + .choice-group { margin-top: 10px; }
+
+    .ai-status {
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr);
+      gap: 12px;
+      align-items: center;
+      border-radius: 18px;
+      border: 1px solid #e9eef5;
+      background: linear-gradient(180deg, #ffffff, #f8fbff);
+      padding: 12px;
+      margin-top: 12px;
+    }
+
+    .orb {
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 35% 30%, #ffffff, #93c5fd 32%, #2563eb 76%);
+      box-shadow: 0 10px 24px rgba(37, 99, 235, 0.18);
+      position: relative;
+    }
+
+    .orb.thinking::after {
+      content: "";
+      position: absolute;
+      inset: -5px;
+      border-radius: 50%;
+      border: 2px solid rgba(37, 99, 235, 0.22);
+      border-top-color: rgba(37, 99, 235, 0.92);
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .ai-status-title { font-size: 14px; font-weight: 900; margin-bottom: 2px; }
+    .ai-status-sub { color: var(--muted); font-size: 12px; line-height: 1.55; }
+
+    .play-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      min-width: 0;
+    }
+
+    .active-area {
+      display: grid;
+      grid-template-columns: minmax(300px, 455px) minmax(0, 1fr);
+      gap: 16px;
+      align-items: stretch;
+    }
+
+    .active-board-header,
+    .timeline-header,
+    .history-header {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: flex-start;
+      flex-wrap: wrap;
+      margin-bottom: 12px;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      border-radius: 999px;
+      padding: 7px 11px;
+      font-size: 12px;
+      font-weight: 850;
+      background: #f8fafc;
+      border: 1px solid #e8eef6;
+      color: var(--muted);
+      min-height: 28px;
+    }
+
+    .badge.primary { background: var(--accent-soft); border-color: rgba(37,99,235,0.22); color: var(--accent-strong); }
+    .badge.o { background: var(--o-soft); border-color: rgba(217,119,6,0.22); color: var(--o); }
+    .badge.warn { background: var(--warning-soft); border-color: rgba(245,158,11,0.2); color: var(--warning); }
+    .badge.success { background: var(--success-soft); border-color: rgba(21,128,61,0.18); color: var(--success); }
+    .badge.danger { background: var(--danger-soft); border-color: rgba(220,38,38,0.18); color: var(--danger); }
+
+    .active-board-wrap {
+      position: relative;
+      display: grid;
+      place-items: center;
+      padding: 4px 0 0;
+    }
+
+    .active-board {
+      width: min(100%, 430px);
+      aspect-ratio: 1 / 1;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      grid-template-rows: repeat(3, 1fr);
+      border: 4px solid #111827;
+      border-radius: 28px;
+      overflow: hidden;
+      background: #fff;
+      box-shadow: inset 0 0 0 1px rgba(17,24,39,0.06), 0 14px 30px rgba(15,23,42,0.08);
+    }
+
+    .board-cell {
+      position: relative;
+      border: 0;
+      border-right: 4px solid #111827;
+      border-bottom: 4px solid #111827;
+      background: #ffffff;
+      display: grid;
+      place-items: center;
+      font-size: clamp(44px, 7vw, 84px);
+      font-weight: 950;
+      line-height: 1;
+      user-select: none;
+      cursor: default;
+      padding: 0;
+      appearance: none;
+      -webkit-appearance: none;
+    }
+
+    .board-cell:nth-child(3n) { border-right: 0; }
+    .board-cell:nth-last-child(-n + 3) { border-bottom: 0; }
+
+    .board-cell.clickable {
+      cursor: pointer;
+      background: linear-gradient(180deg, #ffffff, #f8fafc);
+    }
+
+    .board-cell.clickable:hover,
+    .board-cell.clickable:active {
+      background: rgba(37, 99, 235, 0.08);
+    }
+
+    .board-cell.x,
+    .mini-cell.x { color: var(--accent); }
+    .board-cell.o,
+    .mini-cell.o { color: var(--o); }
+
+    .board-cell.last-move::after,
+    .mini-cell.last-move::after {
+      content: "";
+      position: absolute;
+      inset: 8px;
+      border-radius: 16px;
+      border: 2px solid rgba(37, 99, 235, 0.58);
+      background: rgba(37, 99, 235, 0.05);
+      pointer-events: none;
+      animation: pulse 1.2s ease-in-out 2;
+    }
+
+    .mini-cell.last-move::after { inset: 2px; border-radius: 6px; border-width: 1.5px; }
+
+    @keyframes pulse {
+      0%, 100% { opacity: .38; transform: scale(1); }
+      45% { opacity: 1; transform: scale(.92); }
+    }
+
+    .active-board.role-place-origin,
+    .active-board.role-place-copy { box-shadow: inset 0 0 0 3px rgba(37,99,235,0.20), 0 14px 30px rgba(15,23,42,0.08); }
+    .active-board.role-travel-source,
+    .active-board.role-travel-new { box-shadow: inset 0 0 0 3px rgba(124,58,237,0.22), 0 14px 30px rgba(15,23,42,0.08); }
+    .active-board.role-imprint-base,
+    .active-board.role-imprint-target,
+    .active-board.role-imprint-new { box-shadow: inset 0 0 0 3px rgba(5,150,105,0.22), 0 14px 30px rgba(15,23,42,0.08); }
+
+    .cell-symbol, .mini-symbol { position: relative; z-index: 1; }
+    .cell-marker {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      z-index: 2;
+      border-radius: 999px;
+      padding: 3px 7px;
+      background: rgba(15, 23, 42, 0.88);
+      color: #fff;
+      font-size: 11px;
+      font-weight: 950;
+      letter-spacing: .02em;
+      line-height: 1;
+      pointer-events: none;
+    }
+
+    .mini-marker {
+      position: absolute;
+      top: 1px;
+      right: 1px;
+      z-index: 2;
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: var(--mark);
+      color: transparent;
+      overflow: hidden;
+      pointer-events: none;
+    }
+
+    .board-cell.imprint-from-target { background: linear-gradient(180deg, #ffffff, rgba(5,150,105,0.13)); }
+    .board-cell.imprint-erased { background: linear-gradient(180deg, #ffffff, rgba(245,158,11,0.18)); }
+    .board-cell.imprint-conflict { background: linear-gradient(135deg, rgba(5,150,105,0.12), rgba(37,99,235,0.10)); }
+    .mini-cell.imprint-from-target { background: rgba(5,150,105,0.12); }
+    .mini-cell.imprint-erased { background: rgba(245,158,11,0.18); }
+    .mini-cell.imprint-conflict { background: rgba(37,99,235,0.10); }
+
+    .mini-board.role-place-origin,
+    .mini-board.role-place-copy { outline: 2px solid rgba(37,99,235,0.45); outline-offset: 2px; }
+    .mini-board.role-travel-source { outline: 2px dashed rgba(124,58,237,0.55); outline-offset: 2px; }
+    .mini-board.role-travel-new { outline: 2px solid rgba(124,58,237,0.58); outline-offset: 2px; }
+    .mini-board.role-imprint-base,
+    .mini-board.role-imprint-target { outline: 2px dashed rgba(5,150,105,0.55); outline-offset: 2px; }
+    .mini-board.role-imprint-new { outline: 2px solid rgba(5,150,105,0.62); outline-offset: 2px; }
+
+    .active-side {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      min-width: 0;
+    }
+
+    .last-action-card {
+      overflow: hidden;
+      background: linear-gradient(180deg, rgba(255,255,255,0.98), #f8fafc);
+    }
+
+    .last-action-card.place { border-color: rgba(37,99,235,0.26); }
+    .last-action-card.travel { border-color: rgba(124,58,237,0.28); }
+    .last-action-card.imprint { border-color: rgba(5,150,105,0.30); }
+
+    .last-action-body { display: grid; gap: 8px; }
+    .last-action-title { font-size: 18px; line-height: 1.25; font-weight: 950; letter-spacing: -0.01em; }
+    .last-action-desc { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.75; }
+    .last-action-meta { display: flex; flex-wrap: wrap; gap: 8px; }
+    .last-action-meta span {
+      display: inline-flex;
+      align-items: center;
+      min-height: 26px;
+      border-radius: 999px;
+      padding: 5px 9px;
+      background: #fff;
+      border: 1px solid #e8eef6;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 850;
+    }
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .summary-item {
+      border-radius: 16px;
+      background: #f8fafc;
+      border: 1px solid #e8eef6;
+      padding: 12px;
+      min-height: 78px;
+    }
+
+    .summary-item .value { font-size: 19px; }
+
+    .notice-inline {
+      min-height: 22px;
+      margin: 0;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.75;
+    }
+
+    .notice-inline.strong { color: var(--accent-strong); font-weight: 800; }
+    .notice-inline.danger { color: var(--danger); font-weight: 800; }
+
+    .action-stack,
+    .select-board-list,
+    .imprint-list,
+    .rules-list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .helper-list,
+    .rules-list ol,
+    .rules-list ul {
+      margin: 8px 0 0;
+      padding-left: 18px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.75;
+    }
+
+    .helper-list li + li { margin-top: 4px; }
+
+    .select-chip {
+      width: 100%;
+      text-align: left;
+      border-radius: 17px;
+      padding: 11px;
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      background: #fff;
+    }
+
+    .select-chip.active {
+      border-color: rgba(37,99,235,0.36);
+      background: var(--accent-soft);
+      box-shadow: inset 0 0 0 1px rgba(37,99,235,0.08);
+    }
+
+    .chip-content { min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+    .chip-title { font-size: 14px; font-weight: 900; }
+    .chip-desc { color: var(--muted); font-size: 12px; line-height: 1.55; }
+
+    .mini-board {
+      width: 62px;
+      aspect-ratio: 1 / 1;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      grid-template-rows: repeat(3, 1fr);
+      border: 2px solid #111827;
+      border-radius: 11px;
+      overflow: hidden;
+      background: #fff;
+      flex-shrink: 0;
+    }
+
+    .mini-cell {
+      position: relative;
+      border-right: 2px solid #111827;
+      border-bottom: 2px solid #111827;
+      display: grid;
+      place-items: center;
+      font-size: 15px;
+      font-weight: 950;
+      line-height: 1;
+    }
+
+    .mini-cell:nth-child(3n) { border-right: 0; }
+    .mini-cell:nth-last-child(-n + 3) { border-bottom: 0; }
+
+    .timeline-stack { display: flex; flex-direction: column; gap: 12px; }
+
+    .timeline-grid-wrap {
+      overflow-x: auto;
+      overflow-y: hidden;
+      max-width: 100%;
+      padding-bottom: 4px;
+      scrollbar-width: thin;
+    }
+
+    .timeline-grid-inner {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      width: max-content;
+      min-width: 100%;
+    }
+
+    .timeline-axis,
+    .timeline-row {
+      display: grid;
+      grid-template-columns: 226px max-content;
+      gap: 12px;
+      align-items: start;
+      width: max-content;
+      min-width: 100%;
+    }
+
+    .timeline-axis { align-items: center; padding: 0 14px; }
+
+    .axis-meta {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 900;
+      letter-spacing: .04em;
+    }
+
+    .axis-strip,
+    .board-strip {
+      display: grid;
+      grid-auto-flow: column;
+      grid-auto-columns: 98px;
+      gap: 10px;
+      min-width: max-content;
+    }
+
+    .axis-tag {
+      display: grid;
+      place-items: center;
+      min-height: 34px;
+      border-radius: 999px;
+      border: 1px solid #e8eef6;
+      background: #f8fafc;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 900;
+    }
+
+    .timeline-row {
+      border: 1px solid #e8eef6;
+      background: linear-gradient(180deg, #ffffff, #fbfcfe);
+      border-radius: 20px;
+      padding: 14px;
+    }
+
+    .timeline-row.active {
+      border-color: rgba(37, 99, 235, 0.28);
+      box-shadow: inset 0 0 0 1px rgba(37,99,235,0.05), var(--shadow-soft);
+      background: linear-gradient(180deg, rgba(239,246,255,0.82), #ffffff);
+    }
+
+    .timeline-row.ai-created {
+      border-color: rgba(21,128,61,0.28);
+      background: linear-gradient(180deg, rgba(240,253,244,0.72), #ffffff);
+    }
+
+    .line-meta { min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+    .line-title { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+    .line-name { font-size: 20px; line-height: 1.18; font-weight: 950; }
+    .line-origin, .line-progress { color: var(--muted); font-size: 12px; line-height: 1.65; }
+
+    .board-slot { width: 98px; min-width: 98px; }
+    .board-slot.placeholder { min-height: 1px; }
+
+    .board-thumb {
+      width: 98px;
+      border-radius: 18px;
+      background: #fff;
+      padding: 10px;
+      cursor: default;
+    }
+
+    .board-thumb.selectable { cursor: pointer; }
+    .board-thumb.current { border-color: rgba(37,99,235,0.28); }
+    .board-thumb.active { border-color: rgba(37,99,235,0.38); background: var(--accent-soft); }
+    .board-thumb.last-action { border-color: rgba(21,128,61,0.42); box-shadow: inset 0 0 0 1px rgba(21,128,61,0.08); }
+    .board-thumb.role-place-origin,
+    .board-thumb.role-place-copy { border-color: rgba(37,99,235,0.45); background: rgba(37,99,235,0.06); }
+    .board-thumb.role-travel-source { border-style: dashed; border-color: rgba(124,58,237,0.62); background: var(--travel-soft); }
+    .board-thumb.role-travel-new { border-color: rgba(124,58,237,0.62); background: var(--travel-soft); }
+    .board-thumb.role-imprint-base,
+    .board-thumb.role-imprint-target { border-style: dashed; border-color: rgba(5,150,105,0.58); background: var(--imprint-soft); }
+    .board-thumb.role-imprint-new { border-color: rgba(5,150,105,0.62); background: var(--imprint-soft); }
+
+    .board-thumb .time-tag {
+      display: flex;
+      justify-content: space-between;
+      gap: 6px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 900;
+      margin-bottom: 8px;
+    }
+
+    .thumb-note { min-height: 30px; margin-top: 8px; color: var(--muted); font-size: 11px; line-height: 1.4; }
+
+    .history-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      max-height: 380px;
+      overflow: auto;
+      padding-right: 4px;
+    }
+
+    .history-item {
+      border-radius: 16px;
+      border: 1px solid #e8eef6;
+      background: #fff;
+      padding: 11px 12px;
+      font-size: 13px;
+      line-height: 1.7;
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+    }
+
+    .history-index {
+      width: 24px;
+      height: 24px;
+      flex: 0 0 24px;
+      border-radius: 999px;
+      background: #f1f5f9;
+      color: #475569;
+      display: grid;
+      place-items: center;
+      font-size: 12px;
+      font-weight: 950;
+      margin-top: 1px;
+    }
+
+    details {
+      border-radius: 18px;
+      border: 1px solid #e8eef6;
+      background: #fff;
+      overflow: hidden;
+    }
+
+    details[open] { box-shadow: var(--shadow-soft); }
+
+    details.help-focus-pulse {
+      animation: helpGlow 3s ease-in-out 1;
+      border-color: rgba(37, 99, 235, 0.56);
+      box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12), var(--shadow-soft);
+    }
+
+    @keyframes helpGlow {
+      0%, 100% { border-color: #e8eef6; box-shadow: var(--shadow-soft); }
+      18%, 72% { border-color: rgba(37, 99, 235, 0.68); box-shadow: 0 0 0 5px rgba(37, 99, 235, 0.16), var(--shadow-soft); }
+    }
+
+    summary {
+      cursor: pointer;
+      list-style: none;
+      padding: 15px 16px;
+      font-size: 15px;
+      font-weight: 950;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    summary::-webkit-details-marker { display: none; }
+
+    .help-content { padding: 0 16px 16px; display: grid; gap: 10px; }
+
+    .help-block {
+      padding: 12px 14px;
+      border-radius: 16px;
+      background: #f8fafc;
+      border: 1px solid #e8eef6;
+    }
+
+    .help-block h4 { margin: 0 0 7px; font-size: 14px; }
+    .help-block p { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.75; }
+
+    .overlay {
+      position: fixed;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 40;
+      padding: 20px;
+      background: rgba(15, 23, 42, 0.45);
+      backdrop-filter: blur(8px);
+    }
+
+    .overlay.show { display: flex; }
+
+    .modal {
+      width: min(100%, 540px);
+      background: #fff;
+      border-radius: 28px;
+      border: 1px solid rgba(255,255,255,0.82);
+      box-shadow: 0 30px 80px rgba(15, 23, 42, 0.25);
+      padding: 22px;
+    }
+
+    .modal h2 { margin: 0 0 8px; font-size: 28px; line-height: 1.2; }
+    .modal p { margin: 0; color: var(--muted); line-height: 1.8; }
+    .modal-actions { margin-top: 18px; display: flex; flex-wrap: wrap; gap: 10px; }
+
+    .mobile-bottom-bar {
+      display: none;
+      position: sticky;
+      bottom: calc(8px + var(--safe-bottom));
+      z-index: 18;
+      gap: 8px;
+      padding: 8px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.88);
+      border: 1px solid rgba(255,255,255,0.8);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(12px);
+    }
+
+    .mobile-bottom-bar button { flex: 1 1 0; padding-inline: 10px; }
+
+    @media (max-width: 1180px) {
+      .layout { grid-template-columns: 1fr; }
+      .control-panel { position: static; }
+      .active-area { grid-template-columns: minmax(280px, 430px) minmax(0, 1fr); }
+    }
+
+    @media (max-width: 880px) {
+      body { padding: 12px; }
+      .hero { grid-template-columns: 1fr; border-radius: 24px; }
+      .hero-actions { max-width: none; justify-content: stretch; }
+      .hero-actions button { flex: 1 1 auto; }
+      .active-area { grid-template-columns: 1fr; }
+      .active-board { width: min(100%, 520px); border-width: 3px; border-radius: 24px; }
+      .board-cell { border-right-width: 3px; border-bottom-width: 3px; }
+      .timeline-row { grid-template-columns: 1fr; }
+      .timeline-axis { display: none; }
+      .timeline-grid-wrap { margin-inline: -4px; padding-inline: 4px; }
+      .summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+
+    @media (max-width: 620px) {
+      .panel { padding: 12px; border-radius: 22px; }
+      .info-grid, .summary-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
+      .info-card { min-height: 78px; padding: 11px; }
+      .info-value, .value { font-size: 19px; }
+      .mode-group .mode-btn,
+      .choice-group .choice-btn,
+      .side-group .side-btn { flex: 1 1 auto; }
+      .hero-actions { display: none; }
+      .mobile-bottom-bar { display: flex; }
+      .active-board-card, .summary-card, .history-card, .last-action-card, .timeline-card { border-radius: 20px; }
+      .active-board { width: min(100%, calc(100vw - 48px)); }
+      .board-cell { font-size: clamp(40px, 16vw, 72px); }
+      .board-thumb { width: 88px; }
+      .board-slot { width: 88px; min-width: 88px; }
+      .axis-strip, .board-strip { grid-auto-columns: 88px; }
+      .mini-board { width: 56px; }
+      .select-chip { align-items: flex-start; }
+    }
+
+    @media (max-width: 420px) {
+      body { padding: 9px; }
+      .hero h1 { font-size: 30px; }
+      .subtitle { font-size: 13px; }
+      .info-grid, .summary-grid { grid-template-columns: 1fr; }
+      .badge { max-width: 100%; white-space: normal; }
+      .modal { padding: 18px; border-radius: 24px; }
+      .modal h2 { font-size: 24px; }
+    }
+
+
+    /* p1 redesign: timeline boards are now the primary playable surface; legacy large board is removed from layout. */
+    :root {
+      --timeline-col: 178px;
+      --timeline-board-base: 106px;
+      --timeline-board-time: 126px;
+      --timeline-board-active: 154px;
+      --timeline-board-terminal: 132px;
+      --timeline-cell-border: 3px;
+    }
+
+    .play-panel { gap: 12px; }
+    .timeline-card { order: -2; scroll-margin-top: 14px; }
+    .active-area { grid-template-columns: 1fr; order: -1; }
+    .active-board-card,
+    .legacy-active-board { display: none !important; }
+    .active-side {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: 12px;
+      align-items: start;
+    }
+    .history-card { grid-column: 1 / -1; }
+
+    .timeline-header-tools {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+      justify-content: flex-end;
+      min-width: min(100%, 420px);
+    }
+
+    .download-game-btn[hidden] { display: none !important; }
+
+    .timeline-grid-wrap {
+      padding: 6px 2px 10px;
+      scroll-behavior: smooth;
+      overscroll-behavior-x: contain;
+      scroll-padding-inline: 22px;
+    }
+
+    .timeline-axis,
+    .timeline-row {
+      grid-template-columns: minmax(178px, 226px) max-content;
+    }
+
+    .axis-strip,
+    .board-strip {
+      grid-auto-columns: var(--timeline-col);
+      gap: 12px;
+    }
+
+    .axis-tag.focus-time {
+      background: var(--accent-soft);
+      border-color: rgba(37,99,235,0.32);
+      color: var(--accent-strong);
+      transform: scale(1.04);
+    }
+
+    .timeline-row {
+      align-items: center;
+      min-height: 206px;
+      transition: border-color .22s ease, box-shadow .22s ease, background .22s ease, transform .22s ease;
+    }
+
+    .timeline-row.focus-row {
+      border-color: rgba(37, 99, 235, 0.38);
+      box-shadow: inset 0 0 0 1px rgba(37,99,235,0.06), var(--shadow-soft);
+    }
+
+    .timeline-row.terminal-row {
+      border-color: rgba(21,128,61,0.36);
+      background: linear-gradient(180deg, rgba(240,253,244,0.78), #ffffff);
+    }
+
+    .line-meta {
+      position: sticky;
+      left: 0;
+      z-index: 3;
+      border-radius: 16px;
+      background: linear-gradient(90deg, rgba(255,255,255,0.98) 0%, rgba(255,255,255,0.92) 78%, rgba(255,255,255,0) 100%);
+      padding-right: 14px;
+    }
+
+    .board-slot {
+      width: var(--timeline-col);
+      min-width: var(--timeline-col);
+      min-height: 178px;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding-top: 2px;
+    }
+
+    .board-slot.placeholder { min-height: 178px; }
+
+    .board-thumb {
+      width: calc(var(--timeline-board-base) + 24px);
+      min-height: 164px;
+      border-radius: 20px;
+      padding: 10px;
+      cursor: default;
+      will-change: transform;
+      transform-origin: top center;
+      transition: width .22s ease, min-height .22s ease, transform .22s ease, box-shadow .22s ease, border-color .22s ease, background .22s ease;
+    }
+
+    .board-thumb.time-focus {
+      width: calc(var(--timeline-board-time) + 24px);
+      min-height: 186px;
+      border-color: rgba(37,99,235,0.26);
+      background: linear-gradient(180deg, rgba(239,246,255,0.94), #ffffff);
+      box-shadow: 0 10px 28px rgba(15, 23, 42, 0.07);
+    }
+
+    .board-thumb.action-focus {
+      width: calc(var(--timeline-board-active) + 26px);
+      min-height: 218px;
+      border-color: rgba(37,99,235,0.54);
+      background: linear-gradient(180deg, rgba(239,246,255,0.98), #ffffff);
+      box-shadow: 0 18px 42px rgba(37,99,235,0.17), inset 0 0 0 1px rgba(37,99,235,0.10);
+      transform: translateY(-4px);
+      z-index: 2;
+    }
+
+    .board-thumb.terminal-focus {
+      width: calc(var(--timeline-board-terminal) + 24px);
+      min-height: 196px;
+      border-color: rgba(21,128,61,0.56);
+      background: linear-gradient(180deg, rgba(240,253,244,0.96), #ffffff);
+      box-shadow: 0 14px 34px rgba(21,128,61,0.12), inset 0 0 0 1px rgba(21,128,61,0.10);
+      transform: translateY(-2px);
+      z-index: 2;
+    }
+
+    .board-thumb.selectable { cursor: pointer; }
+    .board-thumb.playable .thumb-note { color: var(--accent-strong); font-weight: 850; }
+
+    .board-thumb .time-tag {
+      align-items: center;
+      min-height: 26px;
+      margin-bottom: 8px;
+    }
+
+    .time-tag .focus-dot {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      color: var(--accent-strong);
+    }
+
+    .timeline-mini-board {
+      width: var(--timeline-board-base);
+      aspect-ratio: 1 / 1;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      grid-template-rows: repeat(3, 1fr);
+      border: var(--timeline-cell-border) solid #111827;
+      border-radius: 16px;
+      overflow: hidden;
+      background: #fff;
+      margin-inline: auto;
+      box-shadow: inset 0 0 0 1px rgba(17,24,39,0.04);
+      transition: width .22s ease, border-width .22s ease, border-radius .22s ease;
+    }
+
+    .board-thumb.time-focus .timeline-mini-board { width: var(--timeline-board-time); border-radius: 18px; }
+    .board-thumb.action-focus .timeline-mini-board { width: var(--timeline-board-active); border-radius: 22px; border-width: 4px; }
+    .board-thumb.terminal-focus .timeline-mini-board { width: var(--timeline-board-terminal); border-radius: 20px; }
+
+    .timeline-cell {
+      position: relative;
+      border: 0;
+      border-right: var(--timeline-cell-border) solid #111827;
+      border-bottom: var(--timeline-cell-border) solid #111827;
+      background: #fff;
+      display: grid;
+      place-items: center;
+      min-width: 0;
+      min-height: 0;
+      padding: 0;
+      appearance: none;
+      -webkit-appearance: none;
+      color: inherit;
+      font-size: 25px;
+      font-weight: 950;
+      line-height: 1;
+      cursor: default;
+      user-select: none;
+      transition: background .16s ease, transform .16s ease;
+    }
+
+    .timeline-cell:nth-child(3n) { border-right: 0; }
+    .timeline-cell:nth-last-child(-n + 3) { border-bottom: 0; }
+    .board-thumb.time-focus .timeline-cell { font-size: 30px; }
+    .board-thumb.action-focus .timeline-cell { font-size: 38px; border-right-width: 4px; border-bottom-width: 4px; }
+    .board-thumb.terminal-focus .timeline-cell { font-size: 32px; }
+
+    .timeline-cell.x { color: var(--accent); }
+    .timeline-cell.o { color: var(--o); }
+    .timeline-cell.clickable {
+      cursor: pointer;
+      background: linear-gradient(180deg, #ffffff, #f8fafc);
+    }
+    .timeline-cell.clickable:hover,
+    .timeline-cell.clickable:focus-visible,
+    .timeline-cell.clickable:active {
+      background: rgba(37, 99, 235, 0.10);
+      outline: none;
+    }
+    .timeline-cell.clickable:active { transform: scale(.96); }
+
+    .timeline-cell.last-move::after {
+      content: "";
+      position: absolute;
+      inset: 4px;
+      border-radius: 9px;
+      border: 2px solid rgba(37, 99, 235, 0.58);
+      background: rgba(37, 99, 235, 0.05);
+      pointer-events: none;
+      animation: pulse 1.2s ease-in-out 2;
+    }
+    .board-thumb.action-focus .timeline-cell.last-move::after { inset: 7px; border-radius: 14px; }
+
+    .timeline-cell.imprint-from-target { background: linear-gradient(180deg, #ffffff, rgba(5,150,105,0.13)); }
+    .timeline-cell.imprint-erased { background: linear-gradient(180deg, #ffffff, rgba(245,158,11,0.18)); }
+    .timeline-cell.imprint-conflict { background: linear-gradient(135deg, rgba(5,150,105,0.12), rgba(37,99,235,0.10)); }
+
+    .timeline-cell .mini-symbol { z-index: 3; }
+
+    .timeline-marker {
+      position: absolute;
+      top: -5px;
+      right: 1px;
+      z-index: 2;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 16px;
+      height: 11px;
+      border-radius: 999px;
+      padding: 0 2px;
+      background: rgba(15, 23, 42, 0.88);
+      color: #fff;
+      font-size: 6.5px;
+      font-weight: 950;
+      letter-spacing: -0.06em;
+      line-height: 1;
+      pointer-events: none;
+    }
+    .timeline-cell:nth-child(-n + 3) .timeline-marker { top: auto; bottom: -5px; }
+    .board-thumb.action-focus .timeline-marker { top: -6px; right: 2px; min-width: 18px; height: 12px; font-size: 7px; padding: 0 2px; }
+    .board-thumb.action-focus .timeline-cell:nth-child(-n + 3) .timeline-marker { top: auto; bottom: -6px; }
+
+    .timeline-mini-board.role-place-origin,
+    .timeline-mini-board.role-place-copy { outline: 3px solid rgba(37,99,235,0.46); outline-offset: 3px; }
+    .timeline-mini-board.role-travel-source { outline: 3px dashed rgba(124,58,237,0.58); outline-offset: 3px; }
+    .timeline-mini-board.role-travel-new { outline: 3px solid rgba(124,58,237,0.62); outline-offset: 3px; }
+    .timeline-mini-board.role-imprint-base,
+    .timeline-mini-board.role-imprint-target { outline: 3px dashed rgba(5,150,105,0.58); outline-offset: 3px; }
+    .timeline-mini-board.role-imprint-new { outline: 3px solid rgba(5,150,105,0.64); outline-offset: 3px; }
+
+    @media (max-width: 1180px) {
+      .layout { grid-template-columns: 1fr; }
+      .play-panel { order: -1; }
+      .control-panel { position: static; }
+      .active-area { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 880px) {
+      :root {
+        --timeline-col: 160px;
+        --timeline-board-base: 94px;
+        --timeline-board-time: 112px;
+        --timeline-board-active: 136px;
+        --timeline-board-terminal: 118px;
+      }
+      body { padding: 10px; }
+      .hero { padding: 16px; }
+      .hero h1 { font-size: clamp(26px, 8vw, 38px); }
+      .active-side { grid-template-columns: 1fr; }
+      .timeline-row { grid-template-columns: 1fr; min-height: auto; }
+      .line-meta { position: static; background: transparent; padding-right: 0; }
+      .timeline-axis { display: none; }
+      .timeline-grid-wrap { margin-inline: -4px; padding-inline: 4px; }
+      .board-slot { min-height: 160px; }
+      .board-slot.placeholder { min-height: 160px; }
+      .timeline-cell { font-size: 22px; }
+      .board-thumb.time-focus .timeline-cell { font-size: 27px; }
+      .board-thumb.action-focus .timeline-cell { font-size: 33px; }
+    }
+
+    @media (max-width: 620px) {
+      :root {
+        --timeline-col: 142px;
+        --timeline-board-base: 84px;
+        --timeline-board-time: 100px;
+        --timeline-board-active: 120px;
+        --timeline-board-terminal: 106px;
+        --timeline-cell-border: 2.5px;
+      }
+      .timeline-card { padding: 10px; }
+      .timeline-header { gap: 8px; }
+      .timeline-header-tools { justify-content: stretch; min-width: 100%; }
+      .timeline-header-tools .badge,
+      .timeline-header-tools .small-btn { flex: 1 1 auto; justify-content: center; text-align: center; }
+      .timeline-row { padding: 10px; border-radius: 18px; }
+      .axis-strip, .board-strip { gap: 8px; }
+      .board-slot { min-height: 146px; }
+      .board-slot.placeholder { min-height: 146px; }
+      .board-thumb { min-height: 142px; padding: 8px; border-radius: 17px; }
+      .board-thumb.time-focus { min-height: 160px; }
+      .board-thumb.action-focus { min-height: 184px; }
+      .board-thumb.terminal-focus { min-height: 168px; }
+      .thumb-note { font-size: 10px; }
+      .board-thumb .time-tag { font-size: 11px; }
+    }
+
+    @media (max-width: 420px) {
+      :root {
+        --timeline-col: 132px;
+        --timeline-board-base: 78px;
+        --timeline-board-time: 94px;
+        --timeline-board-active: 112px;
+        --timeline-board-terminal: 100px;
+      }
+      .timeline-cell { font-size: 20px; }
+      .board-thumb.time-focus .timeline-cell { font-size: 25px; }
+      .board-thumb.action-focus .timeline-cell { font-size: 31px; }
+      .modal-actions .download-game-btn { flex-basis: 100%; }
+    }
+
+
+    /* p2 layout: title → mode selection → board → operation selection → other functions → rules. */
+    .layout.app-flow {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      align-items: stretch;
+      grid-template-columns: none;
+    }
+
+    .mode-panel,
+    .board-panel,
+    .operation-panel,
+    .aux-panel,
+    .rules-panel {
+      width: 100%;
+    }
+
+    .mode-panel.control-panel {
+      position: static;
+      display: block;
+    }
+
+    .mode-panel .settings-card,
+    .status-card-group {
+      padding: 14px;
+      border: 1px solid #e9eef5;
+      background: rgba(255,255,255,0.96);
+      border-radius: var(--radius-lg);
+    }
+
+    .board-panel.play-panel {
+      display: block;
+      gap: 0;
+      order: 0;
+    }
+
+    .board-panel .timeline-card {
+      order: 0;
+      scroll-margin-top: 14px;
+    }
+
+    .operation-panel {
+      display: grid;
+      grid-template-columns: minmax(280px, 0.9fr) minmax(320px, 1.1fr);
+      gap: 14px;
+      align-items: stretch;
+    }
+
+    .operation-mode-card,
+    .operation-detail-card {
+      min-height: 100%;
+    }
+
+    .aux-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .aux-head {
+      align-items: center;
+      margin-bottom: 0;
+    }
+
+    .auxiliary-actions {
+      display: flex !important;
+      max-width: none;
+      justify-content: flex-end;
+    }
+
+    .aux-grid {
+      display: grid;
+      grid-template-columns: minmax(300px, 0.9fr) minmax(0, 1.35fr);
+      gap: 14px;
+      align-items: start;
+    }
+
+    .status-column {
+      display: grid;
+      gap: 14px;
+      align-content: start;
+      min-width: 0;
+    }
+
+    .status-card-group .section-title,
+    .notice-card .section-title {
+      margin-bottom: 12px;
+      font-size: 17px;
+    }
+
+    .aux-panel .active-area {
+      display: block;
+      min-width: 0;
+    }
+
+    .aux-panel .active-side {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: 12px;
+      align-items: start;
+    }
+
+    .aux-panel .history-card {
+      grid-column: 1 / -1;
+    }
+
+    .rules-panel details {
+      margin: 0;
+      background: rgba(255,255,255,0.96);
+    }
+
+    .mobile-bottom-bar {
+      display: none !important;
+    }
+
+    .modal {
+      width: min(100%, 580px);
+      padding: clamp(20px, 3vw, 28px);
+      text-align: center;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,1), rgba(248,250,252,0.98));
+    }
+
+    .modal h2 {
+      font-size: clamp(24px, 5vw, 34px);
+      letter-spacing: -0.03em;
+      margin-bottom: 10px;
+    }
+
+    .modal p {
+      max-width: 46em;
+      margin-inline: auto;
+    }
+
+    .modal-actions {
+      margin-top: 22px;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      align-items: stretch;
+    }
+
+    .modal-actions button {
+      width: 100%;
+      justify-content: center;
+      min-height: 44px;
+    }
+
+    #playAgainBtn { order: 1; }
+    #closeResultBtn { order: 2; }
+    #modalDownloadGameBtn {
+      order: 3;
+      grid-column: 1 / -1;
+    }
+
+    @media (min-width: 1181px) {
+      .mode-panel .settings-card {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(300px, 0.9fr);
+        gap: 12px 18px;
+        align-items: end;
+      }
+      .mode-panel .settings-card .section-title,
+      .mode-panel .settings-card #gameModeGroup,
+      .mode-panel .settings-card #aiSideGroup,
+      .mode-panel .settings-card .label,
+      .mode-panel .settings-card #aiLevelGroup {
+        grid-column: 1;
+      }
+      .mode-panel .settings-card #aiStatusCard {
+        grid-column: 2;
+        grid-row: 1 / span 5;
+        margin-top: 0;
+        align-self: stretch;
+      }
+    }
+
+    @media (max-width: 980px) {
+      .operation-panel,
+      .aux-grid,
+      .aux-panel .active-side {
+        grid-template-columns: 1fr;
+      }
+      .aux-head {
+        align-items: stretch;
+        flex-direction: column;
+      }
+      .auxiliary-actions {
+        justify-content: stretch;
+      }
+      .auxiliary-actions button {
+        flex: 1 1 calc(50% - 8px);
+      }
+    }
+
+    @media (max-width: 620px) {
+      .layout.app-flow { gap: 12px; }
+      .mode-panel .settings-card,
+      .status-card-group { padding: 12px; border-radius: 18px; }
+      .operation-panel,
+      .aux-panel { padding: 12px; border-radius: 22px; }
+      .auxiliary-actions { gap: 8px; }
+      .auxiliary-actions button { flex: 1 1 100%; }
+      .modal-actions { grid-template-columns: 1fr; }
+      #modalDownloadGameBtn { grid-column: auto; }
+    }
+
+    /* 时间线归属与动静状态视觉编码 */
+    .timeline-row.owner-first {
+      border-left: 7px solid rgba(37, 99, 235, 0.72);
+      background-image: linear-gradient(90deg, rgba(37,99,235,0.07), rgba(255,255,255,0.98) 18%);
+    }
+    .timeline-row.owner-second {
+      border-left: 7px solid rgba(217, 119, 6, 0.72);
+      background-image: linear-gradient(90deg, rgba(217,119,6,0.08), rgba(255,255,255,0.98) 18%);
+    }
+    .timeline-row.owner-neutral {
+      border-left: 7px solid rgba(100, 116, 139, 0.66);
+      background-image: linear-gradient(90deg, rgba(100,116,139,0.08), rgba(255,255,255,0.98) 18%);
+    }
+    .timeline-row.timeline-inactive {
+      border-style: dashed;
+      border-color: rgba(124, 58, 237, 0.34);
+      background: repeating-linear-gradient(135deg, rgba(124,58,237,0.045) 0 12px, rgba(255,255,255,0.96) 12px 24px);
+      box-shadow: inset 0 0 0 1px rgba(124,58,237,0.05);
+    }
+    .timeline-row.timeline-inactive .board-thumb:not(.action-focus) {
+      filter: saturate(.72);
+      opacity: .86;
+      border-style: dashed;
+    }
+    .timeline-row.timeline-inactive .line-name { color: #6d28d9; }
+    .timeline-row.timeline-active .line-name { color: var(--text); }
+    .timeline-row.timeline-inactive.active {
+      border-color: rgba(220, 38, 38, 0.58);
+      box-shadow: 0 0 0 4px rgba(220,38,38,0.08), var(--shadow-soft);
+    }
+    .timeline-row.timeline-inactive.active .board-thumb.action-focus {
+      border-color: rgba(220, 38, 38, 0.66);
+      box-shadow: 0 18px 42px rgba(220,38,38,0.12), inset 0 0 0 2px rgba(220,38,38,0.10);
+    }
+    .static-badge {
+      color: #6d28d9;
+      background: rgba(124,58,237,0.10);
+      border-color: rgba(124,58,237,0.24);
+    }
+    .neutral-badge {
+      color: #475569;
+      background: rgba(100,116,139,0.10);
+      border-color: rgba(100,116,139,0.24);
+    }
+
+
+    /* 多端自适应与对局设置锁定 */
+    html { scroll-behavior: smooth; }
+    body { overflow-x: hidden; }
+    button { touch-action: manipulation; }
+
+    .mode-section-head {
+      margin-bottom: 10px;
+      align-items: center;
+    }
+    .mode-section-head .section-title { margin: 0; }
+    .mode-panel #gameModeGroup,
+    .mode-panel #aiSideGroup,
+    .mode-panel #aiLevelGroup {
+      display: grid;
+      width: 100%;
+      gap: 8px;
+    }
+    .mode-panel #gameModeGroup,
+    .mode-panel #aiSideGroup { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .mode-panel #aiLevelGroup { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .mode-panel .choice-btn {
+      width: 100%;
+      min-height: 44px;
+      white-space: normal;
+      line-height: 1.35;
+    }
+    .mode-panel .settings-card {
+      transition: border-color .2s ease, box-shadow .2s ease, background .2s ease;
+    }
+    .mode-panel .settings-card.settings-locked {
+      border-color: rgba(180, 83, 9, .24);
+      background: linear-gradient(180deg, rgba(255,251,235,.92), rgba(255,255,255,.98));
+      box-shadow: inset 0 0 0 1px rgba(245,158,11,.05);
+    }
+    .mode-panel .settings-card.settings-locked .choice-btn:disabled {
+      opacity: .72;
+      cursor: not-allowed;
+      filter: saturate(.72);
+    }
+    .mode-panel .settings-card.settings-locked .choice-btn.active:disabled {
+      opacity: 1;
+      filter: none;
+      box-shadow: inset 0 0 0 2px rgba(37,99,235,.12);
+    }
+
+    .timeline-grid-wrap {
+      -webkit-overflow-scrolling: touch;
+      scrollbar-gutter: stable;
+      scroll-snap-type: x proximity;
+    }
+    .board-slot { scroll-snap-align: center; }
+    .timeline-header-tools .badge { line-height: 1.55; }
+    .rules-panel details { scroll-margin-top: 12px; }
+
+    @media (min-width: 1440px) {
+      .app-shell { width: min(1680px, 100%); }
+      .operation-panel { grid-template-columns: minmax(320px, .72fr) minmax(520px, 1.28fr); }
+      .aux-grid { grid-template-columns: minmax(330px, .72fr) minmax(0, 1.5fr); }
+      .timeline-card { padding-inline: clamp(18px, 2vw, 28px); }
+    }
+
+    @media (min-width: 721px) and (max-width: 1180px) {
+      body { padding: 14px; }
+      .hero { padding: 20px; }
+      .mode-panel .settings-card {
+        display: grid;
+        grid-template-columns: minmax(0, 1.15fr) minmax(260px, .85fr);
+        gap: 10px 16px;
+        align-items: end;
+      }
+      .mode-panel .mode-section-head,
+      .mode-panel #gameModeGroup,
+      .mode-panel #aiSideGroup,
+      .mode-panel .settings-card > .label,
+      .mode-panel #aiLevelGroup { grid-column: 1; }
+      .mode-panel #aiStatusCard {
+        grid-column: 2;
+        grid-row: 1 / span 5;
+        margin-top: 0;
+        align-self: stretch;
+      }
+      .timeline-row { min-height: 194px; }
+    }
+
+    @media (max-width: 720px) {
+      body {
+        padding: 9px 9px calc(84px + var(--safe-bottom));
+      }
+      .app-shell { gap: 11px; }
+      .hero {
+        padding: 16px;
+        border-radius: 22px;
+      }
+      .hero h1 { font-size: clamp(28px, 9vw, 38px); }
+      .panel { border-radius: 20px; }
+      .mode-panel .settings-card,
+      .status-card-group,
+      .action-card,
+      .notice-card { border-radius: 17px; }
+      .mode-section-head { align-items: flex-start; }
+      .mode-section-head .badge { flex: 0 0 auto; }
+      .operation-panel,
+      .aux-panel { padding: 10px; }
+      .timeline-card { padding: 10px 8px; }
+      .timeline-header-tools { width: 100%; }
+      .timeline-header-tools .badge { flex: 1 1 100%; }
+      .timeline-grid-wrap {
+        margin-inline: -4px;
+        padding-inline: 4px;
+        overscroll-behavior-inline: contain;
+      }
+      .timeline-row { padding: 10px 9px; }
+      .line-title { gap: 6px; }
+      .line-name { font-size: 18px; }
+      .board-thumb { touch-action: pan-x pan-y; }
+      .timeline-cell.clickable { touch-action: manipulation; }
+      .mobile-bottom-bar {
+        display: flex !important;
+        position: fixed;
+        left: max(9px, env(safe-area-inset-left, 0px));
+        right: max(9px, env(safe-area-inset-right, 0px));
+        bottom: calc(8px + var(--safe-bottom));
+        width: auto;
+        z-index: 35;
+        padding: 7px;
+      }
+      .mobile-bottom-bar button { min-height: 44px; }
+      .auxiliary-actions button { min-height: 44px; }
+      summary { min-height: 52px; }
+    }
+
+    @media (max-width: 480px) {
+      .eyebrow { font-size: 10px; letter-spacing: .06em; }
+      .subtitle { line-height: 1.65; }
+      .mode-panel #gameModeGroup,
+      .mode-panel #aiSideGroup { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .mode-panel #aiLevelGroup { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      .mode-panel .choice-btn { padding: 9px 7px; font-size: 12px; }
+      .mode-section-head { gap: 8px; }
+      .mode-section-head .badge { padding: 6px 8px; font-size: 11px; }
+      .mode-group {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+      .mode-group .mode-btn { padding-inline: 7px; min-height: 42px; }
+      .timeline-header { align-items: stretch; }
+      .timeline-header .section-title { font-size: 16px; }
+      .history-list { max-height: 310px; }
+      .modal { max-height: calc(100dvh - 18px); overflow: auto; }
+    }
+
+    @media (pointer: coarse) {
+      .ghost-btn,
+      .primary-btn,
+      .mode-btn,
+      .choice-btn,
+      .side-btn,
+      .small-btn { min-height: 44px; }
+      .timeline-cell.clickable:hover { background: linear-gradient(180deg, #ffffff, #f8fafc); }
+    }
+
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <header class="hero">
+      <div>
+        <p class="eyebrow">Chrono-Spatial Tic-Tac-Toe</p>
+        <h1>超时空井字棋</h1>
+        <p class="subtitle">版权声明：该游戏版权全部归 Ye.Yinfeng 版权所有。</p>
+      </div>
+    </header>
+
+    <main class="layout app-flow">
+      <section class="panel control-panel mode-panel" aria-labelledby="modeTitle">
+        <div class="settings-card">
+          <div class="section-head mode-section-head">
+            <h2 class="section-title" id="modeTitle">选择模式</h2>
+            <span class="badge success" id="setupLockBadge" aria-live="polite">开局前可调整</span>
+          </div>
+          <div class="choice-group" id="gameModeGroup" aria-label="选择对局模式">
+            <button class="choice-btn" type="button" data-game-mode="pvp">双人模式</button>
+            <button class="choice-btn" type="button" data-game-mode="ai">AI 模式</button>
+          </div>
+          <div class="choice-group" id="aiSideGroup" aria-label="选择 AI 执子">
+            <button class="choice-btn" type="button" data-ai-side="X">AI 先手 X</button>
+            <button class="choice-btn o" type="button" data-ai-side="O">AI 后手 O</button>
+          </div>
+          <div class="label" style="margin-top: 12px;">AI 版本</div>
+          <div class="choice-group" id="aiLevelGroup" aria-label="选择 AI 版本">
+            <button class="choice-btn" type="button" data-ai-level="flash">Flash · 2s</button>
+            <button class="choice-btn" type="button" data-ai-level="pro">Pro · 3s</button>
+            <button class="choice-btn" type="button" data-ai-level="max">Max · 5s</button>
+          </div>
+          <div class="ai-status" id="aiStatusCard">
+            <div class="orb" id="aiOrb" aria-hidden="true"></div>
+            <div>
+              <div class="ai-status-title" id="aiStatusTitle"></div>
+              <div class="ai-status-sub" id="aiStatusSub"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel play-panel board-panel" aria-labelledby="boardTitle">
+        <section class="timeline-card">
+          <div class="timeline-header">
+            <h2 class="section-title" id="boardTitle" style="margin: 0;">棋盘 / 时间线全景</h2>
+            <div class="timeline-header-tools">
+              <span class="badge warn">时间轴按 t 对齐；拓印按同一 t 向上/向下寻找最近存在的棋盘（各至多一个）；静线也可参与拓印与终局判定</span>
+              <button class="primary-btn small-btn download-game-btn" id="downloadGameBtn" type="button" hidden>下载完整棋局图</button>
+            </div>
+          </div>
+          <div class="timeline-stack" id="timelineStack"></div>
+        </section>
+      </section>
+
+      <section class="panel operation-panel" aria-labelledby="actionModeTitle">
+        <div class="action-card operation-mode-card">
+          <h2 class="section-title" id="actionModeTitle">执棋操作选择</h2>
+          <div class="mode-group" id="modeGroup">
+            <button class="mode-btn" data-mode="place" type="button">下棋</button>
+            <button class="mode-btn" data-mode="travel" type="button">时间回溯</button>
+            <button class="mode-btn" data-mode="imprint" type="button">拓印</button>
+          </div>
+          <p class="tip-text" id="modeHint"></p>
+        </div>
+
+        <div class="action-card action-stack operation-detail-card" id="actionPanel"></div>
+      </section>
+
+      <section class="panel aux-panel" aria-labelledby="otherFunctionsTitle">
+        <div class="section-head aux-head">
+          <h2 class="section-title" id="otherFunctionsTitle">其他功能</h2>
+          <div class="hero-actions auxiliary-actions" aria-label="对局快捷功能">
+            <button class="ghost-btn" id="undoBtn" type="button">撤销一步</button>
+            <button class="ghost-btn" id="restartBtn" type="button">重新开始</button>
+            <button class="ghost-btn" id="drawBtn" type="button">协议和棋</button>
+            <button class="ghost-btn" id="toggleHelpBtn" type="button">展开/收起规则</button>
+          </div>
+        </div>
+
+        <div class="aux-grid">
+          <div class="status-column">
+            <div class="status-card-group">
+              <h3 class="section-title">对局状态</h3>
+              <div class="info-grid">
+                <div class="info-card">
+                  <div class="info-label">当前执子</div>
+                  <div class="info-value" id="currentPlayerLabel"></div>
+                  <div class="info-sub" id="currentPlayerDesc"></div>
+                </div>
+                <div class="info-card">
+                  <div class="info-label">当前时间线</div>
+                  <div class="info-value" id="currentLineLabel"></div>
+                  <div class="info-sub" id="currentLineDesc"></div>
+                </div>
+                <div class="info-card">
+                  <div class="info-label">当前时间点</div>
+                  <div class="info-value" id="currentTimeLabel"></div>
+                  <div class="info-sub" id="priorityHint"></div>
+                </div>
+                <div class="info-card">
+                  <div class="info-label">总时间线数</div>
+                  <div class="info-value" id="lineCountLabel"></div>
+                  <div class="info-sub" id="boardCountLabel"></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="notice-card">
+              <div class="section-head">
+                <h3 class="section-title">即时提示</h3>
+                <span class="badge" id="thinkingBadge">就绪</span>
+              </div>
+              <p class="notice-inline" id="noticeText"></p>
+            </div>
+          </div>
+
+          <div class="active-area">
+            <section class="active-board-card legacy-active-board" aria-hidden="true">
+              <div class="active-board-header">
+                <div>
+                  <h2 class="section-title" style="margin-bottom: 4px;">当前可行动局面</h2>
+                  <p class="muted-text" id="activeBoardDesc"></p>
+                </div>
+                <div class="badge-row" id="activeBadges"></div>
+              </div>
+              <div class="active-board-wrap">
+                <div class="active-board" id="activeBoard" aria-label="当前井字棋棋盘"></div>
+              </div>
+            </section>
+
+            <div class="active-side">
+              <section class="last-action-card" id="lastActionCard">
+                <div class="timeline-header" style="margin-bottom: 8px;">
+                  <h3 class="section-title" style="margin: 0;">上一步追踪</h3>
+                  <span class="badge" id="lastActionBadge">尚无</span>
+                </div>
+                <div class="last-action-body">
+                  <div class="last-action-title" id="lastActionTitle">等待第一步</div>
+                  <p class="last-action-desc" id="lastActionDesc">第一步行动后，这里会显示落子点、回溯源、新时间线或拓印合成结果。</p>
+                  <div class="last-action-meta" id="lastActionMeta"></div>
+                </div>
+              </section>
+
+              <section class="summary-card">
+                <div class="timeline-header">
+                  <h3 class="section-title" style="margin: 0;">对局摘要</h3>
+                  <span class="badge" id="schedulerBadge"></span>
+                </div>
+                <div class="summary-grid">
+                  <div class="summary-item">
+                    <div class="label">当前模式</div>
+                    <div class="value" id="modeLabel"></div>
+                  </div>
+                  <div class="summary-item">
+                    <div class="label">竖直最近拓印目标</div>
+                    <div class="value" id="imprintCountLabel"></div>
+                  </div>
+                  <div class="summary-item">
+                    <div class="label">合法回溯历史点</div>
+                    <div class="value" id="travelCountLabel"></div>
+                  </div>
+                  <div class="summary-item">
+                    <div class="label">最近创建时间线</div>
+                    <div class="value" id="lastCreatedLabel"></div>
+                  </div>
+                </div>
+              </section>
+
+              <section class="history-card">
+                <div class="history-header">
+                  <h3 class="section-title" style="margin: 0;">最近行动</h3>
+                  <span class="badge" id="turnBadge"></span>
+                </div>
+                <div class="history-list" id="historyList"></div>
+              </section>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel rules-panel" aria-labelledby="rulesTitle">
+        <details id="helpDetails">
+          <summary><span id="rulesTitle">规则说明</span> <span id="helpSummaryMark">▲</span></summary>
+          <div class="help-content">
+            <div class="help-block"><h4>1. 每回合只处理一个“当前局面”</h4><p>当前玩家只能在右侧大棋盘显示的当前时间线末端局面行动。可选行动有三种：下棋、时间回溯、拓印；三者都会消耗本回合，之后换对方行动。</p></div>
+            <div class="help-block"><h4>2. 下棋</h4><p>只能点击当前局面的空格。程序先把当前棋子写入该格，再把写入后的局面复制到同一时间线的下一时间点 t+1；该复制局面成为这条线的新末端。</p></div>
+            <div class="help-block"><h4>3. 时间线调度</h4><p>普通情况下，行动后若原当前线只比全局最慢线领先 0 或 1 个时间点，就继续处理这条线；若领先达到 2 个时间点，就切到“进度最慢且创建更早”的时间线。时间回溯生成的新线若正好处在最慢进度，会优先成为下一当前线；拓印生成的新线若不快于任何其它线，也会优先成为下一当前线。</p></div>
+            <div class="help-block"><h4>4. 时间回溯</h4><p>不能在任何刚创建的时间线上立即时间回溯，初始时间线ⓢ也同样适用。当前线必须先完成至少两次下棋推进；回溯源不能是末端的前一个局面（也就是刚刚下好棋子的局面），只能选择它的前一个局面及更早局面。新时间线的第一个局面是该合法历史局面的复制，不会额外放入棋子；新线可以插到所有时间线最上方或最下方。</p></div>
+            <div class="help-block"><h4>5. 拓印</h4><p>只能选择当前线正上方或正下方的相邻时间线，并且对方必须存在同一时间点 t 的局面。合成逐格进行：空+子=子；空+空=空；同子相遇=空；异子冲突=保留当前局面的棋子。向上拓印的新线置顶，向下拓印的新线置底。</p></div>
+            <div class="help-block"><h4>6. 时间线的分类和判别</h4><p>（1）时间线由创建者分为三类：中立时间线、先手方时间线、后手方时间线。有且仅有 S 时间线是中立时间线，S 时间线永久是中立时间线。其余时间线的种类和创造这条时间线的一方对应。</p><p>（2）时间线由当前场上时间线情况分为两类：动时间线（Active）、静时间线（Inactive）。对于一方创立的第 n 条时间线（n 是正整数）：当另一方拥有的动时间线数量不少于（n-1）条时，此时间线为动时间线；若另一方拥有的动时间线数量少于（n-1）条时，此时间线为静时间线；S 时间线恒为动时间线。</p></div>
+            <div class="help-block"><h4>7. 静时间线的作用</h4><p>静时间线的拥有者在静时间里行动时，不可创造其他时间线。</p></div>
+            <div class="help-block"><h4>8. 胜负与和棋</h4><p>每次行动后按固定顺序判定：先看行动方是否在任意时间线、任意局面中三子连线；若没有，再看对方是否三子连线；若仍没有，再看行动方是否满足绝杀棋；最后，只要出现任意一个满盘且无人三连的局面，就判整局和棋。</p></div>
+            <div class="help-block"><h4>9. 绝杀棋</h4><p>绝杀只按单个局面的普通落子来验证：某局面至少还有两个空格，并且对方无论在该局面哪个空格普通落子，只要对方这一手不能直接成三、也不把棋盘填满，行动方下一手仍一定存在直接成三的位置，则行动方立即绝杀胜。</p></div>
+          </div>
+        </details>
+      </section>
+    </main>
+
+    <div class="mobile-bottom-bar" aria-label="快捷操作">
+      <button class="ghost-btn" id="mobileUndoBtn" type="button">撤销</button>
+      <button class="ghost-btn" id="mobileRestartBtn" type="button">重开</button>
+      <button class="ghost-btn" id="mobileHelpBtn" type="button">规则</button>
+    </div>
+  </div>
+
+  <div class="overlay" id="resultOverlay" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="resultTitle">
+      <h2 id="resultTitle"></h2>
+      <p id="resultDesc"></p>
+      <div class="modal-actions">
+        <button class="primary-btn" id="playAgainBtn" type="button">再来一局</button>
+        <button class="primary-btn download-game-btn" id="modalDownloadGameBtn" type="button">下载完整棋局图</button>
+        <button class="ghost-btn" id="closeResultBtn" type="button">留在棋盘查看</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+const WIN_LINES=[[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]],MODE_INFO={place:{label:"下棋",hint:"在时间线中当前放大的棋盘空格落子；落子后该局面会复制到同一时间线的下一时间点。"},travel:{label:"时间回溯",hint:"当前线至少已有 3 个局面时，可选择末端前两个局面以前的历史局面复制成新时间线；回溯本身不额外落子。"},imprint:{label:"拓印",hint:"在当前 t 的竖直方向向上/向下搜索，分别选择最近存在的棋盘（中间可跨过该 t 没有棋盘的时间线），按逐格规则合成新时间线。"}},CELL_NAMES=["左上","上中","右上","左中","中心","右中","左下","下中","右下"],AI_LEVELS={flash:{label:"Flash",budgetMs:2000},pro:{label:"Pro",budgetMs:3000},max:{label:"Max",budgetMs:5000}},DEFAULT_AI_LEVEL="flash",DEFAULT_GAME_OPTIONS={mode:"pvp",aiSide:"O",aiLevel:DEFAULT_AI_LEVEL},STORAGE_KEY="chrono_tictactoe_session",STORAGE_VERSION=12,cachedSession=loadCachedSession();let gameOptions=cachedSession?.gameOptions||{...DEFAULT_GAME_OPTIONS},state=cachedSession?.state||createInitialState(),aiWorker=null,aiTimer=null,aiWorkerUrl=null,helpFocusSession=null,helpFocusTimer=null,postActionViewportLock=null,autoFocusTimer=null,resultModalTimer=null,initialViewportRestore=cachedSession?.viewport||cachedSession?.state?.ui?.viewport||null;const refs={currentPlayerLabel:document.getElementById("currentPlayerLabel"),currentPlayerDesc:document.getElementById("currentPlayerDesc"),currentLineLabel:document.getElementById("currentLineLabel"),currentLineDesc:document.getElementById("currentLineDesc"),currentTimeLabel:document.getElementById("currentTimeLabel"),priorityHint:document.getElementById("priorityHint"),lineCountLabel:document.getElementById("lineCountLabel"),boardCountLabel:document.getElementById("boardCountLabel"),gameModeGroup:document.getElementById("gameModeGroup"),aiSideGroup:document.getElementById("aiSideGroup"),aiLevelGroup:document.getElementById("aiLevelGroup"),setupLockBadge:document.getElementById("setupLockBadge"),aiStatusCard:document.getElementById("aiStatusCard"),aiOrb:document.getElementById("aiOrb"),aiStatusTitle:document.getElementById("aiStatusTitle"),aiStatusSub:document.getElementById("aiStatusSub"),modeGroup:document.getElementById("modeGroup"),modeHint:document.getElementById("modeHint"),actionPanel:document.getElementById("actionPanel"),noticeText:document.getElementById("noticeText"),thinkingBadge:document.getElementById("thinkingBadge"),activeBoard:document.getElementById("activeBoard"),activeBoardDesc:document.getElementById("activeBoardDesc"),activeBadges:document.getElementById("activeBadges"),lastActionCard:document.getElementById("lastActionCard"),lastActionBadge:document.getElementById("lastActionBadge"),lastActionTitle:document.getElementById("lastActionTitle"),lastActionDesc:document.getElementById("lastActionDesc"),lastActionMeta:document.getElementById("lastActionMeta"),modeLabel:document.getElementById("modeLabel"),imprintCountLabel:document.getElementById("imprintCountLabel"),travelCountLabel:document.getElementById("travelCountLabel"),lastCreatedLabel:document.getElementById("lastCreatedLabel"),schedulerBadge:document.getElementById("schedulerBadge"),historyList:document.getElementById("historyList"),turnBadge:document.getElementById("turnBadge"),timelineStack:document.getElementById("timelineStack"),resultOverlay:document.getElementById("resultOverlay"),resultTitle:document.getElementById("resultTitle"),resultDesc:document.getElementById("resultDesc"),helpDetails:document.getElementById("helpDetails"),helpSummaryMark:document.getElementById("helpSummaryMark"),drawBtn:document.getElementById("drawBtn")};function bindButton(e,t){const n=document.getElementById(e);n&&n.addEventListener("click",t)}function normalizeAiLevel(e){return AI_LEVELS[e]?e:DEFAULT_AI_LEVEL}function getAiLevelInfo(e){return AI_LEVELS[normalizeAiLevel(e)]}function getAiBudgetMs(e){return getAiLevelInfo(e).budgetMs}function getAiLevelLabel(e){const t=getAiLevelInfo(e);return t.label+"（每步最长 "+Math.round(t.budgetMs/1000)+" 秒）"}function hasGameStarted(e=state){if(!e||!Array.isArray(e.lines))return!1;if(Array.isArray(e.logs)&&e.logs.length>0)return!0;if(e.lines.length>1)return!0;for(const t of e.lines)if(Array.isArray(t.boards)){if(t.boards.length>1)return!0;for(const n of t.boards)if(n.actor||n.kind&&"start"!==n.kind)return!0}return!1}function isGameSetupLocked(){return hasGameStarted(state)}function isAiGameLocked(){return isGameSetupLocked()}function isAiLevelLocked(){return isGameSetupLocked()}function normalizeOptions(e){return{mode:e&&"ai"===e.mode?"ai":"pvp",aiSide:e&&"X"===e.aiSide?"X":"O",aiLevel:normalizeAiLevel(e&&e.aiLevel)}}function persistGame(){if(state&&gameOptions)try{state.ui=state.ui||{},state.ui.viewport=getPersistViewport(),state.ui.resultOverlayVisible=!!refs?.resultOverlay?.classList.contains("show");const e=deepClone(state);e.ai=e.ai||{},e.ai.thinking=!1,e.ai.error=null,Array.isArray(e.history)&&e.history.length>50&&(e.history=e.history.slice(-50)),e.ui=e.ui||{},e.ui.viewport=state.ui.viewport,e.ui.resultOverlayVisible=!!state.ui.resultOverlayVisible,e.ui.resultOverlayPending=!!state.ui.resultOverlayPending,e.ui.resultOverlayDue=Number(state.ui.resultOverlayDue)||0;const t={version:STORAGE_VERSION,savedAt:Date.now(),gameOptions:normalizeOptions(gameOptions),helpOpen:Boolean(refs?.helpDetails?.open),ui:e.ui,viewport:e.ui.viewport,state:e};window.localStorage?.setItem(STORAGE_KEY,JSON.stringify(t))}catch(e){try{const e=deepClone(state);e.history=Array.isArray(e.history)?e.history.slice(-20):[],e.ai&&(e.ai.thinking=!1,e.ai.error=null),e.ui=e.ui||{},e.ui.viewport=getPersistViewport(),e.ui.resultOverlayVisible=!!refs?.resultOverlay?.classList.contains("show"),window.localStorage?.setItem(STORAGE_KEY,JSON.stringify({version:STORAGE_VERSION,savedAt:Date.now(),gameOptions:normalizeOptions(gameOptions),helpOpen:Boolean(refs?.helpDetails?.open),ui:e.ui,viewport:e.ui.viewport,state:e}))}catch(e){console.warn("缓存写入失败。",e)}}}function restartGame(e){cancelAiThinking(),clearResultModalTimer(),gameOptions={...DEFAULT_GAME_OPTIONS},state=createInitialState(),e&&(state.notice="已重新开始新对局，所有数据已初始化。当前为双人模式，AI 执 O，版本 "+getAiLevelLabel(DEFAULT_GAME_OPTIONS.aiLevel)+"。"),hideResultOverlay(!0),render()}function confirmRestartGame(e){window.confirm("确认重新开始吗？当前棋局、最近行动、撤销记录、对局模式、AI 执子和 AI 版本都会恢复初始设置。")&&restartGame(e)}function deepClone(e){return JSON.parse(JSON.stringify(e))}function pushHistory(){const e=deepClone({...state,history:[]});e.ai.thinking=!1,state.history.push(e),state.history.length>100&&state.history.shift()}function undoStep(){const e=state.ai.requestId||0,t=state.ai.thinking;cancelAiThinking();if(!state.history.length)return state.notice=t?"已取消 AI 本次思考，但当前没有可撤销的历史步骤。":"当前没有可撤销的历史步骤。",void render();let n=state.history.slice(),r=n.pop();if(state.ai.enabled){const e=state.ai.side;for(;r&&r.turn===e&&n.length;)r=n.pop()}return r?(r.history=n,r.ai=r.ai||{},r.ai.enabled="ai"===gameOptions.mode,r.ai.side=gameOptions.aiSide,r.ai.level=gameOptions.aiLevel,r.ai.thinking=!1,r.ai.requestId=e+1,r.ai.budgetMs=getAiBudgetMs(gameOptions.aiLevel),r.ai.error=null,state=r,state.notice=state.ai.enabled&&state.turn!==state.ai.side?"已撤销至你上一步待落子局面。":"已撤销一步。",hideResultOverlay(!0),void render()):(state.notice="当前没有可撤销的历史步骤。",void render())}function agreeDraw(){if(state.ai.enabled)return state.notice="AI 对局不开放协议和棋；请通过棋局规则自然分出胜负或和棋。",void render();state.gameOver||state.ai.thinking||(pushHistory(),state.gameOver=!0,state.result={title:"双方协议和棋",desc:"本局按照协议和棋结束。",winner:null,kind:"draw"},state.notice=state.result.desc,state.logs.unshift("双方达成一致，当前对局协议和棋。"),prepareResultOverlay(650),render())}function toggleHelp(){refs.helpDetails.open=!refs.helpDetails.open,renderHelpMark()}function renderHelpMark(){refs.helpSummaryMark.textContent=refs.helpDetails.open?"▲":"▼"}function clearHelpFocus(e){helpFocusTimer&&(clearTimeout(helpFocusTimer),helpFocusTimer=null),refs.helpDetails.classList.remove("help-focus-pulse"),e&&(helpFocusSession=null)}function indicateHelpFocus(){refs.helpDetails.classList.remove("help-focus-pulse"),void refs.helpDetails.offsetWidth,refs.helpDetails.classList.add("help-focus-pulse"),helpFocusTimer&&clearTimeout(helpFocusTimer),helpFocusTimer=setTimeout((()=>{refs.helpDetails.classList.remove("help-focus-pulse"),helpFocusTimer=null}),3e3)}function handleBottomHelpButton(){if(helpFocusSession&&helpFocusSession.active&&!helpFocusSession.dirty&&refs.helpDetails.open){const e=helpFocusSession.restoreY||0;return refs.helpDetails.open=!1,renderHelpMark(),persistGame(),clearHelpFocus(!0),void window.requestAnimationFrame((()=>window.scrollTo({top:e,behavior:"smooth"})))}helpFocusSession={active:!0,dirty:!1,restoreY:window.scrollY||0},refs.helpDetails.open=!0,renderHelpMark(),persistGame(),indicateHelpFocus(),window.requestAnimationFrame((()=>refs.helpDetails.scrollIntoView({behavior:"smooth",block:"center"})))}function markHelpFocusChanged(e){if(!helpFocusSession||!helpFocusSession.active)return;if(e.target.closest("#mobileHelpBtn"))return;e.target.closest("button, summary, input, select, textarea, a, [data-cell-index], [data-thumb-line-id], [data-action], [data-side], [data-travel-index], [data-imprint-line-id], [data-game-mode], [data-ai-side], [data-ai-level], [data-mode]")&&(helpFocusSession.dirty=!0)}function setGameMode(e){if("pvp"!==e&&"ai"!==e)return;if(isGameSetupLocked())return state.notice="对局已经开始，模式选择已锁定；请重新开始后再切换双人或 AI 模式。",void render();cancelAiThinking(),gameOptions.mode=e,gameOptions.aiLevel=normalizeAiLevel(gameOptions.aiLevel),state.ai.enabled="ai"===e,state.ai.side=gameOptions.aiSide,state.ai.level=gameOptions.aiLevel,state.ai.budgetMs=getAiBudgetMs(gameOptions.aiLevel),state.ai.error=null,state.notice="ai"===e?"已切换为 AI 模式。AI 执 "+state.ai.side+"，版本 "+getAiLevelLabel(state.ai.level)+"；轮到 AI 时会自动思考并执行合法行动，AI 对局不开放协议和棋。":"已切换为双人模式。双方均由玩家手动操作；第一步落下后模式将锁定。",render()}function setAiSide(e){if("X"!==e&&"O"!==e)return;if(isGameSetupLocked())return state.notice="对局已经开始，对局设置已锁定；请重新开始后再调整 AI 执子。",void render();if("ai"!==gameOptions.mode)return state.notice="请先选择 AI 模式，再设置 AI 执子。",void render();cancelAiThinking(),gameOptions.aiSide=e,state.ai.side=e,state.ai.level=gameOptions.aiLevel,state.ai.budgetMs=getAiBudgetMs(gameOptions.aiLevel),state.ai.enabled=!0,state.ai.error=null,state.notice="AI 已设置为 "+e+" 方。"+(state.turn===e?"当前正轮到 AI。":""),render()}function setAiLevel(e){const t=normalizeAiLevel(e);if(isGameSetupLocked())return state.notice="对局已经开始，对局设置已锁定；请重新开始后再调整 AI 档位。",void render();if("ai"!==gameOptions.mode)return state.notice="请先选择 AI 模式，再设置 AI 档位。",void render();cancelAiThinking(),gameOptions.aiLevel=t,state.ai.level=t,state.ai.budgetMs=getAiBudgetMs(t),state.ai.enabled=!0,state.ai.error=null,state.notice="AI 版本已设置为 "+getAiLevelLabel(t)+"。Flash / Pro / Max 使用同一套顶尖搜索逻辑，主要区别是每步最大思考时间。",render()}function cancelAiThinking(){state&&state.ai&&(state.ai.requestId=(state.ai.requestId||0)+1,state.ai.thinking=!1,aiTimer&&(clearTimeout(aiTimer),aiTimer=null))}function changeMode(e){
+  if((e==="travel"||e==="imprint")&&isTimelineCreationLocked()){
+    state.mode="place";state.selectedTravelIndex=null;state.selectedImprint=null;
+    state.notice="当前是你拥有的静时间线：本回合不能通过时间回溯或拓印创建新时间线，只能下棋。";
+    render();return;
+  }
+  state.mode=e;state.selectedTravelIndex=null;state.selectedImprint=null;state.notice=MODE_INFO[e].hint;render();
+}function getLineById(e,t=state){return t.lines.find((t=>t.id===e))}function getLineIndexById(e,t=state){return t.lines.findIndex((t=>t.id===e))}function getLastBoard(e){return e.boards[e.boards.length-1]}function getActiveLine(e=state){return getLineById(e.activeLineId,e)}function getActiveBoard(e=state){return getLastBoard(getActiveLine(e))}function getProgress(e){return getLastBoard(e).t}function isTimelineCreationLocked(target=state,line=getActiveLine(target),actor=target.turn){return Boolean(line&&!line.active&&line.owner===actor)}function getTotalBoards(){return state.lines.reduce(((e,t)=>e+t.boards.length),0)}function nextPlayer(e){return"X"===e?"O":"X"}function lineNameFromIndex(e){return["⓪","①","②","③","④","⑤","⑥","⑦","⑧","⑨","⑩","⑪","⑫","⑬","⑭","⑮","⑯","⑰","⑱","⑲","⑳"][e]||"T"+e}function createBoard(e,t,n,r){return state.counters.boardId+=1,{id:state.counters.boardId,t:t,cells:[...e],actor:n||null,kind:r||"copy"}}function checkWinner(e){for(const[t,n,r]of WIN_LINES)if(e[t]&&e[t]===e[n]&&e[t]===e[r])return e[t];return null}function hasWinningLine(e,t){return WIN_LINES.some(([n,r,i])=>e[n]===t&&e[r]===t&&e[i]===t)}function isBoardFull(e){return e.every(Boolean)}function hasForcedWinInOne(e,t){const n=nextPlayer(t),r=e.map(((e,t)=>e?null:t)).filter((e=>null!==e));if(r.length<2)return!1;for(const i of r){const r=[...e];if(r[i]=n,checkWinner(r)===n)return!1;if(isBoardFull(r))return!1;let a=!1;for(let e=0;e<9;e+=1){if(r[e])continue;const n=[...r];if(n[e]=t,checkWinner(n)===t){a=!0;break}}if(!a)return!1}return!0}function evaluateOutcome(e){
+  let actorRef=null,opponentRef=null;const opponent=nextPlayer(e);
+  for(const line of state.lines)for(const board of line.boards){if(!actorRef&&hasWinningLine(board.cells,e))actorRef={line,board};if(!opponentRef&&hasWinningLine(board.cells,opponent))opponentRef={line,board};}
+  if(actorRef)return{ended:true,title:e+" 方获胜",desc:"在时间线 "+actorRef.line.name+" 的 t"+actorRef.board.t+" 局面中形成三子连线。",winner:e,kind:"line",lineId:actorRef.line.id,boardId:actorRef.board.id};
+  if(opponentRef)return{ended:true,title:opponent+" 方获胜",desc:"在时间线 "+opponentRef.line.name+" 的 t"+opponentRef.board.t+" 局面中形成三子连线。",winner:opponent,kind:"line",lineId:opponentRef.line.id,boardId:opponentRef.board.id};
+  for(const line of state.lines)for(const board of line.boards)if(hasForcedWinInOne(board.cells,e))return{ended:true,title:e+" 方绝杀胜",desc:"在时间线 "+line.name+" 的 t"+board.t+" 局面中满足“对手任意普通落子后，你下一手仍可直接成三”的绝杀棋条件。",winner:e,kind:"forced",lineId:line.id,boardId:board.id};
+  for(const line of state.lines)for(const board of line.boards)if(!checkWinner(board.cells)&&isBoardFull(board.cells))return{ended:true,title:"双方和棋",desc:"时间线 "+line.name+" 的 t"+board.t+" 局面已满盘且无人连成三子。",winner:null,kind:"draw",lineId:line.id,boardId:board.id};
+  return{ended:false};
+}function getLinePriorityKind(e){return e?.priorityKind||(String(e?.origin||"").includes("拓印")?"imprint":String(e?.origin||"").includes("回溯")?"travel":"initial")}function getImprintTargets(e=state){
+  const line=getActiveLine(e);if(!line)return[];
+  const index=getLineIndexById(line.id,e),t=getProgress(line),out=[];
+  for(let i=index-1;i>=0;i-=1){const candidate=e.lines[i],board=candidate.boards.find(item=>item.t===t);if(board){out.push({line:candidate,board,direction:"up",lineDistance:index-i,skippedLines:index-i-1});break;}}
+  for(let i=index+1;i<e.lines.length;i+=1){const candidate=e.lines[i],board=candidate.boards.find(item=>item.t===t);if(board){out.push({line:candidate,board,direction:"down",lineDistance:i-index,skippedLines:i-index-1});break;}}
+  return out;
+}function mergeByImprint(e,t){return e.map(((e,n)=>{const r=t[n];return e||r?!e&&r?r:e&&!r?e:e===r?"":e:""}))}function sameAction(e,t){return!(!e||!t||e.type!==t.type)&&("place"===e.type?Number(e.index)===Number(t.index):"travel"===e.type?Number(e.sourceIndex)===Number(t.sourceIndex)&&e.side===t.side:"imprint"===e.type&&(Number(e.lineId)===Number(t.lineId)&&e.direction===t.direction))}function findLegalAction(e){return getLegalActions().find((t=>sameAction(t,e)))}function performPlace(e,t){performAction({type:"place",index:e},t)}function performTimeTravel(e){if(null===state.selectedTravelIndex)return state.notice="请先选中一个合法回溯源：它必须早于刚刚落子的局面。",void render();performAction({type:"travel",sourceIndex:state.selectedTravelIndex,side:state.travelSide},e)}function performImprint(e){if(!state.selectedImprint)return state.notice="请先选中当前 t 竖直方向上最近的一个可拓印棋盘。",void render();performAction({type:"imprint",lineId:state.selectedImprint.lineId,direction:state.selectedImprint.direction},e)}function actionPrefix(e,t){return"ai"===e?"AI（"+t+"）":t+" 方"}function handleThumbSelection(e,t){const n=getActiveLine();if("travel"===state.mode&&e===n.id&&t<n.boards.length-2)return state.selectedTravelIndex=t,state.notice="已选中 "+n.name+" · t"+n.boards[t].t+" 作为回溯目标。",void render();if("imprint"===state.mode){const n=getLineById(e),r=n?.boards[t],i=getImprintTargets().find((t=>t.line.id===e&&t.board.id===r?.id));i&&(state.selectedImprint={lineId:i.line.id,direction:i.direction},state.notice="已选中 "+i.line.name+" 作为"+("up"===i.direction?"向上":"向下")+"拓印对象。",render())}}function isAiTurn(){return state.ai.enabled&&state.turn===state.ai.side&&!state.gameOver}function shouldHumanInteract(){return!state.gameOver&&!state.ai.thinking&&!isAiTurn()}function initAiWorker(){if(aiWorker)return aiWorker;if(!window.Worker)return null;const e=new Blob([AI_WORKER_SOURCE],{type:"application/javascript"});return aiWorkerUrl=URL.createObjectURL(e),aiWorker=new Worker(aiWorkerUrl),aiWorker.onmessage=e=>handleAiResponse(e.data),aiWorker.onerror=e=>{state.ai.error="Worker 运行异常，已改用保底策略。",state.ai.thinking=!1,console.error(e);const t=chooseFallbackAction();t?performAction(t,"ai"):render()},aiWorker}function scheduleAiIfNeeded(){!isAiTurn()||state.ai.thinking||state.gameOver||(aiTimer&&clearTimeout(aiTimer),aiTimer=setTimeout(requestAiMove,180))}function requestAiMove(){if(!isAiTurn()||state.ai.thinking||state.gameOver)return;const e=getLegalActions();if(!e.length)return;state.ai.thinking=!0,state.ai.error=null,state.ai.level=normalizeAiLevel(state.ai.level||gameOptions.aiLevel),state.ai.budgetMs=getAiBudgetMs(state.ai.level),state.ai.requestId+=1;const t=state.ai.requestId,n={requestId:t,state:sanitizeStateForAI(),aiSide:state.ai.side,aiLevel:state.ai.level,budgetMs:state.ai.budgetMs};render();const r=initAiWorker();r?r.postMessage(n):window.setTimeout((()=>{const n=chooseFallbackAction();handleAiResponse({requestId:t,action:n,summary:"浏览器不支持 Worker，已使用保底策略。",depth:0,elapsed:0,considered:e.length,score:0})}),120)}function handleAiResponse(e){if(!state.ai||e.requestId!==state.ai.requestId||!isAiTurn()||state.gameOver)return;if(state.ai.thinking=!1,state.ai.last={summary:e.summary||"AI 已完成思考。",depth:e.depth||0,elapsed:e.elapsed||0,considered:e.considered||0,score:"number"==typeof e.score?e.score:null},!e.action)return state.notice="AI 没有找到可执行行动。",void render();const t=findLegalAction(e.action);if(!t){const e=chooseFallbackAction();return state.notice=e?"AI 返回了非法行动，已按当前双人模式规则拦截并改用保底合法行动："+describeAction(e)+"。":"AI 返回了非法行动，且当前没有可执行行动。",void(e?performAction(e,"ai"):render())}state.notice="AI 已完成思考，准备执行："+describeAction(t)+"。",performAction(t,"ai")}function chooseFallbackAction(){
+  const actions=getLegalActions();if(!actions.length)return null;
+  const actor=state.turn,opponent=nextPlayer(actor),base=getActiveBoard().cells,weights=[42,24,42,24,62,24,42,24,42];
+  for(const action of actions){const preview=previewActionForImmediate(action);if(preview&&preview.winner===actor)return action;}
+  for(const action of actions)if(action.type==="place"){const test=[...base];test[action.index]=opponent;if(hasWinningLine(test,opponent))return action;}
+  let best=actions[0],bestScore=-Infinity;
+  for(const action of actions){let score=0;
+    if(action.type==="place"){
+      const cells=[...base];cells[action.index]=actor;score+=weights[action.index]*6+130*countOpenThreats(cells,actor)-155*countOpenThreats(cells,opponent);const own=countImmediateWinsLocal(cells,actor),opp=countImmediateWinsLocal(cells,opponent);score+=own*360-opp*430;if(own>=2)score+=1500;if(opp>=2)score-=1700;
+    }else if(action.type==="imprint"){
+      const target=getImprintTargets().find(item=>item.line.id===action.lineId&&item.direction===action.direction);if(target){const cells=mergeByImprint(base,target.board.cells),own=countImmediateWinsLocal(cells,actor),opp=countImmediateWinsLocal(cells,opponent);score+=260+150*countOpenThreats(cells,actor)-175*countOpenThreats(cells,opponent)+own*430-opp*500;if(own>=2)score+=1800;}
+    }else{
+      const line=getActiveLine(),source=line.boards[action.sourceIndex];score+=90+120*countOpenThreats(source.cells,actor)-135*countOpenThreats(source.cells,opponent)+countImmediateWinsLocal(source.cells,actor)*380-countImmediateWinsLocal(source.cells,opponent)*450;score+=Math.min(6,getProgress(line)-source.t)*35;
+    }
+    if(score>bestScore){bestScore=score;best=action;}
+  }
+  return best;
+}function countImmediateWinsLocal(e,t){let n=0;for(let r=0;r<9;r+=1)if(!e[r]){const i=[...e];i[r]=t,checkWinner(i)===t&&(n+=1)}return n}function countOpenThreats(e,t){let n=0;for(const[r,i,a]of WIN_LINES){const s=[e[r],e[i],e[a]],o=s.filter((e=>e===t)).length,d=s.filter(Boolean).length-o;0===d&&o>0&&(n+=o)}return n}function previewActionForImmediate(e){
+  const actor=state.turn,action=findLegalAction(e);if(!action)return null;
+  if(action.type==="place"){const cells=[...getActiveBoard().cells];cells[action.index]=actor;return{winner:hasWinningLine(cells,actor)?actor:checkWinner(cells),cells};}
+  if(action.type==="imprint"){const target=getImprintTargets().find(item=>item.line.id===action.lineId&&item.direction===action.direction);if(!target)return null;const cells=mergeByImprint(getActiveBoard().cells,target.board.cells);return{winner:hasWinningLine(cells,actor)?actor:checkWinner(cells),cells};}
+  return{winner:null,cells:null};
+}function describeAction(e){if(!e)return"无行动";const t=getActiveLine();if("place"===e.type)return"在 "+t.name+" · t"+getActiveBoard().t+" 的「"+CELL_NAMES[e.index]+"」落子";if("travel"===e.type){const n=t.boards[e.sourceIndex];return"从 "+t.name+" · t"+n.t+" 时间回溯并"+("top"===e.side?"置顶":"置底")}if("imprint"===e.type){const t=getLineById(e.lineId);return"对 "+(t?t.name:"竖直目标线")+" 执行"+("up"===e.direction?"向上":"向下")+"拓印"}return"未知行动"}function findBoardById(e,t=state){for(const n of t.lines)for(const t of n.boards)if(t.id===e)return{line:n,board:t};return null}function getBoardRole(e){const t=state.lastAction;if(!t)return"";if("place"===t.action.type){if(e===t.boardId)return"place-origin";if(e===t.nextBoardId)return"place-copy"}if("travel"===t.action.type){if(e===t.sourceBoardId)return"travel-source";if(e===t.newBoardId)return"travel-new"}if("imprint"===t.action.type){if(e===t.boardId)return"imprint-base";if(e===t.targetBoardId)return"imprint-target";if(e===t.newBoardId)return"imprint-new"}return""}function getBoardRoleLabel(e){return{"place-origin":"落子点","place-copy":"推进后","travel-source":"回溯源","travel-new":"回溯新线","imprint-base":"拓印本线","imprint-target":"拓印对象","imprint-new":"拓印结果"}[e]||""}function getImprintCellEffect(e,t){const n=state.lastAction;if(!n||"imprint"!==n.action.type||e!==n.newBoardId)return"";const r=findBoardById(n.boardId)?.board,i=findBoardById(n.targetBoardId)?.board;if(!r||!i)return"";const a=r.cells[t],s=i.cells[t];return!a&&s?"from-target":a&&s&&a===s?"erased":a&&s&&a!==s?"conflict":""}function getCellMarker(e,t){if(isLastMoveCell(e,t))return"上步";const n=getImprintCellEffect(e,t);return"from-target"===n?"拓入":"erased"===n?"抵消":"conflict"===n?"保留":""}function getLastActionBoardNote(e){const t=getBoardRole(e.id);if(!t)return"";const n=getBoardRoleLabel(t);return"place-origin"===t?n+"：原 t 局面已写入棋子":"place-copy"===t?n+"：复制到下一时间点":"travel-source"===t?n+"：被复制的历史局面":"travel-new"===t?n+"：新时间线首局面":"imprint-base"===t?n+"：当前线参与合成":"imprint-target"===t?n+"：竖直最近的同 t 局面":"imprint-new"===t?n+"：逐格合成后的新局面":n}function renderBoardCells(e,t,n){return e.map(((e,r)=>{const i=["board-cell"],a=getImprintCellEffect(n,r),s=getCellMarker(n,r);return"X"===e&&i.push("x"),"O"===e&&i.push("o"),t&&!e&&i.push("clickable"),isLastMoveCell(n,r)&&i.push("last-move"),a&&i.push("imprint-"+a),'<button type="button" class="'+i.join(" ")+'" data-cell-index="'+r+'" aria-label="'+CELL_NAMES[r]+(e?"，"+e:"，空格")+(s?"，"+s:"")+'"><span class="cell-symbol">'+(e||"")+"</span>"+(s?'<span class="cell-marker">'+s+"</span>":"")+"</button>"})).join("")}function renderMiniBoard(e,t){const n=getBoardRole(t);return'<div class="mini-board '+(n?"role-"+n:"")+'">'+e.map(((e,n)=>{const r=["mini-cell"],i=getImprintCellEffect(t,n),a=getCellMarker(t,n);return"X"===e&&r.push("x"),"O"===e&&r.push("o"),isLastMoveCell(t,n)&&r.push("last-move"),i&&r.push("imprint-"+i),'<div class="'+r.join(" ")+'"><span class="mini-symbol">'+(e||"")+"</span>"+(a?'<span class="mini-marker">'+a+"</span>":"")+"</div>"})).join("")+"</div>"}function renderTimelineBoard(e,t,n){const r=getBoardRole(t),i=n&&n.canPlace,a=n&&n.lineId,s=n&&n.boardIndex;return'<div class="timeline-mini-board '+(r?'role-'+r:'')+'" aria-label="井字棋棋盘">'+e.map(((e,o)=>{const d=['timeline-cell'],l=getImprintCellEffect(t,o),c=getCellMarker(t,o);return'X'===e&&d.push('x'),'O'===e&&d.push('o'),i&&!e&&d.push('clickable'),isLastMoveCell(t,o)&&d.push('last-move'),l&&d.push('imprint-'+l),'<button type="button" class="'+d.join(' ')+'" '+(i&&!e?'data-timeline-cell-index="'+o+'" data-timeline-line-id="'+a+'" data-timeline-board-index="'+s+'"':'tabindex="-1" aria-disabled="true"')+' aria-label="'+CELL_NAMES[o]+(e?'，'+e:'，空格')+(c?'，'+c:'')+'"><span class="mini-symbol">'+(e||'')+'</span>'+(c?'<span class="timeline-marker">'+c+'</span>':'')+'</button>'})).join('')+'</div>'}
+function getTimelineScroller(){return refs.timelineStack?refs.timelineStack.querySelector('.timeline-grid-wrap'):null}
+function ensureTimelineShell(){let e=getTimelineScroller();if(!e){refs.timelineStack.innerHTML='<div class="timeline-grid-wrap"><div class="timeline-grid-inner"></div></div>';e=getTimelineScroller()}let t=e?e.querySelector('.timeline-grid-inner'):null;if(e&&!t){e.innerHTML='<div class="timeline-grid-inner"></div>';t=e.querySelector('.timeline-grid-inner')}return{wrap:e,inner:t}}
+const POST_ACTION_HOLD_MS=500;
+function nowMs(){return window.performance&&window.performance.now?window.performance.now():Date.now()}
+function captureTimelineViewport(){const e=getTimelineScroller();return{windowX:window.scrollX||window.pageXOffset||0,windowY:window.scrollY||window.pageYOffset||0,timelineX:e?e.scrollLeft:0,timelineY:e?e.scrollTop:0}}
+function getPersistViewport(){return initialViewportRestore||(postActionViewportLock&&!postActionViewportLock.userInteracted?postActionViewportLock.snapshot:captureTimelineViewport())}
+function restoreTimelineViewport(e,t={}){if(!e)return;const n=getTimelineScroller();if(n){const r=Math.max(0,n.scrollWidth-n.clientWidth),i=Math.max(0,Math.min(Number(e.timelineX)||0,r));n.scrollLeft=i,t.horizontalOnly||(n.scrollTop=Math.max(0,Number(e.timelineY)||0))}t.timelineOnly||window.scrollTo(Number(e.windowX)||0,Number(e.windowY)||0)}
+function holdPostActionViewport(){postActionViewportLock&&!postActionViewportLock.userInteracted&&restoreTimelineViewport(postActionViewportLock.snapshot)}
+function restoreViewportAfterRender(e){if(initialViewportRestore){const e=initialViewportRestore;initialViewportRestore=null,window.requestAnimationFrame((()=>{restoreTimelineViewport(e),persistGame()}));return}if(postActionViewportLock){if(postActionViewportLock.userInteracted){restoreTimelineViewport(e);return}holdPostActionViewport();const e=postActionViewportLock;window.requestAnimationFrame((()=>{postActionViewportLock===e&&!e.userInteracted&&restoreTimelineViewport(e.snapshot)}));return}restoreTimelineViewport(e)}
+function applyResultOverlayVisible(e){refs.resultOverlay.classList.toggle("show",!!e),refs.resultOverlay.setAttribute("aria-hidden",e?"false":"true")}
+function clearResultModalTimer(){resultModalTimer&&(clearTimeout(resultModalTimer),resultModalTimer=null)}
+function showResultOverlay(){if(!state||!state.gameOver||!state.result)return;clearResultModalTimer(),state.ui=state.ui||{},state.ui.resultOverlayVisible=!0,state.ui.resultOverlayPending=!1,state.ui.resultOverlayDue=0,refs.resultTitle.textContent=state.result.title,refs.resultDesc.textContent=state.result.desc,applyResultOverlayVisible(!0),persistGame()}
+function hideResultOverlay(e){clearResultModalTimer(),state&&(state.ui=state.ui||{},state.ui.resultOverlayVisible=!1,state.ui.resultOverlayPending=!1,state.ui.resultOverlayDue=0),applyResultOverlayVisible(!1),e||persistGame()}
+function prepareResultOverlay(e=650){clearResultModalTimer(),state.ui=state.ui||{},state.ui.resultOverlayVisible=!1,state.ui.resultOverlayPending=!0,state.ui.resultOverlayDue=Date.now()+e,applyResultOverlayVisible(!1),resultModalTimer=setTimeout(showResultOverlay,e)}
+function prepareResultOverlayAfterTerminal(){prepareResultOverlay(postActionViewportLock?1350:650)}
+function syncResultOverlayFromState(){if(!state.gameOver||!state.result)return void applyResultOverlayVisible(!1);refs.resultTitle.textContent=state.result.title,refs.resultDesc.textContent=state.result.desc,state.ui=state.ui||{};if(state.ui.resultOverlayVisible)return clearResultModalTimer(),void applyResultOverlayVisible(!0);applyResultOverlayVisible(!1),state.ui.resultOverlayPending&&(clearResultModalTimer(),resultModalTimer=setTimeout(showResultOverlay,Math.max(0,(Number(state.ui.resultOverlayDue)||Date.now()+650)-Date.now())))}
+function beginPostActionViewportLock(e){autoFocusTimer&&(clearTimeout(autoFocusTimer),autoFocusTimer=null),postActionViewportLock={startedAt:nowMs(),snapshot:captureTimelineViewport(),origin:e||'action',userInteracted:!1,autoScheduled:!1,stableScheduled:!1}}
+function markManualTimelineNavigation(){postActionViewportLock&&(postActionViewportLock.userInteracted=!0)}
+function focusCurrentTimelineBoard(e='smooth'){const t=document.querySelector('[data-focus-anchor="current"]')||document.querySelector('[data-focus-anchor="terminal"]');if(!t)return;const n=getTimelineScroller();if(n){const r=t.getBoundingClientRect(),i=n.getBoundingClientRect(),a=n.scrollLeft+r.left-i.left-(n.clientWidth-r.width)/2,s=Math.max(0,Math.min(a,n.scrollWidth-n.clientWidth));n.scrollTo({left:s,behavior:e})}const r=t.getBoundingClientRect(),i=window.innerWidth<700?74:92,a=Math.max(0,(window.scrollY||window.pageYOffset||0)+r.top-i);window.scrollTo({top:a,behavior:e})}
+function stabilizePostActionViewport(){if(!postActionViewportLock)return;const e=nowMs()-postActionViewportLock.startedAt;if(e<POST_ACTION_HOLD_MS&&!postActionViewportLock.stableScheduled){postActionViewportLock.stableScheduled=!0;const e=postActionViewportLock,t=()=>{const n=nowMs()-e.startedAt;postActionViewportLock===e&&!e.userInteracted&&n<POST_ACTION_HOLD_MS&&restoreTimelineViewport(e.snapshot)};t(),window.requestAnimationFrame(t),[80,180,300,430,490].forEach((e=>setTimeout(t,e)))}postActionViewportLock.autoScheduled||(postActionViewportLock.autoScheduled=!0,autoFocusTimer=setTimeout((()=>{const e=postActionViewportLock;autoFocusTimer=null;if(!e)return;e.userInteracted||focusCurrentTimelineBoard('smooth'),postActionViewportLock=null}),Math.max(0,POST_ACTION_HOLD_MS-e)))}
+function updateDownloadButtons(){const e=state&&state.gameOver;document.querySelectorAll('.download-game-btn').forEach((t=>{t.hidden=!e,t.disabled=!e,t.title=e?'下载本局完整时间线高清图':'终局后可下载完整棋局图'}))}
+function svgEsc(e){return String(e==null?'':e).replace(/[&<>"']/g,(e=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[e])))}
+function safeFilePart(e){return String(e||'chrono').replace(/[^\w\u4e00-\u9fa5-]+/g,'_').slice(0,40)}
+function downloadBlob(e,t){const n=document.createElement('a'),r=URL.createObjectURL(e);n.href=r,n.download=t,document.body.appendChild(n),n.click(),n.remove(),setTimeout((()=>URL.revokeObjectURL(r)),1200)}
+function buildGameImageSvg(){const terminalRef=state.result&&state.result.boardId?findBoardById(state.result.boardId):null,focusBoard=terminalRef?.board||getActiveBoard(),focusT=focusBoard?focusBoard.t:0,maxT=Math.max(...state.lines.flatMap((line=>line.boards.map((board=>board.t))))),lineHeaderW=230,colW=182,leftGap=28,pad=24,axisTop=142,rowTop=190,rowH=222,boardBase=112,boardFocus=126,boardTerminal=132,width=lineHeaderW+leftGap+(maxT+1)*colW+pad,height=rowTop+state.lines.length*rowH+92,font='PingFang SC, Microsoft YaHei, Noto Sans SC, Arial, sans-serif',parts=[];parts.push('<svg xmlns="http://www.w3.org/2000/svg" width="'+width+'" height="'+height+'" viewBox="0 0 '+width+' '+height+'">');parts.push('<defs><filter id="shadow" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="10" stdDeviation="12" flood-color="#0f172a" flood-opacity="0.12"/></filter></defs>');parts.push('<rect width="100%" height="100%" fill="#f6f8fb"/>');parts.push('<rect x="18" y="18" width="'+(width-36)+'" height="'+(height-36)+'" rx="30" fill="#ffffff" stroke="#e7edf4"/>');parts.push('<text x="42" y="62" font-size="32" font-weight="950" font-family="'+font+'" fill="#111827">超时空井字棋 · 完整棋局图</text>');parts.push('<text x="42" y="94" font-size="15" font-weight="700" font-family="'+font+'" fill="#64748b">'+svgEsc(state.result?state.result.title:'对局进行中')+'｜'+svgEsc(state.result?state.result.desc:'当前显示完整时间线')+'</text>');parts.push('<text x="42" y="124" font-size="13" font-weight="700" font-family="'+font+'" fill="#64748b">时间轴按 t 对齐；X 为蓝色，O 为橙色；高亮列为终局/当前时间点。</text>');for(let t=0;t<=maxT;t+=1){const x=lineHeaderW+leftGap+t*colW+colW/2;parts.push('<rect x="'+(x-42)+'" y="'+axisTop+'" width="84" height="34" rx="17" fill="'+(t===focusT?'#eff6ff':'#f8fafc')+'" stroke="'+(t===focusT?'#93c5fd':'#e8eef6')+'"/>');parts.push('<text x="'+x+'" y="'+(axisTop+22)+'" text-anchor="middle" font-size="14" font-weight="950" font-family="'+font+'" fill="'+(t===focusT?'#1d4ed8':'#64748b')+'">t'+t+'</text>')}state.lines.forEach(((line,lineIndex)=>{const y=rowTop+lineIndex*rowH,isActive=line.id===state.activeLineId,isTerminalLine=terminalRef&&terminalRef.line.id===line.id;parts.push('<rect x="30" y="'+y+'" width="'+(width-60)+'" height="'+(rowH-16)+'" rx="22" fill="'+(isTerminalLine?'#f0fdf4':isActive?'#f8fbff':'#ffffff')+'" stroke="'+(isTerminalLine?'#86efac':isActive?'#93c5fd':'#e8eef6')+'" filter="url(#shadow)"/>');parts.push('<text x="52" y="'+(y+42)+'" font-size="28" font-weight="950" font-family="'+font+'" fill="#111827">'+svgEsc(line.name)+'</text>');parts.push('<text x="52" y="'+(y+72)+'" font-size="13" font-weight="700" font-family="'+font+'" fill="#64748b">'+svgEsc(line.origin)+'</text>');parts.push('<text x="52" y="'+(y+96)+'" font-size="13" font-weight="850" font-family="'+font+'" fill="#64748b">进度 t'+getProgress(line)+'｜局面 '+line.boards.length+'｜创建序 '+line.createdOrder+'</text>');const byT=new Map(line.boards.map((board=>[board.t,board])));for(let t=0;t<=maxT;t+=1){const board=byT.get(t);if(!board)continue;const isFocusTime=t===focusT,isTerminal=terminalRef&&terminalRef.board.id===board.id,isCurrent=!state.gameOver&&line.id===state.activeLineId&&board.id===getActiveBoard().id;let size=boardBase;if(isFocusTime)size=boardFocus;if(isTerminal)size=boardTerminal;const slotX=lineHeaderW+leftGap+t*colW,cardW=size+26,cardH=size+58,cardX=slotX+(colW-cardW)/2,cardY=y+24+(rowH-60-cardH)/2,bg=isTerminal?'#f0fdf4':isCurrent?'#eff6ff':isFocusTime?'#f8fbff':'#ffffff',stroke=isTerminal?'#22c55e':isCurrent?'#2563eb':isFocusTime?'#93c5fd':'#e8eef6';parts.push('<rect x="'+cardX+'" y="'+cardY+'" width="'+cardW+'" height="'+cardH+'" rx="18" fill="'+bg+'" stroke="'+stroke+'"/>');parts.push('<text x="'+(cardX+13)+'" y="'+(cardY+22)+'" font-size="12" font-weight="950" font-family="'+font+'" fill="#64748b">t'+board.t+'</text>');parts.push('<text x="'+(cardX+cardW-13)+'" y="'+(cardY+22)+'" text-anchor="end" font-size="12" font-weight="950" font-family="'+font+'" fill="'+(isCurrent?'#1d4ed8':isTerminal?'#15803d':'#64748b')+'">'+(isCurrent?'当前':isTerminal?'终局':board===getLastBoard(line)?'末端':'历史')+'</text>');drawSvgBoard(parts,board,cardX+13,cardY+32,size,font);parts.push('<text x="'+(cardX+cardW/2)+'" y="'+(cardY+cardH-12)+'" text-anchor="middle" font-size="11" font-weight="800" font-family="'+font+'" fill="#64748b">'+svgEsc(getLastActionBoardNote(board)|| (isCurrent?'当前可行动局面':isTerminal?'终局判定局面':board===getLastBoard(line)?'该线末端':'历史局面'))+'</text>')}}));parts.push('<text x="42" y="'+(height-34)+'" font-size="12" font-weight="700" font-family="'+font+'" fill="#94a3b8">导出时间：'+svgEsc(new Date().toLocaleString())+'｜版权声明：该游戏版权全部归 Ye.Yinfeng 版权所有。</text>');parts.push('</svg>');return parts.join('')}
+function drawSvgBoard(parts,board,x,y,size,font){const cell=size/3,strokeW=size>=132?4:3;parts.push('<rect x="'+x+'" y="'+y+'" width="'+size+'" height="'+size+'" rx="'+Math.max(12,size*.12)+'" fill="#ffffff" stroke="#111827" stroke-width="'+strokeW+'"/>');for(let i=1;i<3;i+=1){const p=x+i*cell;parts.push('<line x1="'+p+'" y1="'+y+'" x2="'+p+'" y2="'+(y+size)+'" stroke="#111827" stroke-width="'+strokeW+'"/>');const q=y+i*cell;parts.push('<line x1="'+x+'" y1="'+q+'" x2="'+(x+size)+'" y2="'+q+'" stroke="#111827" stroke-width="'+strokeW+'"/>')}for(let i=0;i<9;i+=1){const mark=board.cells[i];if(!mark)continue;const cx=x+(i%3)*cell+cell/2,cy=y+Math.floor(i/3)*cell+cell*.66;parts.push('<text x="'+cx+'" y="'+cy+'" text-anchor="middle" font-size="'+(cell*.64)+'" font-weight="950" font-family="'+font+'" fill="'+(mark==='X'?'#2563eb':'#d97706')+'">'+mark+'</text>')}if(state.lastAction&&state.lastAction.action.type==='place'&&(state.lastAction.boardId===board.id||state.lastAction.nextBoardId===board.id)){const idx=state.lastAction.index,rx=x+(idx%3)*cell+cell*.12,ry=y+Math.floor(idx/3)*cell+cell*.12;parts.push('<rect x="'+rx+'" y="'+ry+'" width="'+(cell*.76)+'" height="'+(cell*.76)+'" rx="'+(cell*.16)+'" fill="none" stroke="#2563eb" stroke-opacity="0.68" stroke-width="2"/>')}}
+function downloadGameImage(){if(!state.gameOver){state.notice='终局后才能下载完整棋局图。';render();return}const svg=buildGameImageSvg(),sizeMatch=svg.match(/width="(\d+)" height="(\d+)"/),w=sizeMatch?Number(sizeMatch[1]):1800,h=sizeMatch?Number(sizeMatch[2]):1200,svgBlob=new Blob([svg],{type:'image/svg+xml;charset=utf-8'}),url=URL.createObjectURL(svgBlob),img=new Image;img.onload=()=>{try{const maxSide=30000,maxPixels=90000000,device=Math.min(3,Math.max(2,window.devicePixelRatio||2));let scale=Math.min(device,maxSide/w,maxSide/h,Math.sqrt(maxPixels/(w*h)));scale=Math.max(1,scale);const canvas=document.createElement('canvas');canvas.width=Math.round(w*scale),canvas.height=Math.round(h*scale);const ctx=canvas.getContext('2d');ctx.setTransform(scale,0,0,scale,0,0),ctx.drawImage(img,0,0),canvas.toBlob((blob=>{URL.revokeObjectURL(url);if(blob)downloadBlob(blob,'超时空井字棋_'+safeFilePart(state.result?.title)+'_完整棋局图.png');else downloadBlob(svgBlob,'超时空井字棋_'+safeFilePart(state.result?.title)+'_完整棋局图.svg')}),'image/png',1)}catch(e){URL.revokeObjectURL(url),downloadBlob(svgBlob,'超时空井字棋_'+safeFilePart(state.result?.title)+'_完整棋局图.svg')}};img.onerror=()=>{URL.revokeObjectURL(url),downloadBlob(svgBlob,'超时空井字棋_'+safeFilePart(state.result?.title)+'_完整棋局图.svg')};img.src=url}
+function isLastMoveCell(e,t){return!(!state.lastAction||"place"!==state.lastAction.action.type)&&((state.lastAction.boardId===e||state.lastAction.nextBoardId===e)&&state.lastAction.index===t)}function renderLastActionCard(){const e=state.lastAction;if(refs.lastActionCard.className="last-action-card",!e)return refs.lastActionBadge.textContent="尚无",refs.lastActionBadge.className="badge",refs.lastActionTitle.textContent="等待第一步",refs.lastActionDesc.textContent="第一步行动后，这里会显示落子点、回溯源、新时间线或拓印合成结果。",void(refs.lastActionMeta.innerHTML="");const t=e.by+"（"+e.player+"）",n=findBoardById(e.boardId),r=[];let i="",a="",s="badge";if(refs.lastActionCard.classList.add(e.action.type),"place"===e.action.type){const o=n?.board;if(i=t+"落在「"+CELL_NAMES[e.index]+"」",a="棋子写入 "+(n?.line.name||"当前线")+" · t"+(o?.t??e.t)+"，再复制到同线下一时间点。大棋盘与缩略图中带“上步”的格子就是准确落点。",s="badge primary",r.push("落点："+CELL_NAMES[e.index]),e.nextBoardId){const t=findBoardById(e.nextBoardId);t&&r.push("推进："+t.line.name+" · t"+t.board.t)}}else if("travel"===e.action.type){const n=findBoardById(e.sourceBoardId),o=findBoardById(e.newBoardId);i=t+"执行时间回溯",a="复制历史局面 "+(n?n.line.name+" · t"+n.board.t:"未知局面")+"，创建新时间线 "+(o?o.line.name:"")+"。紫色虚线为回溯源，紫色实线为新线首局面。",s="badge warn",r.push("源局面："+(n?n.line.name+" · t"+n.board.t:"未知")),r.push("新线位置："+("top"===e.action.side?"置顶":"置底"))}else if("imprint"===e.action.type){const n=findBoardById(e.boardId),o=findBoardById(e.targetBoardId),d=findBoardById(e.newBoardId);i=t+"执行拓印",a="以 "+(n?n.line.name+" · t"+n.board.t:"当前局面")+" 与 "+(o?o.line.name+" · t"+o.board.t:"竖直最近局面")+" 逐格合成，生成 "+(d?d.line.name+" · t"+d.board.t:"新局面")+"。结果棋盘中的“拓入 / 抵消 / 保留”标记展示合成原因。",s="badge success",r.push("方向："+("up"===e.action.direction?"向上":"向下")),r.push("对象："+(o?o.line.name+" · t"+o.board.t:"未知"))}refs.lastActionBadge.textContent=getBoardRoleLabel(getBoardRole(e.newBoardId||e.nextBoardId||e.boardId))||MODE_INFO[e.action.type]?.label||"行动",refs.lastActionBadge.className=s,refs.lastActionTitle.textContent=i,refs.lastActionDesc.textContent=a,refs.lastActionMeta.innerHTML=r.map((e=>"<span>"+escapeHtml(e)+"</span>")).join("")}function renderHistory(){const e=state.logs.slice(0,16);refs.historyList.innerHTML=e.length?e.map(((e,t)=>'<div class="history-item"><div class="history-index">'+(t+1)+"</div><div>"+escapeHtml(e)+"</div></div>")).join(""):'<p class="muted-text">暂无行动记录。</p>'}function escapeHtml(e){return String(e).replace(/[&<>"]/g,(e=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[e])))}
+/* ===== 时间线归属、动静判定、静线创建权限、统一调度与 AI 状态 ===== */
+function timelineOwnerText(owner){
+  return owner === "X" ? "先手" : (owner === "O" ? "后手" : "中立");
+}
+function timelineOwnerShort(owner){
+  return owner === "X" ? "先" : (owner === "O" ? "后" : "S");
+}
+function timelineDisplayName(line){
+  if (!line || line.owner === "S" || line.priorityKind === "initial") return "S动";
+  return timelineOwnerShort(line.owner) + String(line.ownerIndex || 1) + (line.active ? "动" : "静");
+}
+function getTimelineClassification(line){
+  if (!line) return "未知时间线";
+  if (line.owner === "S") return "中立时间线 · 动时间线";
+  return timelineOwnerText(line.owner) + "第 " + line.ownerIndex + " 条时间线 · " + (line.active ? "动时间线" : "静时间线");
+}
+function refreshTimelineStatuses(target=state){
+  if (!target || !Array.isArray(target.lines)) return { X:0, O:0, staticCount:0 };
+  target.counters = target.counters || {};
+  target.counters.ownerLineCount = target.counters.ownerLineCount || { X:0, O:0 };
+  const ordered = [...target.lines].sort((a,b)=>(a.createdOrder||0)-(b.createdOrder||0));
+  const seen = { X:0, O:0 };
+  for (const line of ordered) {
+    if (line.priorityKind === "initial" || line.owner === "S" || line.id === 1 && String(line.origin||"").includes("初始")) {
+      line.owner = "S";
+      line.ownerIndex = 0;
+      line.createdBy = null;
+      line.active = true;
+      line.priorityKind = "initial";
+      continue;
+    }
+    const owner = line.owner === "O" || line.createdBy === "O" ? "O" : "X";
+    line.owner = owner;
+    line.createdBy = owner;
+    if (!Number.isInteger(line.ownerIndex) || line.ownerIndex <= 0) line.ownerIndex = ++seen[owner];
+    else seen[owner] = Math.max(seen[owner], line.ownerIndex);
+  }
+  const totalX = ordered.filter(line=>line.owner === "X").length;
+  const totalO = ordered.filter(line=>line.owner === "O").length;
+  let activeX = 0, activeO = 0;
+  for (let guard=0; guard<Math.max(totalX,totalO)+3; guard+=1) {
+    const nextX = Math.min(totalX, activeO + 1);
+    const nextO = Math.min(totalO, activeX + 1);
+    if (nextX === activeX && nextO === activeO) break;
+    activeX = nextX;
+    activeO = nextO;
+  }
+  for (const line of target.lines) {
+    if (line.owner === "S") line.active = true;
+    else if (line.owner === "X") line.active = line.ownerIndex <= activeO + 1;
+    else line.active = line.ownerIndex <= activeX + 1;
+    line.name = timelineDisplayName(line);
+  }
+  target.counters.ownerLineCount.X = Math.max(totalX, seen.X);
+  target.counters.ownerLineCount.O = Math.max(totalO, seen.O);
+  target.timelineActivity = { X:activeX, O:activeO };
+  if (target.forcedInactiveLineId && !target.lines.some(line=>line.id===target.forcedInactiveLineId)) target.forcedInactiveLineId = null;
+  return { X:activeX, O:activeO, staticCount:target.lines.filter(line=>!line.active).length };
+}
+function normalizeTimelineState(target){
+  if (!target) return target;
+  target.forcedInactiveLineId = null;
+  target.counters = target.counters || { lineId:1, boardId:1, createdOrder:1, lineNameIndex:0 };
+  target.counters.ownerLineCount = target.counters.ownerLineCount || { X:0, O:0 };
+  refreshTimelineStatuses(target);
+  if (!target.lines.some(line=>line.id===target.activeLineId)) target.activeLineId = target.lines[0]?.id || 1;
+  const active = target.lines.find(line=>line.id===target.activeLineId);
+  if (active && !active.active && active.owner === target.turn && (target.mode==="travel" || target.mode==="imprint")) {
+    target.mode = "place";
+    target.selectedTravelIndex = null;
+    target.selectedImprint = null;
+  }
+  return target;
+}
+function loadCachedSession(){
+  try {
+    const raw = window.localStorage?.getItem(STORAGE_KEY);
+    if (!raw) return null;
+    const saved = JSON.parse(raw);
+    if (!saved || saved.version !== STORAGE_VERSION || !saved.state || !saved.gameOptions) return null;
+    const options = normalizeOptions(saved.gameOptions), restored = saved.state;
+    restored.ai = restored.ai || {};
+    restored.ai.enabled = options.mode === "ai";
+    restored.ai.side = options.aiSide;
+    restored.ai.level = options.aiLevel;
+    restored.ai.thinking = false;
+    restored.ai.requestId = (restored.ai.requestId || 0) + 1;
+    restored.ai.budgetMs = getAiBudgetMs(options.aiLevel);
+    restored.ai.error = null;
+    restored.history = Array.isArray(restored.history) ? restored.history : [];
+    restored.logs = Array.isArray(restored.logs) ? restored.logs : ["已从页面缓存恢复对局。"];
+    restored.mode = MODE_INFO[restored.mode] ? restored.mode : "place";
+    restored.turn = restored.turn === "O" ? "O" : "X";
+    restored.selectedTravelIndex = restored.selectedTravelIndex ?? null;
+    restored.selectedImprint = restored.selectedImprint || null;
+    restored.travelSide = restored.travelSide === "top" ? "top" : "bottom";
+    restored.lastAction = restored.lastAction || null;
+    restored.ui = { ...(restored.ui||{}), ...(saved.ui||{}) };
+    restored.ui.viewport = restored.ui.viewport || saved.viewport || null;
+    restored.ui.resultOverlayVisible = !!restored.ui.resultOverlayVisible;
+    restored.ui.resultOverlayPending = !!restored.ui.resultOverlayPending;
+    restored.ui.resultOverlayDue = Number(restored.ui.resultOverlayDue)||0;
+    normalizeTimelineState(restored);
+    return { gameOptions:options, state:restored, helpOpen:saved.helpOpen===true, viewport:restored.ui.viewport||null };
+  } catch (error) {
+    console.warn("缓存读取失败，已使用新对局。", error);
+    return null;
+  }
+}
+function createInitialState(){
+  const enabled = gameOptions.mode === "ai";
+  const initial = {
+    turn:"X", mode:"place", gameOver:false, result:null,
+    notice:enabled && gameOptions.aiSide === "X" ? "AI 执 X 先手，"+getAiLevelLabel(gameOptions.aiLevel)+" 正在准备第一步。" : "游戏开始：S 中立动时间线已建立，X 先手。",
+    travelSide:"bottom", selectedTravelIndex:null, selectedImprint:null,
+    lines:[{ id:1, name:"S动", createdOrder:1, origin:"初始中立时间线", priorityKind:"initial", owner:"S", ownerIndex:0, createdBy:null, active:true,
+      boards:[{ id:1, t:0, cells:Array(9).fill(""), actor:null, kind:"start" }] }],
+    activeLineId:1, forcedInactiveLineId:null, logs:[],
+    counters:{ lineId:1, boardId:1, createdOrder:1, lineNameIndex:0, ownerLineCount:{X:0,O:0} }, history:[],
+    timelineActivity:{X:0,O:0},
+    ai:{ enabled, side:gameOptions.aiSide, level:gameOptions.aiLevel, thinking:false, requestId:0, budgetMs:getAiBudgetMs(gameOptions.aiLevel), last:null, error:null },
+    lastAction:null,
+    ui:{ resultOverlayVisible:false, resultOverlayPending:false, resultOverlayDue:0, viewport:null }
+  };
+  refreshTimelineStatuses(initial);
+  return initial;
+}
+function createLine(origin, firstBoard, priorityKind, creator=state.turn){
+  state.counters.lineId += 1;
+  state.counters.createdOrder += 1;
+  state.counters.ownerLineCount = state.counters.ownerLineCount || {X:0,O:0};
+  state.counters.ownerLineCount[creator] = (state.counters.ownerLineCount[creator]||0) + 1;
+  const line = {
+    id:state.counters.lineId,
+    name:"",
+    createdOrder:state.counters.createdOrder,
+    origin,
+    priorityKind:priorityKind||"created",
+    owner:creator,
+    ownerIndex:state.counters.ownerLineCount[creator],
+    createdBy:creator,
+    active:false,
+    boards:[firstBoard]
+  };
+  line.name = timelineDisplayName(line);
+  return line;
+}
+function getActiveTimelineLines(target=state){
+  refreshTimelineStatuses(target);
+  return target.lines.filter(line=>line.active);
+}
+function getSlowestLine(target=state, excludeId=null){
+  refreshTimelineStatuses(target);
+  const lines = target.lines.filter(line=>line.id!==excludeId);
+  if (!lines.length) return target.lines[0] || null;
+  const slowest = Math.min(...lines.map(getProgress));
+  return lines.filter(line=>getProgress(line)===slowest).sort((a,b)=>a.createdOrder-b.createdOrder)[0] || null;
+}
+function isLineNotAheadOfAny(lineId, target=state){
+  refreshTimelineStatuses(target);
+  const line = getLineById(lineId,target);
+  if (!line) return false;
+  return target.lines.every(other=>other.id===line.id || getProgress(line)<=getProgress(other));
+}
+function chooseNextActive(currentLineId, target=state){
+  refreshTimelineStatuses(target);
+  const current = getLineById(currentLineId,target);
+  if (!current) return getSlowestLine(target)?.id || target.lines[0]?.id || currentLineId;
+  const passed = target.lines
+    .filter(line=>line.id!==current.id && getProgress(line)<getProgress(current))
+    .sort((a,b)=>a.createdOrder-b.createdOrder);
+  return passed[0]?.id || current.id;
+}
+function getLegalActions(target=state){
+  if (target.gameOver) return [];
+  refreshTimelineStatuses(target);
+  const line = getActiveLine(target);
+  if (!line) return [];
+  const board = getLastBoard(line), actions=[];
+  board.cells.forEach((cell,index)=>{ if(!cell) actions.push({type:"place",index,lineId:line.id,boardId:board.id}); });
+  const canCreate = !isTimelineCreationLocked(target,line,target.turn);
+  if (canCreate && line.boards.length>=3) {
+    for (let sourceIndex=0; sourceIndex<line.boards.length-2; sourceIndex+=1) {
+      actions.push({type:"travel",sourceIndex,side:"top",lineId:line.id,boardId:line.boards[sourceIndex].id});
+      actions.push({type:"travel",sourceIndex,side:"bottom",lineId:line.id,boardId:line.boards[sourceIndex].id});
+    }
+  }
+  if (canCreate) {
+    for (const targetInfo of getImprintTargets(target)) actions.push({type:"imprint",lineId:targetInfo.line.id,direction:targetInfo.direction,targetBoardId:targetInfo.board.id});
+  }
+  return actions;
+}
+function performAction(requestedAction, source){
+  if (state.gameOver) return false;
+  refreshTimelineStatuses(state);
+  const action = findLegalAction(requestedAction);
+  if (!action) {
+    const actorLabel = source === "ai" ? "AI" : "玩家";
+    const locked = isTimelineCreationLocked();
+    state.notice = locked && (requestedAction?.type==="travel" || requestedAction?.type==="imprint")
+      ? "当前是该行动方拥有的静时间线：不能在这里创建新时间线。"
+      : actorLabel + " 请求的行动不符合当前规则，已被拦截。";
+    state.ai.thinking = false;
+    render();
+    return false;
+  }
+  beginPostActionViewportLock(source === "ai" ? "ai" : "human");
+  const actor = state.turn, currentLine = getActiveLine(), currentBoard = getActiveBoard(), oldLineId=currentLine.id;
+  let newLine=null, log="";
+  const trace={ by:source==="ai"?"AI":"玩家", player:actor, action, lineId:currentLine.id, boardId:currentBoard.id, t:currentBoard.t };
+  pushHistory();
+  if (action.type === "place") {
+    if (currentBoard.cells[action.index]) { state.notice="该格已有棋子，不能重复落子。"; render(); return false; }
+    currentBoard.cells[action.index]=actor;
+    currentBoard.actor=actor;
+    currentBoard.kind="place";
+    const copied=createBoard(currentBoard.cells,currentBoard.t+1,actor,"place-copy");
+    currentLine.boards.push(copied);
+    trace.index=action.index;
+    trace.nextBoardId=copied.id;
+    log=actionPrefix(source,actor)+"在 "+currentLine.name+" · t"+currentBoard.t+" 的「"+CELL_NAMES[action.index]+"」落子，推进到 t"+copied.t+"。";
+  } else if (action.type === "travel") {
+    const sourceBoard=currentLine.boards[action.sourceIndex];
+    const first=createBoard(sourceBoard.cells,sourceBoard.t,actor,"travel");
+    newLine=createLine("由 "+currentLine.name+" 的 t"+sourceBoard.t+" 回溯创建",first,"travel",actor);
+    if (action.side === "top") state.lines.unshift(newLine); else state.lines.push(newLine);
+    trace.sourceBoardId=sourceBoard.id;
+    trace.newLineId=newLine.id;
+    trace.newBoardId=first.id;
+    log=actionPrefix(source,actor)+"从 "+currentLine.name+" · t"+currentBoard.t+" 回溯到 t"+sourceBoard.t+"，创建 "+timelineOwnerText(actor)+"第 "+newLine.ownerIndex+" 条时间线。";
+  } else if (action.type === "imprint") {
+    const targetInfo=getImprintTargets().find(item=>item.line.id===action.lineId && item.direction===action.direction);
+    if (!targetInfo) { state.notice="所选拓印目标已无效，请重新选择。"; render(); return false; }
+    const first=createBoard(mergeByImprint(currentBoard.cells,targetInfo.board.cells),currentBoard.t,actor,"imprint");
+    newLine=createLine("由 "+currentLine.name+" 的 t"+currentBoard.t+" "+(targetInfo.direction==="up"?"向上":"向下")+"拓印 "+targetInfo.line.name+" 创建",first,"imprint",actor);
+    if (targetInfo.direction === "up") state.lines.unshift(newLine); else state.lines.push(newLine);
+    trace.targetLineId=targetInfo.line.id;
+    trace.targetBoardId=targetInfo.board.id;
+    trace.newLineId=newLine.id;
+    trace.newBoardId=first.id;
+    log=actionPrefix(source,actor)+"在 "+currentLine.name+" · t"+currentBoard.t+" 对 "+targetInfo.line.name+" 执行拓印，创建 "+timelineOwnerText(actor)+"第 "+newLine.ownerIndex+" 条时间线。";
+  }
+  refreshTimelineStatuses(state);
+  const imprintPriorityLineId=newLine && action.type==="imprint" && isLineNotAheadOfAny(newLine.id) ? newLine.id : null;
+  if (newLine) {
+    trace.newLineActive=newLine.active;
+    trace.newLineName=newLine.name;
+    log += " 新线判定为"+(newLine.active?"动时间线":"静时间线")+"（"+newLine.name+"）。";
+  }
+  state.lastAction=trace;
+  if (source!=="ai" && action.type!=="place") state.mode="place";
+  finalizeAction(actor,oldLineId,{imprintPriorityLineId,actionType:action.type},log);
+  return true;
+}
+function finalizeAction(actor,currentLineId,schedule,log){
+  if (log) { state.logs.unshift(log); if(state.logs.length>240) state.logs.pop(); }
+  refreshTimelineStatuses(state);
+  const outcome=evaluateOutcome(actor);
+  if (outcome.ended) {
+    state.gameOver=true; state.result=outcome;
+    if (outcome.lineId) state.activeLineId=outcome.lineId;
+    state.selectedTravelIndex=null; state.selectedImprint=null; state.forcedInactiveLineId=null;
+    state.notice=outcome.desc; state.ai.thinking=false;
+    prepareResultOverlayAfterTerminal(); render(); return;
+  }
+  state.turn=nextPlayer(actor);
+  state.forcedInactiveLineId=null;
+  let nextLine=null, reason="";
+  const imprintLine=schedule?.imprintPriorityLineId ? getLineById(schedule.imprintPriorityLineId) : null;
+  if (imprintLine && isLineNotAheadOfAny(imprintLine.id)) {
+    nextLine=imprintLine;
+    reason="拓印优先：新拓印时间线不领先于其它时间线，优先在那里行动。";
+  } else {
+    const chosenId=chooseNextActive(currentLineId);
+    nextLine=getLineById(chosenId) || getSlowestLine();
+    reason=chosenId!==currentLineId ? "当前时间线已超过其它时间线，跳转至被超过且创建最早的时间线。" : "当前时间线没有超过其它时间线，继续在本线行动。";
+  }
+  state.activeLineId=nextLine?.id || getSlowestLine()?.id || state.lines[0].id;
+  if (isTimelineCreationLocked(state,getActiveLine(state),state.turn) && (state.mode==="travel" || state.mode==="imprint")) state.mode="place";
+  state.selectedTravelIndex=null; state.selectedImprint=null; state.ai.thinking=false;
+  state.notice="轮到 "+state.turn+" 方行动。当前需处理 "+getActiveLine().name+"。"+reason;
+  render();
+}
+function sanitizeStateForAI(){
+  refreshTimelineStatuses(state);
+  return {
+    turn:state.turn, mode:state.mode, gameOver:state.gameOver, result:state.result,
+    activeLineId:state.activeLineId, forcedInactiveLineId:null,
+    counters:deepClone(state.counters), timelineActivity:deepClone(state.timelineActivity||{X:0,O:0}),
+    lines:state.lines.map(line=>({
+      id:line.id, name:line.name, createdOrder:line.createdOrder, origin:line.origin,
+      priorityKind:getLinePriorityKind(line), owner:line.owner, ownerIndex:line.ownerIndex,
+      createdBy:line.createdBy, active:line.active,
+      boards:line.boards.map(board=>({id:board.id,t:board.t,cells:[...board.cells],actor:board.actor,kind:board.kind}))
+    }))
+  };
+}
+function renderActionPanel(){
+  const line=getActiveLine(), creationLocked=isTimelineCreationLocked(state,line,state.turn);
+  if (isAiTurn()||state.ai.thinking) {
+    refs.actionPanel.innerHTML='<div class="mini-card"><p class="detail-text"><strong>AI 回合。</strong>AI 在 Worker 中使用重构后的统一多维搜索：每个节点都重新计算动/静固定点，并严格执行“拥有者在自己的静时间线中不能创建新时间线”。</p><ul class="helper-list"><li>Flash / Pro / Max 保持 2 / 3 / 5 秒三个模式，共用同一套强搜索核心。</li><li>搜索包含 PVS/αβ、置换表、主变/杀手/历史启发、迟着缩减与战术静态延伸，并完整模拟拓印优先、全线进度调度与全局终局判定。</li></ul></div>';
+    return;
+  }
+  const lockBanner=creationLocked?'<div class="mini-card"><p class="detail-text"><strong>静时间线创建限制：</strong>'+line.name+' 是 '+state.turn+' 方自己拥有的静时间线。本回合只能下棋；时间回溯和拓印都会创建新时间线，因此按规则不可用。除此之外，这条静线与其它时间线一样参与调度、拓印关系与胜负判定。</p></div>':'';
+  if (state.mode==="place") {
+    refs.actionPanel.innerHTML=lockBanner+'<div class="mini-card"><p class="detail-text">请直接点击当前时间线末端棋盘的空格。程序会先在当前 t 写入棋子，再把完成后的局面复制到同线 t+1。</p><ul class="helper-list"><li>动/静标签不会改变普通下棋、调度或终局检查。</li><li>所有时间线的所有历史局面都会保留并参与终局检查。</li></ul></div>';
+    return;
+  }
+  if (creationLocked) {
+    state.mode="place"; state.selectedTravelIndex=null; state.selectedImprint=null;
+    refs.actionPanel.innerHTML=lockBanner+'<div class="mini-card"><p class="detail-text">已自动切回“下棋”模式。</p></div>';
+    return;
+  }
+  if (state.mode==="travel") {
+    const sources=line.boards.slice(0,-2);
+    const list=sources.length?sources.map((board,index)=>'<button class="select-chip '+(state.selectedTravelIndex===index?'active':'')+'" type="button" data-travel-index="'+index+'">'+renderMiniBoard(board.cells,board.id)+'<span class="chip-content"><span class="chip-title">'+line.name+' · t'+board.t+'</span><span class="chip-desc">复制该历史局面，不额外落子；新线归当前行动方。</span></span></button>').join(''):'<p class="muted-text">当前线还没有合法回溯源：必须至少已有 3 个局面，且末端与末端前一个局面不能被选作回溯源。</p>';
+    refs.actionPanel.innerHTML='<div class="mini-card"><p class="detail-text">回溯复制合法历史局面并保留其原 t。选择置顶或置底会改变时间线的竖直排列，从而影响以后“同一 t 最近棋盘”的拓印关系。</p></div><div class="mini-card"><div class="section-title" style="font-size:15px; margin-bottom:10px;">新线插入位置</div><div class="side-group"><button type="button" class="side-btn '+(state.travelSide==='top'?'active':'')+'" data-side="top">置于最上方</button><button type="button" class="side-btn '+(state.travelSide==='bottom'?'active':'')+'" data-side="bottom">置于最下方</button></div></div><div class="mini-card"><div class="section-title" style="font-size:15px; margin-bottom:10px;">可选历史局面</div><div class="select-board-list">'+list+'</div></div><button class="primary-btn" type="button" data-action="execute-travel">执行时间回溯</button>';
+    return;
+  }
+  const targets=getImprintTargets();
+  const list=targets.length?targets.map(item=>{const crossed=item.skippedLines>0?'；中间跨过 '+item.skippedLines+' 条在 t'+item.board.t+' 无棋盘的时间线':'';return '<button class="select-chip '+(state.selectedImprint&&state.selectedImprint.lineId===item.line.id&&state.selectedImprint.direction===item.direction?'active':'')+'" type="button" data-imprint-line-id="'+item.line.id+'" data-direction="'+item.direction+'">'+renderMiniBoard(item.board.cells,item.board.id)+'<span class="chip-content"><span class="chip-title">'+(item.direction==='up'?'向上':'向下')+'拓印 '+item.line.name+'</span><span class="chip-desc">目标：'+item.line.name+' · t'+item.board.t+'；这是该方向最近存在的同 t 棋盘'+crossed+'。</span></span></button>';}).join(''):'<p class="muted-text">当前 t 的上方和下方都找不到可用棋盘；程序会跨过“该 t 缺盘”的时间线，但每个方向只取遇到的第一个同 t 棋盘。</p>';
+  refs.actionPanel.innerHTML='<div class="mini-card"><p class="detail-text">拓印按<strong>同一 t 的竖直最近棋盘</strong>判断：向上、向下分别扫描，允许跨过在当前 t 没有棋盘的时间线，每个方向至多一个目标。动线与静线都可成为目标。</p><ul class="helper-list"><li>空 + 子 = 拓入该子；子 + 空 = 保留当前子</li><li>同子相遇 = 抵消为空</li><li>异子冲突 = 保留当前局面的棋子</li></ul></div><div class="mini-card"><div class="section-title" style="font-size:15px; margin-bottom:10px;">可选拓印对象</div><div class="imprint-list">'+list+'</div></div><button class="primary-btn" type="button" data-action="execute-imprint">执行拓印</button>';
+}
+function renderAiStatus(){
+  const enabled=state.ai.enabled, aiTurn=isAiTurn(), info=getAiLevelInfo(state.ai.level||gameOptions.aiLevel);
+  refs.aiOrb.classList.toggle("thinking",state.ai.thinking);
+  if (!enabled) { refs.aiStatusTitle.textContent="双人模式"; refs.aiStatusSub.textContent="AI 未启用，双方均由玩家手动选择行动。"; return; }
+  refs.aiStatusTitle.textContent=state.ai.thinking?"AI "+info.label+" 正在思考":"AI 模式："+info.label+" · AI 执 "+state.ai.side;
+  if (state.ai.thinking) refs.aiStatusSub.textContent="重构 AI 正在进行迭代加深 PVS/αβ、置换表、迟着缩减与战术静态延伸；本档截止时间 "+Math.round(info.budgetMs/1000)+" 秒。";
+  else if (aiTurn) refs.aiStatusSub.textContent="当前轮到 AI；搜索会严格执行静线拥有者禁建新线规则，并模拟所有时间线调度。";
+  else if (state.ai.last) refs.aiStatusSub.textContent="上次搜索：深度 "+state.ai.last.depth+"，用时 "+state.ai.last.elapsed+"ms，访问 "+state.ai.last.considered+" 个节点。";
+  else refs.aiStatusSub.textContent="Flash / Pro / Max 共用同一套重构搜索核心，仅思考上限为 2 / 3 / 5 秒。";
+}
+function renderTimelineStack(){
+  refreshTimelineStatuses(state);
+  const activeLine=getActiveLine(), activeBoard=getActiveBoard(), terminalRef=state.gameOver&&state.result&&state.result.boardId?findBoardById(state.result.boardId):null;
+  const focusBoard=terminalRef?.board||activeBoard, focusLine=terminalRef?.line||activeLine, focusT=focusBoard?.t??activeBoard.t;
+  const imprintTargets=getImprintTargets(), maxT=Math.max(...state.lines.flatMap(line=>line.boards.map(board=>board.t)));
+  const axisHtml=Array.from({length:maxT+1},(_,t)=>'<div class="axis-tag '+(t===focusT?'focus-time':'')+'">t'+t+'</div>').join('');
+  const rowsHtml=state.lines.map(line=>{
+    const isActiveLine=line.id===activeLine.id, isTerminalLine=terminalRef&&terminalRef.line.id===line.id;
+    const aiCreated=state.lastAction&&state.lastAction.newLineId===line.id&&state.lastAction.by==='AI';
+    const creationLockedHere=isActiveLine&&isTimelineCreationLocked(state,line,state.turn), progress=getProgress(line);
+    const byT=new Map(line.boards.map((board,boardIndex)=>[board.t,{board,boardIndex}]));
+    const boardsHtml=Array.from({length:maxT+1},(_,time)=>{
+      const item=byT.get(time); if(!item) return '<div class="board-slot placeholder" aria-hidden="true"></div>';
+      const {board,boardIndex}=item, isLast=boardIndex===line.boards.length-1;
+      const canTravel=state.mode==='travel'&&shouldHumanInteract()&&isActiveLine&&!creationLockedHere&&boardIndex<line.boards.length-2;
+      const imprint=imprintTargets.find(target=>target.line.id===line.id&&target.board.id===board.id);
+      const canImprint=state.mode==='imprint'&&shouldHumanInteract()&&!creationLockedHere&&Boolean(imprint);
+      const selectedTravel=state.selectedTravelIndex===boardIndex&&isActiveLine&&state.mode==='travel';
+      const selectedImprint=state.selectedImprint&&imprint&&state.selectedImprint.lineId===line.id&&state.selectedImprint.direction===imprint.direction;
+      const role=getBoardRole(board.id), isRole=Boolean(role), isFocusTime=board.t===focusT;
+      const isActionFocus=!state.gameOver&&isActiveLine&&isLast, isTerminalFocus=state.gameOver&&terminalRef&&terminalRef.board.id===board.id;
+      const canPlace=isActionFocus&&shouldHumanInteract()&&state.mode==='place', classes=['board-thumb'];
+      if(role) classes.push('role-'+role); if(isLast) classes.push('current'); if(selectedTravel||selectedImprint) classes.push('active');
+      if(canTravel||canImprint) classes.push('selectable'); if(isRole) classes.push('last-action'); if(isFocusTime) classes.push('time-focus');
+      if(isActionFocus) classes.push('action-focus'); if(isTerminalFocus) classes.push('terminal-focus'); if(canPlace) classes.push('playable');
+      let note=isRole?getLastActionBoardNote(board):isActionFocus?(creationLockedHere?'静线拥有者：本回合只能下棋':'当前可直接行动'):canTravel?'合法回溯起点':imprint?('该方向最近同 t 拓印对象'):isTerminalFocus?'终局判定局面':isLast?(line.active?'动线末端':'静线末端'):'历史局面';
+      const focusAttr=isActionFocus?' data-focus-anchor="current"':isTerminalFocus?' data-focus-anchor="terminal"':'';
+      return '<div class="board-slot"><article class="'+classes.join(' ')+'" data-thumb-line-id="'+line.id+'" data-thumb-board-index="'+boardIndex+'" '+focusAttr+' tabindex="'+(canTravel||canImprint?0:-1)+'" role="'+(canTravel||canImprint?'button':'group')+'" aria-label="'+line.name+' t'+board.t+' '+note+'"><div class="time-tag"><span class="'+(isFocusTime?'focus-dot':'')+'">t'+board.t+'</span><span>'+(isActionFocus?'当前':isTerminalFocus?'终局':isLast?'末端':'历史')+'</span></div>'+renderTimelineBoard(board.cells,board.id,{canPlace,lineId:line.id,boardIndex})+'<div class="thumb-note">'+note+'</div></article></div>';
+    }).join('');
+    const ownerClass=line.owner==='X'?'owner-first':line.owner==='O'?'owner-second':'owner-neutral';
+    const statusClass=line.active?'timeline-active':'timeline-inactive';
+    const badges=(line.owner==='S'?'<span class="badge neutral-badge">中立</span>':'<span class="badge '+(line.owner==='X'?'primary':'o')+'">'+timelineOwnerText(line.owner)+'第 '+line.ownerIndex+' 条</span>')+'<span class="badge '+(line.active?'success':'static-badge')+'">'+(line.active?'动时间线':'静时间线')+'</span>'+(!line.active?'<span class="badge warn">拥有者禁建新线</span>':'')+(isActiveLine?'<span class="badge primary">当前线</span>':'')+(isTerminalLine?'<span class="badge success">终局线</span>':'')+(aiCreated?'<span class="badge success">AI 新建</span>':'');
+    return '<div class="timeline-row '+ownerClass+' '+statusClass+' '+(isActiveLine?'active ':'')+(aiCreated?'ai-created ':'')+(isTerminalLine?'terminal-row ':'')+(isActiveLine||isTerminalLine?'focus-row':'')+'"><div class="line-meta"><div class="line-title"><div class="line-name">'+line.name+'</div>'+badges+'</div><div class="line-origin">'+escapeHtml(line.origin)+'</div><div class="line-progress">'+getTimelineClassification(line)+' ｜ 进度：t'+progress+' ｜ 局面数：'+line.boards.length+' ｜ 创建序：'+line.createdOrder+'</div></div><div class="board-strip">'+boardsHtml+'</div></div>';
+  }).join('');
+  const shell=ensureTimelineShell();
+  if(shell.inner) shell.inner.innerHTML='<div class="timeline-axis"><div class="axis-meta">绝对时间对齐</div><div class="axis-strip">'+axisHtml+'</div></div>'+rowsHtml;
+}
+function render(){
+  refreshTimelineStatuses(state);
+  const viewport=captureTimelineViewport(), activeLine=getActiveLine(), activeBoard=getActiveBoard();
+  const creationLocked=isTimelineCreationLocked(state,activeLine,state.turn);
+  if(creationLocked&&(state.mode==="travel"||state.mode==="imprint")){state.mode="place";state.selectedTravelIndex=null;state.selectedImprint=null;}
+  const terminal=state.gameOver&&state.result&&state.result.boardId?findBoardById(state.result.boardId):null;
+  const shownLine=terminal?.line||activeLine, shownBoard=terminal?.board||activeBoard;
+  const activeLines=getActiveTimelineLines(), schedulingLines=[...state.lines];
+  const slowestProgress=Math.min(...schedulingLines.map(getProgress));
+  const slowestLines=schedulingLines.filter(line=>getProgress(line)===slowestProgress).sort((a,b)=>a.createdOrder-b.createdOrder);
+  const newest=state.lines.reduce((a,b)=>b.createdOrder>a.createdOrder?b:a,state.lines[0]);
+  const imprintTargets=getImprintTargets(), travelCount=creationLocked?0:Math.max(0,shownLine.boards.length-2), human=shouldHumanInteract(), aiTurn=isAiTurn();
+  const staticCount=state.lines.filter(line=>!line.active).length;
+  refs.currentPlayerLabel.textContent=state.turn;
+  refs.currentPlayerLabel.className="info-value "+(state.turn==='X'?'player-x':'player-o');
+  refs.currentPlayerDesc.textContent=(state.turn==='X'?'蓝色 X（先手）':'橙色 O（后手）')+(aiTurn?' · AI 行动中':' · 玩家行动中');
+  refs.currentLineLabel.textContent=shownLine.name;
+  refs.currentLineDesc.textContent=getTimelineClassification(shownLine)+'；'+shownLine.origin;
+  refs.currentTimeLabel.textContent='t'+shownBoard.t;
+  refs.priorityHint.textContent='全线最慢：'+slowestLines.map(line=>line.name).join('、')+'；静线 '+staticCount+' 条仅限制其拥有者创建新线';
+  refs.lineCountLabel.textContent=String(state.lines.length);
+  refs.boardCountLabel.textContent='动 '+activeLines.length+' / 静 '+staticCount+'；全局 '+getTotalBoards()+' 个局面';
+  refs.modeHint.textContent=aiTurn||state.ai.thinking?'AI 回合中，行动模式由统一搜索自动判断。':creationLocked?'当前为你拥有的静时间线：只能下棋，不能通过回溯或拓印创建新时间线。':MODE_INFO[state.mode].hint;
+  refs.modeLabel.textContent=state.ai.enabled?MODE_INFO[state.mode].label+' / AI:'+state.ai.side+' · '+getAiLevelInfo(state.ai.level||gameOptions.aiLevel).label:MODE_INFO[state.mode].label;
+  refs.imprintCountLabel.textContent=creationLocked?'禁用':(imprintTargets.length?imprintTargets.length+' 个':'无');
+  refs.travelCountLabel.textContent=creationLocked?'禁用':travelCount+' 个';
+  refs.lastCreatedLabel.textContent=newest.name;
+  let schedulerText='当前时间线未超过其它时间线', schedulerClass='badge primary';
+  const passed=schedulingLines.filter(line=>line.id!==activeLine.id&&getProgress(line)<getProgress(activeLine)).sort((a,b)=>a.createdOrder-b.createdOrder);
+  if(passed.length){ schedulerText='行动后将转向 '+passed[0].name; schedulerClass='badge warn'; }
+  else if(getLinePriorityKind(activeLine)==='imprint'&&isLineNotAheadOfAny(activeLine.id)){ schedulerText='拓印优先线'; schedulerClass='badge success'; }
+  refs.schedulerBadge.textContent=schedulerText; refs.schedulerBadge.className=schedulerClass;
+  refs.turnBadge.textContent='第 '+state.logs.length+' 条记录';
+  refs.activeBoardDesc.textContent=state.gameOver&&state.result?.boardId?((state.result.kind==='forced'?'最终绝杀局面：':'终局局面：')+shownLine.name+' · t'+shownBoard.t+'。'):'当前玩家 '+state.turn+' 正在 '+shownLine.name+' · t'+shownBoard.t+' 行动。';
+  refs.noticeText.textContent=state.notice||''; refs.noticeText.className='notice-inline '+(state.gameOver?'strong':'');
+  refs.thinkingBadge.textContent=state.ai.thinking?'AI 思考中':state.gameOver?'已结束':creationLocked?'静线禁建线':'就绪';
+  refs.thinkingBadge.className='badge '+(state.ai.thinking?'primary':state.gameOver?'success':creationLocked?'warn':'');
+  (()=>{
+    const locked=isGameSetupLocked();
+    const aiOptionsDisabled=state.ai.thinking||locked||!state.ai.enabled;
+    const settingsCard=refs.gameModeGroup.closest('.settings-card');
+    if(settingsCard){settingsCard.classList.toggle('settings-locked',locked);settingsCard.dataset.locked=locked?'true':'false';}
+    if(refs.setupLockBadge){refs.setupLockBadge.textContent=locked?'对局已开始 · 设置锁定':'开局前可调整';refs.setupLockBadge.className='badge '+(locked?'warn':'success');}
+    [...refs.gameModeGroup.querySelectorAll('[data-game-mode]')].forEach(el=>{el.classList.toggle('active',el.dataset.gameMode===(state.ai.enabled?'ai':'pvp'));el.disabled=state.ai.thinking||locked;el.title=locked?'对局开始后模式已锁定，请重新开始后调整':'';});
+    [...refs.aiSideGroup.querySelectorAll('[data-ai-side]')].forEach(el=>{el.classList.toggle('active',el.dataset.aiSide===state.ai.side);el.disabled=aiOptionsDisabled;el.title=locked?'对局开始后设置已锁定':!state.ai.enabled?'请先选择 AI 模式':'';});
+    if(refs.aiLevelGroup) [...refs.aiLevelGroup.querySelectorAll('[data-ai-level]')].forEach(el=>{el.classList.toggle('active',el.dataset.aiLevel===normalizeAiLevel(state.ai.level||gameOptions.aiLevel));el.disabled=aiOptionsDisabled;el.title=locked?'对局开始后设置已锁定':!state.ai.enabled?'请先选择 AI 模式':'';});
+    if(refs.drawBtn){refs.drawBtn.disabled=state.ai.enabled||state.gameOver||state.ai.thinking;refs.drawBtn.title=state.ai.enabled?'AI 对局不开放协议和棋':'双方同意时可协议和棋';}
+  })();
+  [...refs.modeGroup.querySelectorAll('.mode-btn')].forEach(el=>{
+    el.classList.toggle('active',el.dataset.mode===state.mode);
+    const creationMode=el.dataset.mode==='travel'||el.dataset.mode==='imprint';
+    el.disabled=state.gameOver||state.ai.thinking||aiTurn||(creationLocked&&creationMode);
+    el.title=creationLocked&&creationMode?'静时间线的拥有者不能在这条线中创建新时间线':'';
+  });
+  const canPlace=human&&state.mode==='place', role=getBoardRole(shownBoard.id);
+  refs.activeBoard.className='active-board'+(role?' role-'+role:'');
+  refs.activeBoard.innerHTML=renderBoardCells(shownBoard.cells,canPlace,shownBoard.id);
+  refs.activeBadges.innerHTML=state.gameOver?'<span class="badge success">终局</span><span class="badge">显示：'+shownLine.name+'</span><span class="badge">时间：t'+shownBoard.t+'</span>':'<span class="badge '+(state.turn==='X'?'primary':'o')+'">'+state.turn+' 方行动</span><span class="badge '+(activeLine.active?'success':'static-badge')+'">'+activeLine.name+'</span><span class="badge">t'+activeBoard.t+'</span>'+(creationLocked?'<span class="badge warn">拥有者禁建新线</span>':'');
+  renderAiStatus(); renderActionPanel(); renderLastActionCard(); renderHistory(); renderTimelineStack();
+  restoreViewportAfterRender(viewport); updateDownloadButtons(); stabilizePostActionViewport(); syncResultOverlayFromState(); renderHelpMark(); persistGame(); scheduleAiIfNeeded();
+}
+bindButton("restartBtn",(()=>confirmRestartGame(!0))),bindButton("mobileRestartBtn",(()=>confirmRestartGame(!0))),bindButton("undoBtn",undoStep),bindButton("mobileUndoBtn",undoStep),bindButton("drawBtn",agreeDraw),bindButton("toggleHelpBtn",toggleHelp),bindButton("mobileHelpBtn",handleBottomHelpButton),bindButton("playAgainBtn",(()=>restartGame(!1))),bindButton("closeResultBtn",(()=>hideResultOverlay())),bindButton("downloadGameBtn",downloadGameImage),bindButton("modalDownloadGameBtn",downloadGameImage),window.addEventListener("beforeunload",persistGame),document.addEventListener("click",markHelpFocusChanged,!0),refs.helpDetails.open=!0===cachedSession?.helpOpen,refs.helpDetails.addEventListener("toggle",(()=>{renderHelpMark(),persistGame()})),refs.gameModeGroup.addEventListener("click",(e=>{const t=e.target.closest("[data-game-mode]");t&&setGameMode(t.dataset.gameMode)})),refs.aiSideGroup.addEventListener("click",(e=>{const t=e.target.closest("[data-ai-side]");t&&setAiSide(t.dataset.aiSide)})),refs.aiLevelGroup.addEventListener("click",(e=>{const t=e.target.closest("[data-ai-level]");t&&setAiLevel(t.dataset.aiLevel)})),refs.modeGroup.addEventListener("click",(e=>{const t=e.target.closest("[data-mode]");!t||state.gameOver||isAiTurn()||changeMode(t.dataset.mode)})),refs.activeBoard.addEventListener("click",(e=>{const t=e.target.closest("[data-cell-index]");if(!t||state.gameOver||isAiTurn()||state.ai.thinking)return;if("place"!==state.mode)return;performPlace(Number(t.dataset.cellIndex),"human")})),refs.timelineStack.addEventListener("click",(e=>{const t=e.target.closest("[data-timeline-cell-index]");if(t){if(state.gameOver||isAiTurn()||state.ai.thinking||"place"!==state.mode)return;return void performPlace(Number(t.dataset.timelineCellIndex),"human")}const n=e.target.closest("[data-thumb-line-id]");if(!n||state.gameOver||isAiTurn()||state.ai.thinking)return;handleThumbSelection(Number(n.dataset.thumbLineId),Number(n.dataset.thumbBoardIndex))})),window.addEventListener("wheel",markManualTimelineNavigation,{passive:!0}),window.addEventListener("touchstart",markManualTimelineNavigation,{passive:!0}),window.addEventListener("pointerdown",markManualTimelineNavigation,{passive:!0}),window.addEventListener("keydown",(e=>{["ArrowLeft","ArrowRight","ArrowUp","ArrowDown","PageDown","PageUp","Home","End"," "].includes(e.key)&&markManualTimelineNavigation()})),refs.actionPanel.addEventListener("click",(e=>{if(state.gameOver||isAiTurn()||state.ai.thinking)return;const t=e.target.closest("[data-side]");if(t)return state.travelSide=t.dataset.side,void render();const n=e.target.closest("[data-travel-index]");if(n)return state.selectedTravelIndex=Number(n.dataset.travelIndex),state.notice="已选中 "+getActiveLine().name+" · t"+getActiveLine().boards[state.selectedTravelIndex].t+" 作为回溯目标。",void render();if(e.target.closest('[data-action="execute-travel"]'))return void performTimeTravel("human");const r=e.target.closest("[data-imprint-line-id]");if(r){state.selectedImprint={lineId:Number(r.dataset.imprintLineId),direction:r.dataset.direction};const e=getLineById(state.selectedImprint.lineId);return state.notice="已选中 "+e.name+" 作为"+("up"===state.selectedImprint.direction?"向上":"向下")+"拓印对象。",void render()}e.target.closest('[data-action="execute-imprint"]')&&performImprint("human")}));const AI_WORKER_SOURCE="const WIN_LINES=[[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];\nconst CELL_WEIGHTS=[42,24,42,24,62,24,42,24,42];\nconst INF=1_000_000_000;\nconst MATE=20_000_000;\nconst TT_LIMIT=260000;\nconst Q_MAX_DEPTH=3;\nlet searchNodes=0;\nlet deadline=0;\nlet tt=new Map();\nlet killers=[];\nlet historyTable=new Map();\nlet boardScoreCache=new Map();\nlet forcedWinCache=new Map();\n\nfunction nextPlayer(p){return p==='X'?'O':'X';}\nfunction timeExpired(margin=5){return Date.now()>=deadline-margin;}\nfunction getLastBoard(line){return line.boards[line.boards.length-1];}\nfunction getProgress(line){return getLastBoard(line).t;}\nfunction getLineById(id,state){return state.lines.find(line=>line.id===id);}\nfunction getLineIndexById(id,state){return state.lines.findIndex(line=>line.id===id);}\nfunction getActiveLine(state){return getLineById(state.activeLineId,state);}\nfunction getActiveBoard(state){return getLastBoard(getActiveLine(state));}\nfunction checkWinner(cells){\n  for(const [a,b,c] of WIN_LINES){if(cells[a]&&cells[a]===cells[b]&&cells[a]===cells[c])return cells[a];}\n  return null;\n}\nfunction hasWinningLine(cells,player){return WIN_LINES.some(([a,b,c])=>cells[a]===player&&cells[b]===player&&cells[c]===player);}\nfunction isBoardFull(cells){return cells.every(Boolean);}\nfunction emptyCells(cells){const out=[];for(let i=0;i<9;i+=1)if(!cells[i])out.push(i);return out;}\nfunction countImmediateWins(cells,player){let count=0;for(const i of emptyCells(cells)){const copy=[...cells];copy[i]=player;if(checkWinner(copy)===player)count+=1;}return count;}\nfunction countOpenLines(cells,player){const opp=nextPlayer(player);let score=0;for(const line of WIN_LINES){let own=0,empty=0,blocked=false;for(const i of line){if(cells[i]===player)own+=1;else if(cells[i]===opp)blocked=true;else empty+=1;}if(!blocked){if(own===2&&empty===1)score+=6;else if(own===1&&empty===2)score+=2;else if(own===0)score+=0.25;}}return score;}\nfunction hasForcedWinInOne(cells,player){\n  const key=player+compactCells(cells);if(forcedWinCache.has(key))return forcedWinCache.get(key);\n  const empties=emptyCells(cells);if(empties.length<2){forcedWinCache.set(key,false);return false;}\n  const opponent=nextPlayer(player);\n  for(const reply of empties){\n    const after=[...cells];after[reply]=opponent;\n    if(hasWinningLine(after,opponent)||isBoardFull(after)){forcedWinCache.set(key,false);return false;}\n    let canWin=false;\n    for(const response of emptyCells(after)){const test=[...after];test[response]=player;if(hasWinningLine(test,player)){canWin=true;break;}}\n    if(!canWin){forcedWinCache.set(key,false);return false;}\n  }\n  forcedWinCache.set(key,true);return true;\n}\nfunction evaluateOutcome(state,actor){\n  const opponent=nextPlayer(actor);let actorRef=null,opponentRef=null;\n  for(const line of state.lines)for(const board of line.boards){if(!actorRef&&hasWinningLine(board.cells,actor))actorRef={line,board};if(!opponentRef&&hasWinningLine(board.cells,opponent))opponentRef={line,board};}\n  if(actorRef)return{ended:true,winner:actor,kind:'line',lineId:actorRef.line.id,boardId:actorRef.board.id};\n  if(opponentRef)return{ended:true,winner:opponent,kind:'line',lineId:opponentRef.line.id,boardId:opponentRef.board.id};\n  for(const line of state.lines)for(const board of line.boards)if(hasForcedWinInOne(board.cells,actor))return{ended:true,winner:actor,kind:'forced',lineId:line.id,boardId:board.id};\n  for(const line of state.lines)for(const board of line.boards)if(!checkWinner(board.cells)&&isBoardFull(board.cells))return{ended:true,winner:null,kind:'draw',lineId:line.id,boardId:board.id};\n  return{ended:false};\n}\nfunction refreshTimelineStatuses(state){\n  state.counters=state.counters||{};state.counters.ownerLineCount=state.counters.ownerLineCount||{X:0,O:0};\n  const ordered=[...state.lines].sort((a,b)=>(a.createdOrder||0)-(b.createdOrder||0));\n  const seen={X:0,O:0};\n  for(const line of ordered){\n    if(line.priorityKind==='initial'||line.owner==='S'){line.owner='S';line.ownerIndex=0;line.active=true;continue;}\n    const owner=line.owner==='O'||line.createdBy==='O'?'O':'X';line.owner=owner;line.createdBy=owner;\n    if(!Number.isInteger(line.ownerIndex)||line.ownerIndex<=0)line.ownerIndex=++seen[owner];else seen[owner]=Math.max(seen[owner],line.ownerIndex);\n  }\n  const totalX=ordered.filter(line=>line.owner==='X').length,totalO=ordered.filter(line=>line.owner==='O').length;\n  let activeX=0,activeO=0;\n  for(let guard=0;guard<Math.max(totalX,totalO)+3;guard+=1){const nx=Math.min(totalX,activeO+1),no=Math.min(totalO,activeX+1);if(nx===activeX&&no===activeO)break;activeX=nx;activeO=no;}\n  for(const line of state.lines){if(line.owner==='S')line.active=true;else if(line.owner==='X')line.active=line.ownerIndex<=activeO+1;else line.active=line.ownerIndex<=activeX+1;line.name=line.owner==='S'?'S动':(line.owner==='X'?'先':'后')+line.ownerIndex+(line.active?'动':'静');}\n  state.timelineActivity={X:activeX,O:activeO};\n  state.counters.ownerLineCount.X=Math.max(totalX,seen.X);state.counters.ownerLineCount.O=Math.max(totalO,seen.O);\n}\nfunction getActiveTimelineLines(state){refreshTimelineStatuses(state);return state.lines.filter(line=>line.active);}\nfunction getSlowestLine(state){refreshTimelineStatuses(state);const lines=state.lines;if(!lines.length)return null;const min=Math.min(...lines.map(getProgress));return lines.filter(line=>getProgress(line)===min).sort((a,b)=>a.createdOrder-b.createdOrder)[0]||lines[0];}\nfunction isLineNotAheadOfAny(lineId,state){refreshTimelineStatuses(state);const line=getLineById(lineId,state);if(!line)return false;return state.lines.every(other=>other.id===line.id||getProgress(line)<=getProgress(other));}\nfunction chooseNextLine(currentLineId,state){\n  refreshTimelineStatuses(state);const current=getLineById(currentLineId,state);\n  if(!current)return getSlowestLine(state)?.id||state.lines[0]?.id;\n  const passed=state.lines.filter(line=>line.id!==current.id&&getProgress(line)<getProgress(current)).sort((a,b)=>a.createdOrder-b.createdOrder);\n  return passed[0]?.id||current.id;\n}\nfunction isTimelineCreationLocked(state,line=getActiveLine(state),actor=state.turn){return Boolean(line&&!line.active&&line.owner===actor);}\nfunction getImprintTargets(state){\n  const line=getActiveLine(state);if(!line)return[];\n  const index=getLineIndexById(line.id,state),t=getProgress(line),out=[];\n  for(let i=index-1;i>=0;i-=1){const candidate=state.lines[i],board=candidate.boards.find(item=>item.t===t);if(board){out.push({line:candidate,board,direction:'up',lineDistance:index-i,skippedLines:index-i-1});break;}}\n  for(let i=index+1;i<state.lines.length;i+=1){const candidate=state.lines[i],board=candidate.boards.find(item=>item.t===t);if(board){out.push({line:candidate,board,direction:'down',lineDistance:i-index,skippedLines:i-index-1});break;}}\n  return out;\n}\nfunction mergeByImprint(base,target){return base.map((cell,i)=>{const other=target[i];if(!cell&&!other)return'';if(!cell&&other)return other;if(cell&&!other)return cell;if(cell===other)return'';return cell;});}\nfunction getLegalActions(state){\n  if(state.gameOver)return[];refreshTimelineStatuses(state);\n  const line=getActiveLine(state);if(!line)return[];\n  const board=getLastBoard(line),actions=[];\n  for(let i=0;i<9;i+=1)if(!board.cells[i])actions.push({type:'place',index:i,lineId:line.id,boardId:board.id});\n  const canCreate=!isTimelineCreationLocked(state,line,state.turn);\n  if(canCreate&&line.boards.length>=3)for(let sourceIndex=0;sourceIndex<line.boards.length-2;sourceIndex+=1){actions.push({type:'travel',sourceIndex,side:'top',lineId:line.id,boardId:line.boards[sourceIndex].id});actions.push({type:'travel',sourceIndex,side:'bottom',lineId:line.id,boardId:line.boards[sourceIndex].id});}\n  if(canCreate)for(const target of getImprintTargets(state))actions.push({type:'imprint',lineId:target.line.id,direction:target.direction,targetBoardId:target.board.id});\n  return actions;\n}\nfunction sameAction(a,b){if(!a||!b||a.type!==b.type)return false;if(a.type==='place')return a.index===b.index;if(a.type==='travel')return a.sourceIndex===b.sourceIndex&&a.side===b.side;if(a.type==='imprint')return a.lineId===b.lineId&&a.direction===b.direction;return false;}\nfunction findLegalAction(state,action){return getLegalActions(state).find(item=>sameAction(item,action))||null;}\nfunction cloneState(state){return{turn:state.turn,mode:state.mode,gameOver:state.gameOver,result:state.result?{...state.result}:null,activeLineId:state.activeLineId,forcedInactiveLineId:null,timelineActivity:{...(state.timelineActivity||{X:0,O:0})},counters:{...state.counters,ownerLineCount:{...(state.counters?.ownerLineCount||{X:0,O:0})}},lines:state.lines.map(line=>({...line,boards:[...line.boards]}))};}\nfunction createBoard(state,cells,t,actor,kind){state.counters.boardId+=1;return{id:state.counters.boardId,t,cells:[...cells],actor:actor||null,kind:kind||'copy'};}\nfunction createLine(state,origin,board,kind,creator){\n  state.counters.lineId+=1;state.counters.createdOrder+=1;state.counters.ownerLineCount=state.counters.ownerLineCount||{X:0,O:0};state.counters.ownerLineCount[creator]=(state.counters.ownerLineCount[creator]||0)+1;\n  return{id:state.counters.lineId,name:'',createdOrder:state.counters.createdOrder,origin,priorityKind:kind,owner:creator,ownerIndex:state.counters.ownerLineCount[creator],createdBy:creator,active:false,boards:[board]};\n}\nfunction applyAction(sourceState,requested){\n  const state=cloneState(sourceState);refreshTimelineStatuses(state);const action=findLegalAction(state,requested);if(!action)return null;\n  const actor=state.turn,currentLine=getActiveLine(state),currentLineId=currentLine.id;\n  let currentBoard=getActiveBoard(state),newLine=null;\n  if(action.type==='place'){\n    const lastIndex=currentLine.boards.length-1;currentBoard={...currentBoard,cells:[...currentBoard.cells]};currentLine.boards[lastIndex]=currentBoard;\n    currentBoard.cells[action.index]=actor;currentBoard.actor=actor;currentBoard.kind='place';currentLine.boards.push(createBoard(state,currentBoard.cells,currentBoard.t+1,actor,'place-copy'));\n  }else if(action.type==='travel'){\n    const source=currentLine.boards[action.sourceIndex],first=createBoard(state,source.cells,source.t,actor,'travel');newLine=createLine(state,'回溯',first,'travel',actor);if(action.side==='top')state.lines.unshift(newLine);else state.lines.push(newLine);\n  }else{\n    const target=getImprintTargets(state).find(item=>item.line.id===action.lineId&&item.direction===action.direction);if(!target)return null;\n    const first=createBoard(state,mergeByImprint(currentBoard.cells,target.board.cells),currentBoard.t,actor,'imprint');newLine=createLine(state,'拓印',first,'imprint',actor);if(target.direction==='up')state.lines.unshift(newLine);else state.lines.push(newLine);\n  }\n  refreshTimelineStatuses(state);\n  const imprintPriorityLineId=newLine&&action.type==='imprint'&&isLineNotAheadOfAny(newLine.id,state)?newLine.id:null;\n  const outcome=evaluateOutcome(state,actor);\n  if(outcome.ended){state.gameOver=true;state.result=outcome;if(outcome.lineId)state.activeLineId=outcome.lineId;state.forcedInactiveLineId=null;return{state,outcome,action};}\n  state.turn=nextPlayer(actor);state.forcedInactiveLineId=null;\n  state.activeLineId=imprintPriorityLineId||chooseNextLine(currentLineId,state)||getSlowestLine(state)?.id||state.lines[0].id;\n  return{state,outcome:{ended:false},action};\n}\nfunction terminalScore(outcome,aiSide,ply){if(!outcome.ended)return 0;if(outcome.winner===aiSide)return MATE-ply*120;if(outcome.winner===null)return 0;return-MATE+ply*120;}\nfunction boardPatternScore(cells,aiSide){\n  const cacheKey=aiSide+compactCells(cells);if(boardScoreCache.has(cacheKey))return boardScoreCache.get(cacheKey);\n  const opp=nextPlayer(aiSide);let score=0;\n  for(const line of WIN_LINES){let a=0,o=0,e=0;for(const i of line){if(cells[i]===aiSide)a+=1;else if(cells[i]===opp)o+=1;else e+=1;}\n    if(o===0){if(a===2&&e===1)score+=210;else if(a===1&&e===2)score+=42;else if(a===0)score+=2;}\n    if(a===0){if(o===2&&e===1)score-=235;else if(o===1&&e===2)score-=46;}\n  }\n  for(let i=0;i<9;i+=1){if(cells[i]===aiSide)score+=CELL_WEIGHTS[i];else if(cells[i]===opp)score-=CELL_WEIGHTS[i];}\n  const aiWins=countImmediateWins(cells,aiSide),oppWins=countImmediateWins(cells,opp);\n  score+=aiWins*330-oppWins*370;if(aiWins>=2)score+=1250;if(oppWins>=2)score-=1420;\n  score+=(countOpenLines(cells,aiSide)-countOpenLines(cells,opp))*22;\n  if(hasForcedWinInOne(cells,aiSide))score+=2600;if(hasForcedWinInOne(cells,opp))score-=2850;\n  boardScoreCache.set(cacheKey,score);return score;\n}\nfunction hasGlobalForcedWin(state,player){for(const line of state.lines)for(const board of line.boards)if(hasForcedWinInOne(board.cells,player))return true;return false;}\nfunction hasImmediateWinningAction(state,player){\n  if(state.gameOver)return state.result?.winner===player;if(state.turn!==player)return false;if(hasGlobalForcedWin(state,player))return true;\n  const actions=getLegalActions(state);\n  for(const action of actions){if(action.type==='travel')continue;if(timeExpired(3))break;const result=applyAction(state,action);searchNodes+=1;if(result?.outcome.ended&&result.outcome.winner===player)return true;}\n  return false;\n}\nfunction travelResourceScore(state,aiSide){\n  const line=getActiveLine(state);if(!line||line.boards.length<3||isTimelineCreationLocked(state,line,state.turn))return 0;const actor=state.turn,sign=actor===aiSide?1:-1;let best=0;\n  for(let i=0;i<line.boards.length-2;i+=1){const board=line.boards[i],value=boardPatternScore(board.cells,actor)*0.13+Math.min(8,getProgress(line)-board.t)*16;if(value>best)best=value;}\n  return sign*Math.max(0,best);\n}\nfunction timelineStrategicScore(state,aiSide){\n  const opp=nextPlayer(aiSide),activity=state.timelineActivity||{X:0,O:0};let score=(activity[aiSide]-activity[opp])*120;\n  const ownLines=state.lines.filter(line=>line.owner===aiSide).length,oppLines=state.lines.filter(line=>line.owner===opp).length;\n  const ownStatic=state.lines.filter(line=>line.owner===aiSide&&!line.active).length,oppStatic=state.lines.filter(line=>line.owner===opp&&!line.active).length;\n  score+=(ownLines-oppLines)*42-(ownStatic-oppStatic)*70;\n  for(const line of state.lines){\n    const latest=getLastBoard(line),ownerSign=line.owner===aiSide?1:line.owner===opp?-1:0;\n    score+=ownerSign*Math.min(9,getProgress(line))*7;\n    score+=boardPatternScore(latest.cells,aiSide)*0.22;\n    if(!line.active)score+=ownerSign*-22;\n  }\n  const current=getActiveLine(state);\n  if(current){\n    const board=getLastBoard(current),moverSign=state.turn===aiSide?1:-1;\n    score+=boardPatternScore(board.cells,aiSide)*1.72;\n    score+=moverSign*(countImmediateWins(board.cells,state.turn)*560+Math.max(0,countOpenLines(board.cells,state.turn))*20);\n    if(isTimelineCreationLocked(state,current,state.turn))score+=moverSign*-360;\n  }\n  return score;\n}\nfunction imprintPotentialScore(state,aiSide){\n  const actor=state.turn,line=getActiveLine(state);if(isTimelineCreationLocked(state,line,actor))return 0;\n  const sign=actor===aiSide?1:-1,base=getActiveBoard(state).cells,targets=getImprintTargets(state);if(!targets.length)return 0;\n  let best=-INF;\n  for(const target of targets){const merged=mergeByImprint(base,target.board.cells);let value=boardPatternScore(merged,actor)*0.78;if(hasWinningLine(merged,actor))value+=9500;if(hasWinningLine(merged,nextPlayer(actor))&&!hasWinningLine(merged,actor))value-=10000;if(hasForcedWinInOne(merged,actor))value+=4200;const forks=countImmediateWins(merged,actor);if(forks>=2)value+=1800;value-=Math.max(0,target.lineDistance-1)*3;if(value>best)best=value;}\n  return sign*Math.max(0,best);\n}\nfunction heuristic(state,aiSide){\n  if(state.gameOver&&state.result)return terminalScore(state.result,aiSide,0);\n  let score=timelineStrategicScore(state,aiSide)+imprintPotentialScore(state,aiSide)+travelResourceScore(state,aiSide);\n  let historical=0;for(const line of state.lines){for(let i=0;i<line.boards.length-1;i+=1)historical+=boardPatternScore(line.boards[i].cells,aiSide)*0.025;}score+=historical;\n  const mobility=getLegalActions(state).length;score+=(state.turn===aiSide?1:-1)*Math.min(80,mobility)*3;\n  return Math.max(-MATE+5000,Math.min(MATE-5000,score));\n}\nfunction actionKey(action){if(action.type==='place')return'p'+action.index;if(action.type==='travel')return't'+action.sourceIndex+action.side[0];return'i'+action.lineId+action.direction[0];}\nfunction isTacticalAction(state,action){\n  const actor=state.turn,opp=nextPlayer(actor),board=getActiveBoard(state).cells;\n  if(action.type==='place'){\n    const next=[...board];next[action.index]=actor;if(hasWinningLine(next,actor)||hasForcedWinInOne(next,actor)||countImmediateWins(next,actor)>=2)return true;\n    const block=[...board];block[action.index]=opp;if(hasWinningLine(block,opp))return true;\n    return false;\n  }\n  if(action.type==='imprint'){\n    const target=getImprintTargets(state).find(item=>item.line.id===action.lineId&&item.direction===action.direction);if(!target)return false;\n    const merged=mergeByImprint(board,target.board.cells);return hasWinningLine(merged,actor)||hasForcedWinInOne(merged,actor)||countImmediateWins(merged,actor)>=2||hasWinningLine(merged,opp);\n  }\n  const line=getActiveLine(state),source=line?.boards[action.sourceIndex];return Boolean(source&&(hasForcedWinInOne(source.cells,actor)||countImmediateWins(source.cells,actor)>=2));\n}\nfunction actionShapeScore(state,action,aiSide){\n  const actor=state.turn,opp=nextPlayer(actor),board=getActiveBoard(state).cells;let score=historyTable.get(actionKey(action))||0;\n  if(action.type==='place'){\n    const next=[...board];next[action.index]=actor;score+=CELL_WEIGHTS[action.index]*8+boardPatternScore(next,actor)*28;if(hasWinningLine(next,actor))score+=4_500_000;\n    const block=[...board];block[action.index]=opp;if(hasWinningLine(block,opp))score+=1_050_000;\n    const forks=countImmediateWins(next,actor),oppForks=countImmediateWins(next,opp);if(forks>=2)score+=520_000;if(oppForks>=2)score-=210_000;if(hasForcedWinInOne(next,actor))score+=850_000;\n  }else if(action.type==='imprint'){\n    const target=getImprintTargets(state).find(item=>item.line.id===action.lineId&&item.direction===action.direction);if(target){const merged=mergeByImprint(board,target.board.cells);score+=145_000+boardPatternScore(merged,actor)*102;if(hasWinningLine(merged,actor))score+=4_500_000;else if(hasWinningLine(merged,opp))score-=3_300_000;if(hasForcedWinInOne(merged,actor))score+=950_000;const forks=countImmediateWins(merged,actor);if(forks>=2)score+=430_000;score-=Math.max(0,target.lineDistance-1)*110;}\n  }else{\n    const line=getActiveLine(state),source=line.boards[action.sourceIndex],lag=Math.max(0,getProgress(line)-source.t);score+=54_000+boardPatternScore(source.cells,actor)*48+Math.min(9,lag)*3000;if(countImmediateWins(source.cells,actor)>=2)score+=170_000;if(hasForcedWinInOne(source.cells,actor))score+=260_000;\n  }\n  if(isTacticalAction(state,action))score+=95_000;\n  return score;\n}\nfunction scoreForProgressPenalty(line,source){return Math.max(0,getProgress(line)-source.t)*900;}\nfunction orderActions(state,actions,aiSide,ttBest=null,ply=0){\n  return actions.map(action=>{let score=actionShapeScore(state,action,aiSide);if(ttBest&&sameAction(action,ttBest))score+=3_000_000;if(killers[ply]?.some(k=>sameAction(k,action)))score+=180_000;return{action,score};}).sort((a,b)=>b.score-a.score).map(item=>item.action);\n}\nfunction branchCap(depth,total){if(total<=14)return total;if(depth>=10)return Math.min(total,11);if(depth>=8)return Math.min(total,14);if(depth>=6)return Math.min(total,18);if(depth>=4)return Math.min(total,26);if(depth>=2)return Math.min(total,38);return Math.min(total,56);}\nfunction compactCells(cells){let out='';for(const c of cells)out+=c==='X'?'1':c==='O'?'2':'0';return out;}\nfunction stateKey(state){\n  let key=state.turn+'|'+state.activeLineId+'|';\n  for(const line of state.lines){key+=line.id+'.'+line.createdOrder+'.'+line.owner+'.'+line.ownerIndex+'.'+(line.active?1:0)+':';for(const board of line.boards)key+=board.t+compactCells(board.cells)+';';key+='/';}\n  return key;\n}\nfunction tacticalCandidates(state,aiSide,ply){\n  const actions=orderActions(state,getLegalActions(state),aiSide,null,ply),out=[];\n  for(const action of actions){if(isTacticalAction(state,action))out.push(action);if(out.length>=10)break;}\n  return out;\n}\nfunction quiescence(state,alpha,beta,aiSide,ply,qDepth=0){\n  searchNodes+=1;if(timeExpired())throw new Error('TIME');if(state.gameOver&&state.result)return terminalScore(state.result,aiSide,ply);\n  const maximizing=state.turn===aiSide,stand=heuristic(state,aiSide);\n  if(qDepth>=Q_MAX_DEPTH)return stand;\n  if(maximizing){if(stand>=beta)return stand;alpha=Math.max(alpha,stand);}else{if(stand<=alpha)return stand;beta=Math.min(beta,stand);}\n  const actions=tacticalCandidates(state,aiSide,ply);if(!actions.length)return stand;\n  let best=stand;\n  for(const action of actions){\n    if(timeExpired())throw new Error('TIME');const result=applyAction(state,action);if(!result)continue;\n    const value=result.outcome.ended?terminalScore(result.outcome,aiSide,ply):quiescence(result.state,alpha,beta,aiSide,ply+1,qDepth+1);\n    if(maximizing){if(value>best)best=value;alpha=Math.max(alpha,best);}else{if(value<best)best=value;beta=Math.min(beta,best);}\n    if(alpha>=beta)break;\n  }\n  return best;\n}\nfunction tacticalLeaf(state,aiSide,ply){return quiescence(state,-INF,INF,aiSide,ply,0);}\nfunction rememberKiller(ply,action,depth){\n  killers[ply]=killers[ply]||[];if(!killers[ply].some(k=>sameAction(k,action))){killers[ply].unshift(action);killers[ply]=killers[ply].slice(0,2);}const key=actionKey(action);historyTable.set(key,(historyTable.get(key)||0)+depth*depth*12);\n}\nfunction alphabeta(state,depth,alpha,beta,aiSide,ply){\n  searchNodes+=1;if(timeExpired())throw new Error('TIME');if(state.gameOver&&state.result)return terminalScore(state.result,aiSide,ply);if(depth<=0)return quiescence(state,alpha,beta,aiSide,ply,0);\n  const key=stateKey(state),entry=tt.get(key),alpha0=alpha,beta0=beta;\n  if(entry&&entry.depth>=depth){if(entry.flag==='EXACT')return entry.value;if(entry.flag==='LOWER')alpha=Math.max(alpha,entry.value);else if(entry.flag==='UPPER')beta=Math.min(beta,entry.value);if(alpha>=beta)return entry.value;}\n  let actions=getLegalActions(state);if(!actions.length)return heuristic(state,aiSide);actions=orderActions(state,actions,aiSide,entry?.best||null,ply).slice(0,branchCap(depth,actions.length));\n  const maximizing=state.turn===aiSide;let best=maximizing?-INF:INF,bestAction=actions[0],searched=0;\n  for(const action of actions){\n    if(timeExpired())throw new Error('TIME');const result=applyAction(state,action);if(!result)continue;searched+=1;let value;\n    if(result.outcome.ended)value=terminalScore(result.outcome,aiSide,ply);\n    else{\n      const tactical=isTacticalAction(state,action),fullDepth=depth-1;\n      let reduce=0;\n      if(!tactical&&depth>=4&&searched>4){reduce=searched>16&&depth>=7?2:1;}\n      const reducedDepth=Math.max(0,fullDepth-reduce);\n      if(searched===1)value=alphabeta(result.state,fullDepth,alpha,beta,aiSide,ply+1);\n      else if(maximizing){\n        value=alphabeta(result.state,reducedDepth,alpha,alpha+1,aiSide,ply+1);\n        if(reduce&&value>alpha)value=alphabeta(result.state,fullDepth,alpha,alpha+1,aiSide,ply+1);\n        if(value>alpha&&value<beta)value=alphabeta(result.state,fullDepth,value,beta,aiSide,ply+1);\n      }else{\n        value=alphabeta(result.state,reducedDepth,beta-1,beta,aiSide,ply+1);\n        if(reduce&&value<beta)value=alphabeta(result.state,fullDepth,beta-1,beta,aiSide,ply+1);\n        if(value<beta&&value>alpha)value=alphabeta(result.state,fullDepth,alpha,value,aiSide,ply+1);\n      }\n    }\n    if(maximizing){if(value>best){best=value;bestAction=action;}alpha=Math.max(alpha,best);}else{if(value<best){best=value;bestAction=action;}beta=Math.min(beta,best);}\n    if(alpha>=beta){rememberKiller(ply,action,depth);break;}\n  }\n  if(!searched)return heuristic(state,aiSide);let flag='EXACT';if(best<=alpha0)flag='UPPER';else if(best>=beta0)flag='LOWER';\n  if(tt.size>=TT_LIMIT&&depth>=5)tt.clear();\n  if(tt.size<TT_LIMIT||depth>=4)tt.set(key,{depth,value:best,flag,best:bestAction});return best;\n}\nfunction opponentImmediateWin(state,aiSide){\n  if(state.gameOver)return state.result?.winner===nextPlayer(aiSide);const opponent=nextPlayer(aiSide);return state.turn===opponent&&hasImmediateWinningAction(state,opponent);\n}\nfunction publicAction(action){if(!action)return null;if(action.type==='place')return{type:'place',index:action.index};if(action.type==='travel')return{type:'travel',sourceIndex:action.sourceIndex,side:action.side};return{type:'imprint',lineId:action.lineId,direction:action.direction};}\nfunction findBestAction(root,aiSide,budgetMs,aiLevel,startedAt){\n  budgetMs=Math.max(700,Math.min(7000,Number(budgetMs)||2000));deadline=startedAt+budgetMs-24;searchNodes=0;tt=new Map();killers=[];historyTable=new Map();boardScoreCache=new Map();forcedWinCache=new Map();\n  refreshTimelineStatuses(root);let actions=getLegalActions(root);if(!actions.length)return{action:null,summary:'没有合法行动。',depth:0,score:0,considered:0};\n  let ordered=orderActions(root,actions,aiSide),immediate=[];\n  for(const action of ordered){if(action.type==='travel')continue;if(timeExpired(70))break;const result=applyAction(root,action);searchNodes+=1;if(result?.outcome.ended&&result.outcome.winner===aiSide)immediate.push({action,score:terminalScore(result.outcome,aiSide,0)+actionShapeScore(root,action,aiSide)});}\n  if(immediate.length){immediate.sort((a,b)=>b.score-a.score);return{action:publicAction(immediate[0].action),summary:'发现立即胜利：已同时检查普通落子、竖直最近拓印与全局绝杀。',depth:1,score:Math.round(immediate[0].score),considered:searchNodes};}\n  const safe=[],safetyProbe=ordered.slice(0,Math.min(ordered.length,48));\n  for(const action of safetyProbe){if(timeExpired(115))break;const result=applyAction(root,action);searchNodes+=1;if(result&&!opponentImmediateWin(result.state,aiSide))safe.push(action);}\n  if(safe.length){const safeKeys=new Set(safe.map(actionKey));ordered=safe.concat(ordered.filter(action=>!safeKeys.has(actionKey(action))));}\n  actions=ordered.slice(0,Math.min(96,ordered.length));let bestAction=actions[0],bestScore=-INF,completedDepth=0;\n  for(let depth=1;depth<=36&&!timeExpired(48);depth+=1){\n    const rootEntry=tt.get(stateKey(root));actions=orderActions(root,actions,aiSide,rootEntry?.best||bestAction,0);let localBest=bestAction,localScore=-INF,completed=true,scored=[];\n    let alpha=-INF,beta=INF;if(completedDepth>=2&&Math.abs(bestScore)<MATE-1000){const window=Math.max(700,Math.min(1800,700+depth*85));alpha=bestScore-window;beta=bestScore+window;}const aspirationAlpha=alpha,aspirationBeta=beta;\n    for(let aspiration=0;aspiration<2;aspiration+=1){\n      localScore=-INF;scored=[];completed=true;let aspirationCut=false;\n      try{\n        for(const action of actions){if(timeExpired(16)){completed=false;break;}const result=applyAction(root,action);searchNodes+=1;if(!result)continue;const value=result.outcome.ended?terminalScore(result.outcome,aiSide,0):alphabeta(result.state,depth-1,alpha,beta,aiSide,1);scored.push({action,value});if(value>localScore){localScore=value;localBest=action;}alpha=Math.max(alpha,localScore);if(alpha>=beta){aspirationCut=true;break;}}\n      }catch(error){if(error.message==='TIME')completed=false;else throw error;}\n      if(!completed||!scored.length)break;if(aspiration===0&&completedDepth>=2&&(aspirationCut||localScore<=aspirationAlpha||localScore>=aspirationBeta)){alpha=-INF;beta=INF;continue;}break;\n    }\n    if(!completed||!scored.length)break;bestAction=localBest;bestScore=localScore;completedDepth=depth;scored.sort((a,b)=>b.value-a.value);actions=scored.map(item=>item.action);if(Math.abs(bestScore)>=MATE-2500)break;\n  }\n  const level=aiLevel==='max'?'Max':aiLevel==='pro'?'Pro':'Flash';\n  return{action:publicAction(bestAction),summary:level+'：新规则多维搜索完成（迭代加深 PVS/αβ、置换表、主变/杀手/历史启发、战术静态延伸、迟着缩减、立即胜负/防杀检查、静线创建权限与全线节奏评估）；三档仅时间上限不同。',depth:completedDepth,score:Math.round(bestScore),considered:searchNodes};\n}\nself.onmessage=function(event){const payload=event.data,startedAt=Date.now();const result=findBestAction(payload.state,payload.aiSide,payload.budgetMs||2000,payload.aiLevel||'flash',startedAt);result.requestId=payload.requestId;result.elapsed=Date.now()-startedAt;self.postMessage(result);};\n";render();
+  </script>
+</body>
+</html>
