@@ -1,435 +1,974 @@
 <!DOCTYPE html>
-<html lang="zh">
+<html lang="zh-CN" data-theme="light">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <link
-    rel="icon"
-    href="https://user-assets.sxlcdn.com/images/1209238/FlWuslNmGTHt1EipxUtq2GI6zqnN.png?imageMogr2/strip/auto-orient/thumbnail/1200x9000%3E/quality/90!/format/png"
-    type="image/png"
-  />
-  <title>工具大全</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#f7f8fc">
+  <meta name="description" content="工具大全两周年特别版。65 个实用工具，一站式搜索和分类浏览。感谢自 2024 年以来的每一次同行。">
+  <title>工具大全 · 2周年</title>
+  <link rel="icon" href="https://user-assets.sxlcdn.com/images/1209238/FlWuslNmGTHt1EipxUtq2GI6zqnN.png?imageMogr2/strip/auto-orient/thumbnail/1200x9000%3E/quality/90!/format/png" type="image/png">
+  <script>
+    // 保留旧版深色模式设置，避免加载时闪烁。
+    try {
+      const saved = localStorage.getItem('toolbox-anniversary-theme');
+      if (saved === 'dark' || (!saved && localStorage.getItem('darkMode') === 'true')) {
+        document.documentElement.dataset.theme = 'dark';
+      }
+    } catch (_) {}
+  </script>
   <style>
-    /* 全局平滑滚动 */
-    html { scroll-behavior: smooth; }
+    :root {
+      color-scheme: light;
+      --bg: #f7f8fc; --surface: #fff; --soft: #f3f2fc;
+      --text: #24243d; --muted: #71768b; --subtle: #969aad;
+      --line: #e6e8f0; --accent: #6655dc; --accent-hover: #5545c5;
+      --accent-soft: #f0edff; --focus: #a99aff;
+      --header: rgba(247,248,252,.93); --shadow: 0 6px 22px rgba(38,37,73,.035);
+    }
+    :root[data-theme="dark"] {
+      color-scheme: dark;
+      --bg: #121426; --surface: #1d2035; --soft: #262840;
+      --text: #f3f1ff; --muted: #b1b4c8; --subtle: #9196b0;
+      --line: #333750; --accent: #a69cff; --accent-hover: #c1b9ff;
+      --accent-soft: #302c4e; --focus: #b4acff;
+      --header: rgba(18,20,38,.94); --shadow: 0 7px 24px rgba(0,0,0,.11);
+    }
+    *,*::before,*::after { box-sizing: border-box; }
+    html { scroll-behavior: smooth; scroll-padding-top: 96px; }
+    body { min-width: 0; margin: 0; color: var(--text); background: var(--bg);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", sans-serif;
+      font-size: 14px; -webkit-font-smoothing: antialiased; }
+    a { color: inherit; text-decoration: none; }
+    button,input { font: inherit; }
+    button { cursor: pointer; }
+    [hidden] { display: none !important; }
+    :focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
+    ::selection { background: #e4dfff; color: #24243d; }
+    .sr-only { position: absolute; height: 1px; width: 1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; }
+    .skip-link { position: fixed; left: 15px; top: -65px; z-index: 100;
+      background: var(--surface); padding: 11px 16px; border-radius: 10px; }
+    .skip-link:focus { top: 12px; }
+    .container { width: min(1160px, calc(100% - 48px)); margin-inline: auto; }
 
-    /* Light mode */
-    body {
-      font-family: 'Arial', sans-serif;
-      background: #f0f4f8;
-      color: #333;
-      margin: 0;
-      padding: 0;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: flex-start;
-      min-height: 100vh;
-      overflow-x: hidden;
-    }
+    /* 顶部高考倒计时：保留原版功能 */
+    .exam-banner { padding: 7px 16px; min-height: 31px; text-align: center;
+      color: #4d6951; background: #edf4ec; border-bottom: 1px solid #e2eee0;
+      font-size: 12px; font-weight: 600; line-height: 1.45; }
+    .exam-banner strong { color: #327e48; font-variant-numeric: tabular-nums; }
+    :root[data-theme="dark"] .exam-banner { color: #cce1ce; background: #223528; border-color: #334b38; }
+    :root[data-theme="dark"] .exam-banner strong { color: #aeecb7; }
 
-    /* —— 高考倒计时横幅 —— */
-    #exam-countdown-banner {
-      width: 100%;
-      color: #fff;
-      text-align: center;
-      padding: 12px 20px;
-      font-size: 1.2rem;
-      font-weight: bold;
-      box-shadow: 0 2px 10px rgba(255, 0, 0, 0.25);
-      display: none;
-      z-index: 10001;
-      position: relative;
-    }
-    #exam-countdown-banner span {
-      color: #ffff00;
-      font-size: 1.5rem;
-      margin: 0 4px;
-      text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
-    }
+    /* 简洁、可固定的导航栏 */
+    .site-header { position: sticky; top: 0; z-index: 30; border-bottom: 1px solid var(--line);
+      background: var(--header); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); }
+    .header-inner { display: flex; align-items: center; gap: 20px; height: 72px; }
+    .brand { display: inline-flex; flex-shrink: 0; align-items: center; gap: 11px; }
 
-    /* 顶部控制区 */
-    .top-controls {
-      width: 100%;
-      max-width: 1100px;
-      padding: 14px 20px 0 20px;
-      box-sizing: border-box;
-      display: flex;
-      justify-content: flex-end;
-      align-items: center;
-    }
+    /* Logo 改为旧版图片链接 */
+    .brand-mark { position: relative; display: block; width: 39px; height: 39px;
+      border-radius: 12px; background: var(--surface);
+      box-shadow: 0 4px 10px rgba(96,79,194,.18); }
+    .brand-mark img { display: block; width: 100%; height: 100%;
+      object-fit: cover; border-radius: inherit; }
+    .brand-mark::after { position: absolute; top: -7px; right: -7px; content: '✦'; font-size: 13px; color: #e7b87f; }
 
-    /* 顶部横幅 */
-    .hero {
-      width: 100%;
-      max-width: 1100px;
-      padding: 14px 20px 0 20px;
-      box-sizing: border-box;
-    }
-    .hero img {
-      width: 100%;
-      height: auto;
-      display: block;
-      border-radius: 18px;
-      box-shadow: 0 10px 24px rgba(0,0,0,0.12);
-    }
+    .brand-text { display: flex; flex-direction: column; gap: 3px; }
+    .brand-text strong { font-size: 17px; letter-spacing: -.025em; }
+    .brand-text small { font-size: 9px; letter-spacing: .14em; color: var(--subtle); font-weight: 700; }
+    .top-nav { margin-left: auto; display: flex; align-items: center; gap: 26px; }
+    .top-nav a { font-size: 13px; font-weight: 670; color: var(--muted); }
+    .top-nav a:hover { color: var(--accent); }
+    .anniversary-label { border: 1px solid #e8ddff; border-radius: 999px; padding: 7px 12px;
+      background: #f3eeff; color: #765cc9; font-size: 11px; font-weight: 750; white-space: nowrap; }
+    :root[data-theme="dark"] .anniversary-label { background: #302a4d; border-color: #4a4171; color: #c7bbff; }
+    .theme-toggle { width: 40px; height: 40px; flex-shrink: 0; border: 1px solid var(--line); border-radius: 12px;
+      color: var(--text); background: var(--surface); font-size: 20px; display: grid; place-items: center; }
+    .theme-toggle:hover { background: var(--soft); }
 
-    /* 原 h1 隐藏（保留可回滚） */
-    h1 { display: none; }
+    /* 二周年特别版封面：无大图下载，无持续运行的特效 */
+    .hero { position: relative; isolation: isolate; display: grid; grid-template-columns: minmax(0,1.08fr) minmax(0,.92fr);
+      align-items: center; min-height: 395px; overflow: hidden; margin-top: 22px; padding: 46px 60px 50px;
+      border-radius: 26px; background: linear-gradient(115deg,#201b48 0%,#35275f 53%,#594589 100%); color: #fff;
+      box-shadow: 0 18px 40px rgba(47,38,103,.105); }
+    .hero::before { content: ''; position: absolute; inset: 0; z-index: -1;
+      background-image: radial-gradient(rgba(255,255,255,.23) .75px, transparent .75px);
+      background-size: 23px 23px; opacity: .37; mask-image: linear-gradient(90deg,transparent 20%,#000); pointer-events: none; }
+    .hero::after { content: ''; position: absolute; z-index: -1; width: 430px; height: 430px; right: -110px; top: -200px;
+      background: rgba(183,142,247,.13); border-radius: 50%; filter: blur(45px); pointer-events: none; }
+    .hero-copy { position: relative; z-index: 2; }
+    .hero-kicker { display: inline-flex; align-items: center; gap: 9px; border: 1px solid rgba(255,255,255,.18);
+      background: rgba(255,255,255,.055); border-radius: 999px; padding: 8px 13px;
+      color: #eee7ff; font-weight: 720; letter-spacing: .11em; font-size: 10px; }
+    .hero-kicker span { color: #fcd3a0; font-size: 14px; }
+    .hero h1 { margin: 22px 0 16px; font-size: clamp(36px,4.15vw,56px); line-height: 1.24;
+      letter-spacing: -.055em; font-weight: 820; }
+    .hero h1 em { font-style: normal; color: #ffe0b2; }
+    .hero-desc { max-width: 430px; margin: 0; color: #e0d9ef; line-height: 1.92; font-size: 14px; }
+    .hero-cta { display: inline-flex; align-items: center; justify-content: center; gap: 14px; margin-top: 25px;
+      min-height: 47px; padding: 12px 21px; background: #ffedcf; color: #362e50;
+      border-radius: 11px; font-size: 13px; font-weight: 780; transition: background .18s, transform .18s; }
+    .hero-cta:hover { transform: translateY(-2px); background: #fff7e8; }
+    .hero-footer { margin: 19px 0 0; font-size: 11px; color: #c9bfdd; letter-spacing: .025em; }
+    .hero-visual { position: relative; height: 300px; min-width: 0; display: grid; place-items: center; }
+    .hero-ring { position: absolute; width: 322px; height: 322px; border-radius: 50%;
+      border: 1px dashed rgba(255,235,254,.24); }
+    .hero-ring::before { content: ''; position: absolute; width: 13px; height: 13px; border-radius: 50%;
+      left: 18%; top: 9%; background: #ffccaf; box-shadow: 0 0 15px rgba(254,186,151,.5); }
+    .hero-ring-inner { width: 245px; height: 245px; border-style: solid; border-color: rgba(255,255,255,.11); }
+    .hero-ring-inner::before { display: none; }
+    .hero-number { position: relative; margin-right: .06em; line-height: 1; font-size: 282px; font-weight: 900; letter-spacing: -.11em;
+      background: linear-gradient(150deg,#fff9e6 0%,#ffe2ac 39%,#f8b8b3 75%,#d6b7f4 100%);
+      -webkit-background-clip: text; background-clip: text; color: transparent;
+      filter: drop-shadow(0 16px 29px rgba(254,171,177,.12)); }
+    .hero-star { position: absolute; font-size: 27px; color: #ffdbb0; }
+    .hero-star--one { left: 13%; top: 9%; }
+    .hero-star--two { right: 13%; bottom: 15%; font-size: 18px; color: #ffc9bf; }
+    .hero-art-label { position: absolute; bottom: 0; padding: 9px 18px; border-radius: 999px;
+      background: rgba(27,20,66,.56); border: 1px solid rgba(255,255,255,.19);
+      font-size: 10px; font-weight: 780; letter-spacing: .2em; color: #fff3de; white-space: nowrap; }
 
-    /* —— 副标题 —— */
-    .subtitle {
-      font-size: 1.2rem;
-      color: #7f8c8d;
-      margin: 20px 20px 40px 20px;
-      text-align: center;
-    }
+    /* 精简信息栏 */
+    .facts { position: relative; width: calc(100% - 70px); margin: -22px auto 0; z-index: 3;
+      display: grid; grid-template-columns: repeat(3,minmax(0,1fr));
+      border: 1px solid var(--line); background: var(--surface); box-shadow: 0 12px 28px rgba(36,31,80,.075); border-radius: 17px; }
+    .fact { display: flex; align-items: center; justify-content: center; gap: 12px; min-width: 0; padding: 15px 11px; }
+    .fact+.fact { border-left: 1px solid var(--line); }
+    .fact-icon { width: 38px; height: 38px; flex-shrink: 0; display: grid; place-items: center;
+      border-radius: 11px; background: var(--accent-soft); color: var(--accent); font-size: 19px; }
+    .fact:nth-child(2) .fact-icon { background: #fff2e7; color: #d89462; }
+    .fact:nth-child(3) .fact-icon { background: #eaf7f2; color: #369a83; }
+    :root[data-theme="dark"] .fact:nth-child(2) .fact-icon { background: #413326; color: #e9b181; }
+    :root[data-theme="dark"] .fact:nth-child(3) .fact-icon { background: #234338; color: #9bdfc9; }
+    .fact strong { display: block; line-height: 1.28; font-variant-numeric: tabular-nums; font-size: 19px; letter-spacing: -.035em; }
+    .fact small { display: block; margin-top: 3px; color: var(--muted); font-size: 11px; }
 
-    .time {
-      font-size: 1.4rem;
-      color: #16a085;
-      margin-top: 20px;
-    }
+    /* 工具目录：搜索、分类、统一卡片体系 */
+    .tools-section { padding-top: 67px; padding-bottom: 95px; }
+    .section-head { display: flex; align-items: end; justify-content: space-between; gap: 20px; margin-bottom: 23px; }
+    .section-kicker { margin: 0 0 9px; color: var(--accent); font-size: 11px; font-weight: 780; letter-spacing: .13em; }
+    .section-head h2 { margin: 0; font-size: clamp(26px,3vw,35px); letter-spacing: -.05em; line-height: 1.3; }
+    .section-intro { margin: 9px 0 0; color: var(--muted); font-size: 13px; line-height: 1.75; }
+    .update-note { padding: 9px 14px; border: 1px solid var(--line); border-radius: 999px;
+      background: var(--surface); color: var(--muted); font-size: 11px; white-space: nowrap; }
+    .update-note::before { content: ''; display: inline-block; width: 7px; height: 7px; margin-right: 8px; border-radius: 50%; background: #59ba92; }
+    .search-form { display: flex; align-items: center; gap: 12px; min-height: 60px; padding: 8px 14px 8px 18px;
+      background: var(--surface); border: 1px solid var(--line); border-radius: 14px;
+      box-shadow: var(--shadow); transition: border-color .2s, box-shadow .2s; }
+    .search-form:focus-within { border-color: var(--focus); box-shadow: 0 0 0 3px var(--accent-soft); }
+    .search-icon { width: 21px; height: 21px; flex: 0 0 auto; color: var(--subtle); }
+    .search-input { flex: 1; height: 42px; min-width: 0; border: 0; outline: 0;
+      color: var(--text); background: transparent; font-size: 14px; }
+    .search-input::placeholder { color: var(--subtle); }
+    .search-input::-webkit-search-cancel-button { display: none; }
+    .clear-search { flex-shrink: 0; border: 0; background: var(--soft); color: var(--muted);
+      width: 31px; height: 31px; border-radius: 8px; font-size: 20px; display: grid; place-items: center; }
+    .clear-search:hover { color: var(--text); }
+    .search-shortcut { display: inline-flex; align-items: center; justify-content: center; min-width: 30px;
+      height: 29px; border: 1px solid var(--line); border-radius: 7px;
+      color: var(--subtle); background: var(--bg); font-size: 12px; }
+    .filter-outer { position: relative; margin-top: 18px; }
+    .filter-row { display: flex; align-items: center; flex-wrap: wrap; gap: 9px; }
+    .filter-chip { display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+      flex: 0 0 auto; min-height: 40px; border: 1px solid var(--line); border-radius: 10px;
+      padding: 9px 15px; background: var(--surface); color: var(--muted);
+      font-size: 12px; font-weight: 690; white-space: nowrap; transition: color .18s, background .18s, border-color .18s; }
+    .filter-chip:hover { border-color: var(--focus); color: var(--accent); }
+    .filter-chip.is-active { background: var(--accent); border-color: var(--accent); color: #fff; }
+    .filter-count { font-size: 11px; opacity: .77; font-variant-numeric: tabular-nums; }
+    .result-row { display: flex; align-items: center; justify-content: space-between; gap: 14px;
+      min-height: 48px; margin: 12px 2px 11px; font-size: 12px; color: var(--muted); }
+    .result-row strong { color: var(--text); }
+    .result-hint { color: var(--subtle); font-size: 11px; }
+    .tools-grid { list-style: none; margin: 0; padding: 0; display: grid;
+      grid-template-columns: repeat(3,minmax(0,1fr)); gap: 12px; }
+    .tool-card { min-width: 0; border: 1px solid var(--line); border-radius: 14px;
+      background: var(--surface); box-shadow: var(--shadow); transition: border-color .18s, box-shadow .18s, transform .18s; }
+    .tool-card:hover { border-color: #bfb5f4; box-shadow: 0 9px 24px rgba(83,69,164,.095); transform: translateY(-2px); }
+    .tool-card:focus-within { border-color: var(--focus); }
+    .tool-link { display: flex; align-items: center; gap: 13px; min-height: 91px;
+      height: 100%; padding: 16px; border-radius: inherit; }
+    .tool-icon { display: grid; place-items: center; width: 44px; height: 44px; flex-shrink: 0;
+      border-radius: 12px; font-size: 21px; font-weight: 700; line-height: 1; }
+    .tool-icon--daily { background: #e7f7f2; color: #2e9b7f; }
+    .tool-icon--study { background: #eaf1ff; color: #6087d7; }
+    .tool-icon--dev { background: #f0edff; color: #8070cb; }
+    .tool-icon--creative { background: #fff1e5; color: #d9954f; }
+    .tool-icon--game { background: #feecf1; color: #da7291; }
+    :root[data-theme="dark"] .tool-icon--daily { background: #25453b; color: #94dec5; }
+    :root[data-theme="dark"] .tool-icon--study { background: #273a59; color: #abc3f4; }
+    :root[data-theme="dark"] .tool-icon--dev { background: #363055; color: #c1b6f9; }
+    :root[data-theme="dark"] .tool-icon--creative { background: #483729; color: #edbe89; }
+    :root[data-theme="dark"] .tool-icon--game { background: #482e41; color: #eeabc4; }
+    .tool-main { display: flex; flex: 1; min-width: 0; flex-direction: column; justify-content: center; gap: 7px; }
+    .tool-main strong { font-size: 14px; font-weight: 720; line-height: 1.42;
+      overflow-wrap: anywhere; letter-spacing: -.016em; }
+    .tool-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 7px;
+      color: var(--subtle); font-size: 11px; line-height: 1.45; }
+    .tool-tag { display: inline-flex; align-items: center; padding: 2px 6px;
+      border-radius: 5px; font-size: 10px; font-weight: 720; line-height: 1.35; }
+    .tool-tag--new { background: #fff0df; color: #bc7440; }
+    .tool-tag--original { background: #e9f5ff; color: #367aab; }
+    :root[data-theme="dark"] .tool-tag--new { background: #443428; color: #fac397; }
+    :root[data-theme="dark"] .tool-tag--original { background: #2a4154; color: #a4d4fa; }
+    .tool-arrow { margin-left: auto; flex-shrink: 0; color: var(--subtle); font-size: 17px;
+      transition: color .18s, transform .18s; }
+    .tool-card:hover .tool-arrow { color: var(--accent); transform: translate(2px,-2px); }
+    .empty-state { padding: 46px 20px; margin-top: 8px; border: 1px dashed var(--line);
+      border-radius: 14px; text-align: center; background: var(--surface); }
+    .empty-state .empty-symbol { display: block; color: var(--subtle); font-size: 37px; }
+    .empty-state h3 { margin: 9px 0; font-size: 18px; }
+    .empty-state p { margin: 0; font-size: 13px; color: var(--muted); }
+    .reset-filters { margin-top: 19px; padding: 10px 19px; border: 0; border-radius: 9px;
+      background: var(--accent); color: #fff; font-weight: 700; }
+    .reset-filters:hover { background: var(--accent-hover); }
 
-    .search-container {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      margin-top: 30px;
-      width: 100%;
-    }
+    /* 站点页脚 */
+    .site-footer { border-top: 1px solid var(--line); background: var(--surface); }
+    .footer-inner { min-height: 128px; display: flex; align-items: center; justify-content: space-between;
+      gap: 26px; padding-block: 25px; }
+    .footer-title { margin: 0 0 9px; font-size: 16px; font-weight: 760; }
+    .footer-title span { color: var(--accent); }
+    .footer-detail { margin: 0; font-size: 11px; color: var(--muted); line-height: 1.9; }
+    .footer-links { display: flex; align-items: center; flex-wrap: wrap; gap: 25px; }
+    .footer-links a { color: var(--muted); font-size: 12px; font-weight: 670; }
+    .footer-links a:hover { color: var(--accent); }
 
-    #search-input {
-      width: 250px;
-      padding: 10px;
-      font-size: 1.1rem;
-      border: 2px solid #3498db;
-      border-radius: 8px;
-      margin-right: 10px;
-      outline: none;
+    @media (max-width: 1040px) {
+      .hero { min-height: 365px; padding-inline: 42px; }
+      .hero-number { font-size: 230px; }
+      .hero-ring { width: 275px; height: 275px; }
+      .hero-ring-inner { width: 207px; height: 207px; }
+      .hero h1 { font-size: clamp(34px,4.2vw,46px); }
+      .tools-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
     }
-    #search-button {
-      padding: 10px 20px;
-      font-size: 1.1rem;
-      background-color: #3498db;
-      color: #fff;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      transition: background-color 0.3s;
+    @media (max-width: 720px) {
+      html { scroll-padding-top: 76px; }
+      .container { width: calc(100% - 30px); }
+      .header-inner { height: 62px; gap: 13px; }
+      .brand-mark { width: 36px; height: 36px; }
+      .brand-text strong { font-size: 16px; }
+      .brand-text small { font-size: 8px; }
+      .top-nav { gap: 0; }
+      .top-nav a { font-size: 12px; }
+      .anniversary-label { display: none; }
+      .theme-toggle { width: 37px; height: 37px; border-radius: 10px; }
+      .hero { display: block; min-height: 338px; padding: 30px 24px 31px;
+        border-radius: 20px; margin-top: 14px; }
+      .hero-kicker { font-size: 9px; letter-spacing: .055em; padding: 7px 10px; }
+      .hero h1 { max-width: 350px; font-size: clamp(34px,8vw,46px); margin: 20px 0 13px; }
+      .hero-desc { max-width: 315px; font-size: 12.5px; line-height: 1.88; }
+      .hero-cta { margin-top: 22px; min-height: 43px; padding: 10px 17px; font-size: 12px; }
+      .hero-footer { margin-top: 18px; font-size: 10px; }
+      .hero-visual { position: absolute; right: -46px; bottom: -96px; width: 245px; height: 245px;
+        opacity: .28; pointer-events: none; z-index: 0; }
+      .hero-ring { width: 228px; height: 228px; }
+      .hero-ring-inner { width: 165px; height: 165px; }
+      .hero-number { font-size: 205px; }
+      .hero-art-label,.hero-star { display: none; }
+      .facts { width: calc(100% - 20px); margin-top: -13px; }
+      .fact { flex-direction: column; text-align: center; gap: 6px; padding: 13px 5px; }
+      .fact-icon { width: 30px; height: 30px; border-radius: 9px; font-size: 16px; }
+      .fact strong { font-size: 16px; }
+      .fact small { font-size: 10px; }
+      .tools-section { padding-top: 50px; padding-bottom: 65px; }
+      .section-head { margin-bottom: 18px; }
+      .section-head h2 { font-size: 28px; }
+      .section-intro { font-size: 12px; }
+      .update-note { display: none; }
+      .search-form { min-height: 55px; padding: 6px 11px 6px 14px; }
+      .search-input { font-size: 13px; }
+      .search-shortcut { display: none; }
+      .filter-outer { margin-top: 15px; margin-right: -15px; }
+      .filter-row { flex-wrap: nowrap; overflow-x: auto; overflow-y: hidden; gap: 8px;
+        padding-right: 15px; padding-bottom: 6px; scroll-snap-type: x proximity;
+        -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+      .filter-row::-webkit-scrollbar { display: none; }
+      .filter-chip { scroll-snap-align: start; min-height: 39px; padding: 8px 13px; }
+      .result-row { margin: 9px 2px 9px; }
+      .result-hint { display: none; }
+      .tools-grid { grid-template-columns: 1fr; gap: 9px; }
+      .tool-link { min-height: 79px; padding: 12px 14px; gap: 12px; }
+      .tool-icon { width: 42px; height: 42px; font-size: 20px; }
+      .tool-main { gap: 5px; }
+      .tool-main strong { font-size: 14px; }
+      .tool-meta { font-size: 11px; }
+      .footer-inner { align-items: flex-start; flex-direction: column; gap: 16px; min-height: 0; }
+      .footer-links { gap: 20px; }
     }
-    #search-button:hover { background-color: #2980b9; }
-
-    ul {
-      list-style: none;
-      padding: 0;
-      width: 100%;
-      max-width: 700px;
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-      gap: 20px;
-      margin-top: 40px;
+    @media (max-width: 360px) {
+      .container { width: calc(100% - 24px); }
+      .brand-text small { letter-spacing: .07em; }
+      .header-inner { gap: 9px; }
+      .top-nav a { font-size: 11px; }
+      .hero { padding: 28px 20px 28px; }
+      .hero h1 { font-size: 33px; }
+      .hero-kicker { font-size: 8px; }
+      .hero-footer { font-size: 9px; }
+      .fact small { font-size: 9px; }
+      .fact strong { font-size: 14px; }
+      .filter-outer { margin-right: -12px; }
     }
-    li {
-      background: #ecf0f1;
-      border: 1px solid #bdc3c7;
-      padding: 20px;
-      border-radius: 8px;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-      transition: transform 0.3s, box-shadow 0.3s;
-      text-align: center;
-      font-size: 1.1rem;
-      position: relative;
+    @media (prefers-reduced-motion: reduce) {
+      *,*::before,*::after { scroll-behavior: auto !important; transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
+      html { scroll-behavior: auto; }
     }
-    li:hover { transform: translateY(-8px); box-shadow: 0 6px 12px rgba(0,0,0,0.15); }
-    a { text-decoration: none; color: #2980b9; font-weight: bold; transition: color 0.3s; }
-    a:hover { color: #e74c3c; }
-
-    /* —— "新" 标记 —— */
-    .badge-new {
-      position: absolute;
-      top: 8px;
-      right: 8px;
-      background: linear-gradient(135deg, #ff416c, #ff4b2f);
-      color: #fff;
-      padding: 4px 10px;
-      font-size: 0.78rem;
-      font-weight: bold;
-      border-radius: 10px;
-      box-shadow: 0 3px 10px rgba(255, 65, 108, 0.35);
-      animation: newFloat 2s ease-in-out infinite;
-      letter-spacing: 0.8px;
-      text-shadow: 0 1px 2px rgba(0,0,0,0.15);
-    }
-    @keyframes newFloat {
-      0%, 100% { transform: translateY(0); box-shadow: 0 3px 10px rgba(255, 65, 108, 0.35); }
-      50% { transform: translateY(-3px); box-shadow: 0 6px 16px rgba(255, 65, 108, 0.5); }
-    }
-
-    /* —— "原创游戏" 标记 —— */
-    .badge-original {
-      position: absolute;
-      top: 8px;
-      right: 8px;
-      background: linear-gradient(135deg, #00c6ff, #0072ff);
-      color: #fff;
-      padding: 4px 10px;
-      font-size: 0.78rem;
-      font-weight: bold;
-      border-radius: 20px;
-      box-shadow: 0 3px 10px rgba(0, 114, 255, 0.35);
-      animation: originalPulse 2.5s ease-in-out infinite;
-      letter-spacing: 0.5px;
-    }
-    @keyframes originalPulse {
-      0%, 100% { transform: scale(1); box-shadow: 0 3px 10px rgba(0, 114, 255, 0.35); }
-      50% { transform: scale(1.06); box-shadow: 0 5px 14px rgba(0, 114, 255, 0.5); }
-    }
-
-    footer {
-      margin-top: auto;
-      width: 100%;
-      background-color: #34495e;
-      color: #fff;
-      text-align: center;
-      padding: 30px 0;
-      font-family: 'Arial', sans-serif;
-      position: relative;
-    }
-    footer p {
-      margin: 0; font-size: 1.5rem; font-weight: bold; color: #fff;
-      animation: glowText 1.5s ease-in-out infinite alternate;
-    }
-    footer p span { color: #ffeb3b; }
-    footer a {
-      color: #ffeb3b; font-weight: bold; text-decoration: none;
-      padding: 5px 10px; border-radius: 8px; transition: color 0.3s, transform 0.3s ease;
-    }
-    footer a:hover { color: #fff; background-color: rgba(255,255,255,.1); transform: scale(1.2); }
-    @keyframes glowText {
-      0% { text-shadow: 0 0 5px #ffeb3b, 0 0 10px #ffeb3b, 0 0 20px #ffeb3b; }
-      100% { text-shadow: 0 0 5px #f39c12, 0 0 10px #f39c12, 0 0 20px #f39c12; }
-    }
-
-    /* Dark Mode */
-    body.dark-mode { background: #2c3e50; color: #ecf0f1; }
-    .dark-mode .subtitle { color: #bdc3c7; }
-    .dark-mode .time { color: #1abc9c; }
-    .dark-mode #search-input { background: #34495e; border: 2px solid #1abc9c; color: #ecf0f1; }
-    .dark-mode #search-button { background-color: #f0e6d2; color: #333; }
-
-    /* 暗色模式下卡片 */
-    .dark-mode ul li {
-      background: #34495e;
-      border: 1px solid #2c3e50;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.35);
-    }
-    .dark-mode ul li:hover { box-shadow: 0 8px 18px rgba(0,0,0,0.45); }
-    .dark-mode a { color: #1abc9c; }
-    .dark-mode a:hover { color: #e74c3c; }
-
-    .dark-mode footer { background-color: #1a252f; }
-    .dark-mode footer p { color: #bdc3c7; }
-    .dark-mode footer a { color: #1abc9c; }
-    .dark-mode .hero img { box-shadow: 0 10px 24px rgba(0,0,0,0.35); }
-
-    /* 明暗按钮 */
-    #dark-mode-toggle {
-      width: 30px;
-      height: 30px;
-      background-color: black;
-      color: white;
-      border: none;
-      border-radius: 50%;
-      cursor: pointer;
-      box-shadow: 0 4px 8px rgba(0,0,0,.2);
-      font-size: 1rem;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    body.dark-mode #dark-mode-toggle { background-color: white; color: black; }
-    #dark-mode-toggle.switching { animation: bounce .5s ease-in-out; }
-    @keyframes bounce { 0%{transform:scale(1)} 50%{transform:scale(1.1)} 100%{transform:scale(1)} }
   </style>
 </head>
 <body>
-  <div id="exam-countdown-banner"></div>
+  <a class="skip-link" href="#tools">跳过介绍，直接浏览工具</a>
+  <div class="exam-banner" id="exam-countdown-banner" role="status" hidden>📚 距离 2029 年高考还有 <strong id="exam-days">--</strong> 天 · 一起稳步向前</div>
 
-  <div class="top-controls">
-    <button id="dark-mode-toggle">夜</button>
-  </div>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a href="#top" class="brand" aria-label="工具大全首页">
+        <span class="brand-mark" aria-hidden="true">
+          <img src="https://user-assets.sxlcdn.com/images/1209238/FlWuslNmGTHt1EipxUtq2GI6zqnN.png?imageMogr2/strip/auto-orient/thumbnail/1200x9000%3E/quality/90!/format/png" alt="">
+        </span>
+        <span class="brand-text"><strong>工具大全</strong><small>USEFUL-TOOLS · SINCE 2024</small></span>
+      </a>
+      <nav class="top-nav" aria-label="网站导航"><a href="#tools">工具中心</a></nav>
+      <span class="anniversary-label" aria-label="二周年">✦ 2ND ANNIVERSARY</span>
+      <button type="button" id="dark-mode-toggle" class="theme-toggle" title="切换深浅主题" aria-label="切换到深色模式">
+        <span id="theme-icon" aria-hidden="true">☾</span>
+      </button>
+    </div>
+  </header>
 
-  <div class="hero">
-    <img
-      src="https://user-assets.sxlcdn.com/images/1209238/Foxykd40SX97EaO0j9J9MqrZdx4y.png?imageMogr2/strip/auto-orient/thumbnail/1200x9000%3E/quality/90!/format/png"
-      alt="工具大全 横幅"
-    />
-  </div>
+  <main id="top">
+    <div class="container">
+      <section class="hero" aria-labelledby="hero-title">
+        <div class="hero-copy">
+          <div class="hero-kicker"><span aria-hidden="true">✦</span> 2024 — 2026 · 2ND ANNIVERSARY</div>
+          <h1 id="hero-title">两年相伴，<br><em>探索不止。</em></h1>
+          <p class="hero-desc">从 2024 到 2026，感谢每一次使用与支持。<br>工具大全两周年，愿好奇与灵感始终同行。</p>
+          <a href="#tools" class="hero-cta">探索全部工具 <span aria-hidden="true">↗</span></a>
+          <p class="hero-footer">两周年特别版 · 继续把简单好用的工具带给你</p>
+        </div>
+        <div class="hero-visual" aria-hidden="true">
+          <span class="hero-ring"></span><span class="hero-ring hero-ring-inner"></span>
+          <span class="hero-number">2</span>
+          <span class="hero-star hero-star--one">✦</span><span class="hero-star hero-star--two">✦</span>
+          <span class="hero-art-label">ANNIVERSARY · 2026</span>
+        </div>
+      </section>
+      <div class="facts" aria-label="网站概况">
+        <div class="fact"><span class="fact-icon" aria-hidden="true">◇</span><span><strong id="total-tools">65</strong><small>实用工具</small></span></div>
+        <div class="fact"><span class="fact-icon" aria-hidden="true">✦</span><span><strong>02 YEARS</strong><small>2024 — 2026</small></span></div>
+        <div class="fact"><span class="fact-icon" aria-hidden="true">◷</span><span><strong id="current-time">--:--:--</strong><small id="current-date">本地时间</small></span></div>
+      </div>
 
-  <p class="subtitle">探索常用小工具，让生活与工作更轻松！</p>
-
-  <div class="time" id="current-time"></div>
-
-  <div class="search-container">
-    <input type="text" id="search-input" placeholder="搜索工具..." oninput="searchTools()" />
-    <button id="search-button">搜索</button>
-  </div>
-   <ul id="tools-list">
-    <li>
-      <a href="/SHA%E7%94%9F%E6%88%90">SHA生成器</a>
-      <span class="badge-new">新</span>
-	</li>
-    	<li><a href="/%E4%B9%9D%E5%AD%90%E6%A3%8B">九子棋</a>
-    	<li><a href="/%E5%87%BD%E6%95%B0%E6%B1%82%E5%AF%BC%E4%B8%8E%E5%8F%8D%E6%B1%82%E5%AF%BC">函数求导与反求导</a>
-    	<li><a href="/%E4%BA%8C%E7%BB%B4%E7%A0%81%E7%94%9F%E6%88%90%E4%B8%8E%E8%A7%A3%E6%9E%90">二维码生成与解析器</a>
-    	<li><a href="/%E5%8C%96%E5%AD%A6%E6%96%B9%E7%A8%8B%E5%BC%8F%E9%85%8D%E5%B9%B3">化学方程式配平器</a>
-    	<li><a href="https://chess.tools.ug2.team">Chess·国际象棋</a>
-    <li>
-      <a href="/WZL/Pong">Pong</a>
-      <span class="badge-original">WZL原创游戏</span>
-	</li>
-    <li>
-      <a href="/YYF/%E8%B6%85%E6%97%B6%E7%A9%BA%E4%BA%95%E5%AD%97%E6%A3%8B">超时空井字棋</a>
-      <span class="badge-original">YYF原创游戏</span>
-	</li>
-    	<li><a href="/%E4%BF%84%E7%BD%97%E6%96%AF%E6%96%B9%E5%9D%97">俄罗斯方块</a>
-    	<li><a href="/%E4%B8%93%E6%B3%A8%E5%8A%9B%E5%A4%9A%E7%BB%B4%E6%B5%8B%E8%AF%84">专注力多维测评</a>
-    	<li><a href="/%E5%AE%AB%E6%A0%BC%E5%88%87%E5%9B%BE">宫格切图器</a>
-    	<li><a href="/Scratch%E8%BF%90%E8%A1%8C%E5%99%A8">Scratch运行器</a>
-    	<li><a href="/%E6%96%87%E6%9C%AC%E6%9F%A5%E9%87%8D%E5%99%A8">文本查重器</a>
-    	<li><a href="/%E5%9B%A0%E5%BC%8F%E5%88%86%E8%A7%A3">因式分解</a>
-    	<li><a href="/%E6%8B%89%E6%A0%BC%E6%9C%97%E6%97%A5%E6%8F%92%E5%80%BC%E5%87%BD%E6%95%B0%E7%94%9F%E6%88%90">拉格朗日插值函数生成器</a>
-	   	<li><a href="/%E7%BD%91%E7%BB%9C%E9%80%9F%E5%BA%A6%E6%B5%8B%E8%AF%95">网络速度测试工具</a>
-	   	<li><a href="/%E5%85%AC%E7%BD%91IP%E6%9F%A5%E8%AF%A2">公网IP查询</a>
-	   	<li><a href="/%E5%9B%9B%E5%AD%90%E6%A3%8B">四子棋</a>
-	   	<li><a href="/%E5%88%86%E8%B4%9D%E6%B5%8B%E8%AF%95">分贝测试器</a>
-	   	<li><a href="/%E5%87%BD%E6%95%B0%E5%9B%BE%E5%83%8F%E7%BB%98%E5%88%B6">函数图像绘制器</a>
-	   	<li><a href="/%E6%A0%A1%E9%9F%B3%E5%99%A8">校音器</a>
-		<li><a href="/%E8%8A%82%E6%8B%8D%E5%99%A8">节拍器</a>
-		<li><a href="/%E4%B8%89%E8%A7%86%E5%9B%BE%E6%8E%A8%E5%88%B03D%E4%BD%93%E7%B4%A0">三视图推到3D体素</a>
-		<li><a href="/%E4%BA%94%E5%AD%90%E6%A3%8B">益智五子棋</a>
-		<li><a href="/%E9%BB%91%E7%99%BD%E6%A3%8B">黑白棋</a>
-		<li><a href="/%E4%B9%9D%E4%BA%95%E6%A3%8B">九井棋游戏</a>
-		<li><a href="/%E8%A7%A3%E6%96%B9%E7%A8%8B">解方程器</a>
-		<li><a href="/%E8%B7%91%E5%88%86%E6%9C%BA">综合性能跑分器</a>
-		<li><a href="/%E6%97%A5%E6%9C%9F%E9%97%B4%E9%9A%94%E6%97%B6%E9%97%B4%E8%AE%A1%E7%AE%97%E5%99%A8">日期间隔时间计算器</a>
-		<li><a href="/%E8%A7%86%E9%A2%91%E5%80%92%E6%94%BE">视频倒放工具</a>
-		<li><a href="/%E6%95%B0%E5%AD%97%E5%8D%8E%E5%AE%B9%E9%81%93">数字华容道</a>
-		<li><a href="/%E5%8D%95%E4%BD%8D%E8%BD%AC%E6%8D%A2">单位转换器</a>
-		<li><a href="/%E8%AE%A1%E7%AE%97%E5%99%A8">计算器</a>
-		<li><a href="/%E8%B4%A8%E5%9B%A0%E6%95%B0%E5%88%86%E8%A7%A3">质因数分解器</a>
-		<li><a href="/%E6%96%87%E6%9C%AC%E6%9B%BF%E6%8D%A2">文本替换器</a>
-		<li><a href="/%E6%97%A5%E5%8E%86">日历（简易版）</a>
-		<li><a href="/IDE">在线IDE</a>
-		<li><a href="/%E8%B4%A8%E6%95%B0%E5%88%A4%E5%AE%9A">质数判定器</a>
-		<li><a href="/%E5%8A%A0%E6%9D%83%E5%B9%B3%E5%9D%87%E5%80%BC%E8%AE%A1%E7%AE%97">加权平均值计算器</a>
-		<li><a href="/%E5%BC%80%E5%BF%83%E6%B6%88%E6%B6%88%E4%B9%90">开心消消乐</a>
-    <li><a href="/%E5%9B%B4%E6%A3%8B">围棋游戏</a>
-		<li><a href="/%E6%95%B0%E7%8B%AC">数独练习</a>
-        <li><a href="/24%E7%82%B9%E8%A7%A3%E6%B3%95%E8%AE%A1%E7%AE%97%E5%99%A8">24点解法计算器</a>
-        <li><a href="/%E7%94%BB%E6%9D%BF">画板【自由绘图器】</a></li>
-        <li><a href="/Base64%E8%BD%AC%E5%9B%BE%E7%89%87">Base64转图片</a></li>
-        <li><a href="/%E5%9B%BE%E7%89%87%E8%BD%ACBase64">图片转Base64</a></li>
-        <li><a href="/BMI%E6%8C%87%E6%95%B0">BMI指数计算器</a></li>
-        <li><a href="/%E6%95%B0%E5%AD%A6%E7%AC%A6%E5%8F%B7%E5%A4%A7%E5%85%A8">数学符号大全</a></li>
-        <li><a href="/%E9%80%9F%E7%AE%97">速算练习器</a></li>
-        <li><a href="/%E9%9A%8F%E6%9C%BA%E6%95%B0">随机数生成器</a></li>
-        <li><a href="/Markdown%E9%A2%84%E8%A7%88">Markdown预览器</a></li>
-        <li><a href="/%E8%AE%A1%E6%97%B6%E5%99%A8">计时器</a></li>
-        <li><a href="/%E8%BF%9B%E5%88%B6%E8%BD%AC%E6%8D%A2%E5%99%A8">进制转换工具</a></li>
-        <li><a href="/%E6%91%A9%E6%96%AF%E5%AF%86%E7%A0%81%E8%BD%AC%E6%8D%A2%E5%99%A8">摩斯密码转换器</a></li>
-        <li><a href="/%E8%B4%AA%E5%90%83%E8%9B%87">贪吃蛇游戏</a></li>
-        <li><a href="/%E6%B1%87%E7%8E%87%E8%BD%AC%E6%8D%A2%E5%99%A8">汇率转换器</a></li>
-        <li><a href="/%E8%BA%AB%E9%AB%98%E8%AE%A1%E7%AE%97%E5%99%A8">身高预测器</a></li>
-        <li><a href="/%E6%89%AB%E9%9B%B7%E6%B8%B8%E6%88%8F">扫雷游戏</a></li>
-        <li><a href="/%E5%8F%8D%E5%BA%94%E9%80%9F%E5%BA%A6%E6%B5%8B%E8%AF%95">反应速度测试器</a></li>
-        <li><a href="/%E6%89%8B%E9%80%9F%E6%B5%8B%E8%AF%95">手速测试器</a></li>
-        <li><a href="/%E7%A0%B8%E9%87%91%E8%9B%8B">砸金蛋</a></li>
-        <li><a href="/%E5%B1%8F%E5%B9%95%E5%BD%95%E5%88%B6">屏幕录制【电脑版】</a></li>
-        <li><a href="/%E6%B8%90%E5%8F%98%E8%89%B2">渐变色调节工具</a></li>
-        <li><a href="/%E9%A2%9C%E8%89%B2%E9%85%8D%E7%BD%AE%E5%99%A8">颜色配置器</a></li>
-		<li><a href="/%E7%94%BB%E5%9C%86%E5%BA%A6%E6%B5%8B%E8%AF%95">画圆度测试</a>
-    </ul>
-  <footer>
-    <p>© <span>Lin.ZK</span> 版权所有 2024-2026</p>
-    <a href="mailto:united-grade2@qq.com">联系邮箱：united-grade2@qq.com</a>
+      <section class="tools-section" id="tools" aria-labelledby="tools-title">
+        <div class="section-head">
+          <div>
+            <p class="section-kicker">DISCOVER / TOOL DIRECTORY</p>
+            <h2 id="tools-title">探索工具目录</h2>
+            <p class="section-intro">分类清晰，快速搜索。找到需要的工具，只需一步。</p>
+          </div>
+          <span class="update-note">持续更新中</span>
+        </div>
+        <form class="search-form" id="tool-search-form" role="search">
+          <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="10.8" cy="10.8" r="7"></circle><path d="m16.2 16.2 5 5"></path></svg>
+          <label class="sr-only" for="search-input">搜索工具名称或分类</label>
+          <input class="search-input" id="search-input" type="search" autocomplete="off" spellcheck="false" placeholder="搜索工具名称，如：计算器、数独、Markdown…" enterkeyhint="search">
+          <button type="button" id="clear-search" class="clear-search" aria-label="清除搜索" hidden>×</button>
+          <span class="search-shortcut" aria-hidden="true">/</span>
+        </form>
+        <div class="filter-outer">
+          <div class="filter-row" id="filters" role="group" aria-label="按工具分类筛选">
+          <button type="button" class="filter-chip is-active" data-filter="all" aria-pressed="true">全部工具 <span class="filter-count" data-count-for="all">65</span></button>
+          <button type="button" class="filter-chip" data-filter="daily" aria-pressed="false">日常效率 <span class="filter-count" data-count-for="daily">14</span></button>
+          <button type="button" class="filter-chip" data-filter="study" aria-pressed="false">学习探索 <span class="filter-count" data-count-for="study">14</span></button>
+          <button type="button" class="filter-chip" data-filter="dev" aria-pressed="false">开发网络 <span class="filter-count" data-count-for="dev">13</span></button>
+          <button type="button" class="filter-chip" data-filter="creative" aria-pressed="false">创意设计 <span class="filter-count" data-count-for="creative">5</span></button>
+          <button type="button" class="filter-chip" data-filter="game" aria-pressed="false">游戏娱乐 <span class="filter-count" data-count-for="game">19</span></button>
+          </div>
+        </div>
+        <div class="result-row">
+          <span id="result-count" role="status" aria-live="polite" aria-atomic="true">当前显示 <strong>65</strong> 个工具</span>
+          <span class="result-hint">可通过名称或分类快速查找</span>
+        </div>
+        <ul class="tools-grid" id="tools-list" aria-label="工具列表">
+          <li class="tool-card" data-category="dev">
+            <a class="tool-link" href="/SHA%E7%94%9F%E6%88%90" aria-label="打开SHA生成器">
+              <span class="tool-icon tool-icon--dev" aria-hidden="true">⌘</span>
+              <span class="tool-main"><strong>SHA生成器</strong><span class="tool-meta"><span>开发网络</span><span class="tool-tag tool-tag--new">NEW</span></span></span>
+              <span class="tool-arrow" aria-hidden="true">↗</span>
+            </a>
+          </li>
+          <li class="tool-card" data-category="game">
+            <a class="tool-link" href="/%E4%B9%9D%E5%AD%90%E6%A3%8B" aria-label="打开九子棋">
+              <span class="tool-icon tool-icon--game" aria-hidden="true">♞</span>
+              <span class="tool-main"><strong>九子棋</strong><span class="tool-meta"><span>游戏娱乐</span></span></span>
+              <span class="tool-arrow" aria-hidden="true">↗</span>
+            </a>
+          </li>
+          <li class="tool-card" data-category="study">
+            <a class="tool-link" href="/%E5%87%BD%E6%95%B0%E6%B1%82%E5%AF%BC%E4%B8%8E%E5%8F%8D%E6%B1%82%E5%AF%BC" aria-label="打开函数求导与反求导">
+              <span class="tool-icon tool-icon--study" aria-hidden="true">∑</span>
+              <span class="tool-main"><strong>函数求导与反求导</strong><span class="tool-meta"><span>学习探索</span></span></span>
+              <span class="tool-arrow" aria-hidden="true">↗</span>
+            </a>
+          </li>
+          <li class="tool-card" data-category="dev">
+            <a class="tool-link" href="/%E4%BA%8C%E7%BB%B4%E7%A0%81%E7%94%9F%E6%88%90%E4%B8%8E%E8%A7%A3%E6%9E%90" aria-label="打开二维码生成与解析器">
+              <span class="tool-icon tool-icon--dev" aria-hidden="true">⌘</span>
+              <span class="tool-main"><strong>二维码生成与解析器</strong><span class="tool-meta"><span>开发网络</span></span></span>
+              <span class="tool-arrow" aria-hidden="true">↗</span>
+            </a>
+          </li>
+          <li class="tool-card" data-category="study">
+            <a class="tool-link" href="/%E5%8C%96%E5%AD%A6%E6%96%B9%E7%A8%8B%E5%BC%8F%E9%85%8D%E5%B9%B3" aria-label="打开化学方程式配平器">
+              <span class="tool-icon tool-icon--study" aria-hidden="true">∑</span>
+              <span class="tool-main"><strong>化学方程式配平器</strong><span class="tool-meta"><span>学习探索</span></span></span>
+              <span class="tool-arrow" aria-hidden="true">↗</span>
+            </a>
+          </li>
+          <li class="tool-card" data-category="game">
+            <a class="tool-link" href="https://chess.tools.ug2.team" aria-label="打开Chess·国际象棋">
+              <span class="tool-icon tool-icon--game" aria-hidden="true">♞</span>
+              <span class="tool-main"><strong>Chess·国际象棋</strong><span class="tool-meta"><span>游戏娱乐</span></span></span>
+              <span class="tool-arrow" aria-hidden="true">↗</span>
+            </a>
+          </li>
+          <li class="tool-card" data-category="game">
+            <a class="tool-link" href="/WZL/Pong" aria-label="打开Pong">
+              <span class="tool-icon tool-icon--game" aria-hidden="true">♞</span>
+              <span class="tool-main"><strong>Pong</strong><span class="tool-meta"><span>游戏娱乐</span><span class="tool-tag tool-tag--original">WZL 原创</span></span></span>
+              <span class="tool-arrow" aria-hidden="true">↗</span>
+            </a>
+          </li>
+          <li class="tool-card" data-category="game">
+            <a class="tool-link" href="/YYF/%E8%B6%85%E6%97%B6%E7%A9%BA%E4%BA%95%E5%AD%97%E6%A3%8B" aria-label="打开超时空井字棋">
+              <span class="tool-icon tool-icon--game" aria-hidden="true">♞</span>
+              <span class="tool-main"><strong>超时空井字棋</strong><span class="tool-meta"><span>游戏娱乐</span><span class="tool-tag tool-tag--original">YYF 原创</span></span></span>
+              <span class="tool-arrow" aria-hidden="true">↗</span>
+            </a>
+          </li>
+          <li class="tool-card" data-category="game">
+            <a class="tool-link" href="/%E4%BF%84%E7%BD%97%E6%96%AF%E6%96%B9%E5%9D%97" aria-label="打开俄罗斯方块">
+              <span class="tool-icon tool-icon--game" aria-hidden="true">♞</span>
+              <span class="tool-main"><strong>俄罗斯方块</strong><span class="tool-meta"><span>游戏娱乐</span></span></span>
+              <span class="tool-arrow" aria-hidden="true">↗</span>
+            </a>
+          </li>
+          <li class="tool-card" data-category="study">
+            <a class="tool-link" href="/%E4%B8%93%E6%B3%A8%E5%8A%9B%E5%A4%9A%E7%BB%B4%E6%B5%8B%E8%AF%84" aria-label="打开专注力多维测评">
+              <span class="tool-icon tool-icon--study" aria-hidden="true">∑</span>
+              <span class="tool-main"><strong>专注力多维测评</strong><span class="tool-meta"><span>学习探索</span></span></span>
+              <span class="tool-arrow" aria-hidden="true">↗</span>
+            </a>
+          </li>
+          <li class="tool-card" data-category="creative">
+            <a class="tool-link" href="/%E5%AE%AB%E6%A0%BC%E5%88%87%E5%9B%BE" aria-label="打开宫格切图器">
+              <span class="tool-icon tool-icon--creative" aria-hidden="true">✦</span>
+              <span class="tool-main"><strong>宫格切图器</strong><span class="tool-meta"><span>创意设计</span></span></span>
+              <span class="tool-arrow" aria-hidden="true">↗</span>
+            </a>
+          </li>
+          <li class="tool-card" data-category="dev">
+            <a class="tool-link" href="/Scratch%E8%BF%90%E8%A1%8C%E5%99%A8" aria-label="打开Scratch运行器">
+              <span class="tool-icon tool-icon--dev" aria-hidden="true">⌘</span>
+              <span class="tool-main"><strong>Scratch运行器</strong><span class="tool-meta"><span>开发网络</span></span></span>
+              <span class="tool-arrow" aria-hidden="true">↗</span>
+            </a>
+          </li>
+          <li class="tool-card" data-category="dev">
+            <a class="tool-link" href="/%E6%96%87%E6%9C%AC%E6%9F%A5%E9%87%8D%E5%99%A8" aria-label="打开文本查重器">
+              <span class="tool-icon tool-icon--dev" aria-hidden="true">⌘</span>
+              <span class="tool-main"><strong>文本查重器</strong><span class="tool-meta"><span>开发网络</span></span></span>
+              <span class="tool-arrow" aria-hidden="true">↗</span>
+            </a>
+          </li>
+          <li class="tool-card" data-category="study">
+            <a class="tool-link" href="/%E5%9B%A0%E5%BC%8F%E5%88%86%E8%A7%A3" aria-label="打开因式分解">
+              <span class="tool-icon tool-icon--study" aria-hidden="true">∑</span>
+              <span class="tool-main"><strong>因式分解</strong><span class="tool-meta"><span>学习探索</span></span></span>
+              <span class="tool-arrow" aria-hidden="true">↗</span>
+            </a>
+          </li>
+          <li class="tool-card" data-category="study">
+            <a class="tool-link" href="/%E6%8B%89%E6%A0%BC%E6%9C%97%E6%97%A5%E6%8F%92%E5%80%BC%E5%87%BD%E6%95%B0%E7%94%9F%E6%88%90" aria-label="打开拉格朗日插值函数生成器">
+              <span class="tool-icon tool-icon--study" aria-hidden="true">∑</span>
+              <span class="tool-main"><strong>拉格朗日插值函数生成器</strong><span class="tool-meta"><span>学习探索</span></span></span>
+              <span class="tool-arrow" aria-hidden="true">↗</span>
+            </a>
+          </li>
+          <li class="tool-card" data-category="dev">
+            <a class="tool-link" href="/%E7%BD%91%E7%BB%9C%E9%80%9F%E5%BA%A6%E6%B5%8B%E8%AF%95" aria-label="打开网络速度测试工具">
+              <span class="tool-icon tool-icon--dev" aria-hidden="true">⌘</span>
+              <span class="tool-main"><strong>网络速度测试工具</strong><span class="tool-meta"><span>开发网络</span></span></span>
+              <span class="tool-arrow" aria-hidden="true">↗</span>
+            </a>
+          </li>
+          <li class="tool-card" data-category="dev">
+            <a class="tool-link" href="/%E5%85%AC%E7%BD%91IP%E6%9F%A5%E8%AF%A2" aria-label="打开公网IP查询">
+              <span class="tool-icon tool-icon--dev" aria-hidden="true">⌘</span>
+              <span class="tool-main"><strong>公网IP查询</strong><span class="tool-meta"><span>开发网络</span></span></span>
+              <span class="tool-arrow" aria-hidden="true">↗</span>
+            </a>
+          </li>
+          <li class="tool-card" data-category="game">
+            <a class="tool-link" href="/%E5%9B%9B%E5%AD%90%E6%A3%8B" aria-label="打开四子棋">
+              <span class="tool-icon tool-icon--game" aria-hidden="true">♞</span>
+              <span class="tool-main"><strong>四子棋</strong><span class="tool-meta"><span>游戏娱乐</span></span></span>
+              <span class="tool-arrow" aria-hidden="true">↗</span>
+            </a>
+          </li>
+          <li class="tool-card" data-category="daily">
+            <a class="tool-link" href="/%E5%88%86%E8%B4%9D%E6%B5%8B%E8%AF%95" aria-label="打开分贝测试器">
+              <span class="tool-icon tool-icon--daily" aria-hidden="true">◷</span>
+              <span class="tool-main"><strong>分贝测试器</strong><span class="tool-meta"><span>日常效率</span></span></span>
+              <span class="tool-arrow" aria-hidden="true">↗</span>
+            </a>
+          </li>
+          <li class="tool-card" data-category="study">
+            <a class="tool-link" href="/%E5%87%BD%E6%95%B0%E5%9B%BE%E5%83%8F%E7%BB%98%E5%88%B6" aria-label="打开函数图像绘制器">
+              <span class="tool-icon tool-icon--study" aria-hidden="true">∑</span>
+              <span class="tool-main"><strong>函数图像绘制器</strong><span class="tool-meta"><span>学习探索</span></span></span>
+              <span class="tool-arrow" aria-hidden="true">↗</span>
+            </a>
+          </li>
+          <li class="tool-card" data-category="daily">
+            <a class="tool-link" href="/%E6%A0%A1%E9%9F%B3%E5%99%A8" aria-label="打开校音器">
+              <span class="tool-icon tool-icon--daily" aria-hidden="true">◷</span>
+              <span class="tool-main"><strong>校音器</strong><span class="tool-meta"><span>日常效率</span></span></span>
+              <span class="tool-arrow" aria-hidden="true">↗</span>
+            </a>
+          </li>
+          <li class="tool-card" data-category="daily">
+            <a class="tool-link" href="/%E8%8A%82%E6%8B%8D%E5%99%A8" aria-label="打开节拍器">
+              <span class="tool-icon tool-icon--daily" aria-hidden="true">◷</span>
+              <span class="tool-main"><strong>节拍器</strong><span class="tool-meta"><span>日常效率</span></span></span>
+              <span class="tool-arrow" aria-hidden="true">↗</span>
+            </a>
+          </li>
+          <li class="tool-card" data-category="study">
+            <a class="tool-link" href="/%E4%B8%89%E8%A7%86%E5%9B%BE%E6%8E%A8%E5%88%B03D%E4%BD%93%E7%B4%A0" aria-label="打开三视图推到3D体素">
+              <span class="tool-icon tool-icon--study" aria-hidden="true">∑</span>
+              <span class="tool-main"><strong>三视图推到3D体素</strong><span class="tool-meta"><span>学习探索</span></span></span>
+              <span class="tool-arrow" aria-hidden="true">↗</span>
+            </a>
+          </li>
+          <li class="tool-card" data-category="game">
+            <a class="tool-link" href="/%E4%BA%94%E5%AD%90%E6%A3%8B" aria-label="打开益智五子棋">
+              <span class="tool-icon tool-icon--game" aria-hidden="true">♞</span>
+              <span class="tool-main"><strong>益智五子棋</strong><span class="tool-meta"><span>游戏娱乐</span></span></span>
+              <span class="tool-arrow" aria-hidden="true">↗</span>
+            </a>
+          </li>
+          <li class="tool-card" data-category="game">
+            <a class="tool-link" href="/%E9%BB%91%E7%99%BD%E6%A3%8B" aria-label="打开黑白棋">
+              <span class="tool-icon tool-icon--game" aria-hidden="true">♞</span>
+              <span class="tool-main"><strong>黑白棋</strong><span class="tool-meta"><span>游戏娱乐</span></span></span>
+              <span class="tool-arrow" aria-hidden="true">↗</span>
+            </a>
+          </li>
+          <li class="tool-card" data-category="game">
+            <a class="tool-link" href="/%E4%B9%9D%E4%BA%95%E6%A3%8B" aria-label="打开九井棋游戏">
+              <span class="tool-icon tool-icon--game" aria-hidden="true">♞</span>
+              <span class="tool-main"><strong>九井棋游戏</strong><span class="tool-meta"><span>游戏娱乐</span></span></span>
+              <span class="tool-arrow" aria-hidden="true">↗</span>
+            </a>
+          </li>
+          <li class="tool-card" data-category="study">
+            <a class="tool-link" href="/%E8%A7%A3%E6%96%B9%E7%A8%8B" aria-label="打开解方程器">
+              <span class="tool-icon tool-icon--study" aria-hidden="true">∑</span>
+              <span class="tool-main"><strong>解方程器</strong><span class="tool-meta"><span>学习探索</span></span></span>
+              <span class="tool-arrow" aria-hidden="true">↗</span>
+            </a>
+          </li>
+          <li class="tool-card" data-category="daily">
+            <a class="tool-link" href="/%E8%B7%91%E5%88%86%E6%9C%BA" aria-label="打开综合性能跑分器">
+              <span class="tool-icon tool-icon--daily" aria-hidden="true">◷</span>
+              <span class="tool-main"><strong>综合性能跑分器</strong><span class="tool-meta"><span>日常效率</span></span></span>
+              <span class="tool-arrow" aria-hidden="true">↗</span>
+            </a>
+          </li>
+          <li class="tool-card" data-category="daily">
+            <a class="tool-link" href="/%E6%97%A5%E6%9C%9F%E9%97%B4%E9%9A%94%E6%97%B6%E9%97%B4%E8%AE%A1%E7%AE%97%E5%99%A8" aria-label="打开日期间隔时间计算器">
+              <span class="tool-icon tool-icon--daily" aria-hidden="true">◷</span>
+              <span class="tool-main"><strong>日期间隔时间计算器</strong><span class="tool-meta"><span>日常效率</span></span></span>
+              <span class="tool-arrow" aria-hidden="true">↗</span>
+            </a>
+          </li>
+          <li class="tool-card" data-category="creative">
+            <a class="tool-link" href="/%E8%A7%86%E9%A2%91%E5%80%92%E6%94%BE" aria-label="打开视频倒放工具">
+              <span class="tool-icon tool-icon--creative" aria-hidden="true">✦</span>
+              <span class="tool-main"><strong>视频倒放工具</strong><span class="tool-meta"><span>创意设计</span></span></span>
+              <span class="tool-arrow" aria-hidden="true">↗</span>
+            </a>
+          </li>
+          <li class="tool-card" data-category="game">
+            <a class="tool-link" href="/%E6%95%B0%E5%AD%97%E5%8D%8E%E5%AE%B9%E9%81%93" aria-label="打开数字华容道">
+              <span class="tool-icon tool-icon--game" aria-hidden="true">♞</span>
+              <span class="tool-main"><strong>数字华容道</strong><span class="tool-meta"><span>游戏娱乐</span></span></span>
+              <span class="tool-arrow" aria-hidden="true">↗</span>
+            </a>
+          </li>
+          <li class="tool-card" data-category="daily">
+            <a class="tool-link" href="/%E5%8D%95%E4%BD%8D%E8%BD%AC%E6%8D%A2" aria-label="打开单位转换器">
+              <span class="tool-icon tool-icon--daily" aria-hidden="true">◷</span>
+              <span class="tool-main"><strong>单位转换器</strong><span class="tool-meta"><span>日常效率</span></span></span>
+              <span class="tool-arrow" aria-hidden="true">↗</span>
+            </a>
+          </li>
+          <li class="tool-card" data-category="daily">
+            <a class="tool-link" href="/%E8%AE%A1%E7%AE%97%E5%99%A8" aria-label="打开计算器">
+              <span class="tool-icon tool-icon--daily" aria-hidden="true">◷</span>
+              <span class="tool-main"><strong>计算器</strong><span class="tool-meta"><span>日常效率</span></span></span>
+              <span class="tool-arrow" aria-hidden="true">↗</span>
+            </a>
+          </li>
+          <li class="tool-card" data-category="study">
+            <a class="tool-link" href="/%E8%B4%A8%E5%9B%A0%E6%95%B0%E5%88%86%E8%A7%A3" aria-label="打开质因数分解器">
+              <span class="tool-icon tool-icon--study" aria-hidden="true">∑</span>
+              <span class="tool-main"><strong>质因数分解器</strong><span class="tool-meta"><span>学习探索</span></span></span>
+              <span class="tool-arrow" aria-hidden="true">↗</span>
+            </a>
+          </li>
+          <li class="tool-card" data-category="daily">
+            <a class="tool-link" href="/%E6%96%87%E6%9C%AC%E6%9B%BF%E6%8D%A2" aria-label="打开文本替换器">
+              <span class="tool-icon tool-icon--daily" aria-hidden="true">◷</span>
+              <span class="tool-main"><strong>文本替换器</strong><span class="tool-meta"><span>日常效率</span></span></span>
+              <span class="tool-arrow" aria-hidden="true">↗</span>
+            </a>
+          </li>
+          <li class="tool-card" data-category="daily">
+            <a class="tool-link" href="/%E6%97%A5%E5%8E%86" aria-label="打开日历（简易版）">
+              <span class="tool-icon tool-icon--daily" aria-hidden="true">◷</span>
+              <span class="tool-main"><strong>日历（简易版）</strong><span class="tool-meta"><span>日常效率</span></span></span>
+              <span class="tool-arrow" aria-hidden="true">↗</span>
+            </a>
+          </li>
+          <li class="tool-card" data-category="dev">
+            <a class="tool-link" href="/IDE" aria-label="打开在线IDE">
+              <span class="tool-icon tool-icon--dev" aria-hidden="true">⌘</span>
+              <span class="tool-main"><strong>在线IDE</strong><span class="tool-meta"><span>开发网络</span></span></span>
+              <span class="tool-arrow" aria-hidden="true">↗</span>
+            </a>
+          </li>
+          <li class="tool-card" data-category="study">
+            <a class="tool-link" href="/%E8%B4%A8%E6%95%B0%E5%88%A4%E5%AE%9A" aria-label="打开质数判定器">
+              <span class="tool-icon tool-icon--study" aria-hidden="true">∑</span>
+              <span class="tool-main"><strong>质数判定器</strong><span class="tool-meta"><span>学习探索</span></span></span>
+              <span class="tool-arrow" aria-hidden="true">↗</span>
+            </a>
+          </li>
+          <li class="tool-card" data-category="study">
+            <a class="tool-link" href="/%E5%8A%A0%E6%9D%83%E5%B9%B3%E5%9D%87%E5%80%BC%E8%AE%A1%E7%AE%97" aria-label="打开加权平均值计算器">
+              <span class="tool-icon tool-icon--study" aria-hidden="true">∑</span>
+              <span class="tool-main"><strong>加权平均值计算器</strong><span class="tool-meta"><span>学习探索</span></span></span>
+              <span class="tool-arrow" aria-hidden="true">↗</span>
+            </a>
+          </li>
+          <li class="tool-card" data-category="game">
+            <a class="tool-link" href="/%E5%BC%80%E5%BF%83%E6%B6%88%E6%B6%88%E4%B9%90" aria-label="打开开心消消乐">
+              <span class="tool-icon tool-icon--game" aria-hidden="true">♞</span>
+              <span class="tool-main"><strong>开心消消乐</strong><span class="tool-meta"><span>游戏娱乐</span></span></span>
+              <span class="tool-arrow" aria-hidden="true">↗</span>
+            </a>
+          </li>
+          <li class="tool-card" data-category="game">
+            <a class="tool-link" href="/%E5%9B%B4%E6%A3%8B" aria-label="打开围棋游戏">
+              <span class="tool-icon tool-icon--game" aria-hidden="true">♞</span>
+              <span class="tool-main"><strong>围棋游戏</strong><span class="tool-meta"><span>游戏娱乐</span></span></span>
+              <span class="tool-arrow" aria-hidden="true">↗</span>
+            </a>
+          </li>
+          <li class="tool-card" data-category="game">
+            <a class="tool-link" href="/%E6%95%B0%E7%8B%AC" aria-label="打开数独练习">
+              <span class="tool-icon tool-icon--game" aria-hidden="true">♞</span>
+              <span class="tool-main"><strong>数独练习</strong><span class="tool-meta"><span>游戏娱乐</span></span></span>
+              <span class="tool-arrow" aria-hidden="true">↗</span>
+            </a>
+          </li>
+          <li class="tool-card" data-category="study">
+            <a class="tool-link" href="/24%E7%82%B9%E8%A7%A3%E6%B3%95%E8%AE%A1%E7%AE%97%E5%99%A8" aria-label="打开24点解法计算器">
+              <span class="tool-icon tool-icon--study" aria-hidden="true">∑</span>
+              <span class="tool-main"><strong>24点解法计算器</strong><span class="tool-meta"><span>学习探索</span></span></span>
+              <span class="tool-arrow" aria-hidden="true">↗</span>
+            </a>
+          </li>
+          <li class="tool-card" data-category="creative">
+            <a class="tool-link" href="/%E7%94%BB%E6%9D%BF" aria-label="打开画板【自由绘图器】">
+              <span class="tool-icon tool-icon--creative" aria-hidden="true">✦</span>
+              <span class="tool-main"><strong>画板【自由绘图器】</strong><span class="tool-meta"><span>创意设计</span></span></span>
+              <span class="tool-arrow" aria-hidden="true">↗</span>
+            </a>
+          </li>
+          <li class="tool-card" data-category="dev">
+            <a class="tool-link" href="/Base64%E8%BD%AC%E5%9B%BE%E7%89%87" aria-label="打开Base64转图片">
+              <span class="tool-icon tool-icon--dev" aria-hidden="true">⌘</span>
+              <span class="tool-main"><strong>Base64转图片</strong><span class="tool-meta"><span>开发网络</span></span></span>
+              <span class="tool-arrow" aria-hidden="true">↗</span>
+            </a>
+          </li>
+          <li class="tool-card" data-category="dev">
+            <a class="tool-link" href="/%E5%9B%BE%E7%89%87%E8%BD%ACBase64" aria-label="打开图片转Base64">
+              <span class="tool-icon tool-icon--dev" aria-hidden="true">⌘</span>
+              <span class="tool-main"><strong>图片转Base64</strong><span class="tool-meta"><span>开发网络</span></span></span>
+              <span class="tool-arrow" aria-hidden="true">↗</span>
+            </a>
+          </li>
+          <li class="tool-card" data-category="daily">
+            <a class="tool-link" href="/BMI%E6%8C%87%E6%95%B0" aria-label="打开BMI指数计算器">
+              <span class="tool-icon tool-icon--daily" aria-hidden="true">◷</span>
+              <span class="tool-main"><strong>BMI指数计算器</strong><span class="tool-meta"><span>日常效率</span></span></span>
+              <span class="tool-arrow" aria-hidden="true">↗</span>
+            </a>
+          </li>
+          <li class="tool-card" data-category="study">
+            <a class="tool-link" href="/%E6%95%B0%E5%AD%A6%E7%AC%A6%E5%8F%B7%E5%A4%A7%E5%85%A8" aria-label="打开数学符号大全">
+              <span class="tool-icon tool-icon--study" aria-hidden="true">∑</span>
+              <span class="tool-main"><strong>数学符号大全</strong><span class="tool-meta"><span>学习探索</span></span></span>
+              <span class="tool-arrow" aria-hidden="true">↗</span>
+            </a>
+          </li>
+          <li class="tool-card" data-category="study">
+            <a class="tool-link" href="/%E9%80%9F%E7%AE%97" aria-label="打开速算练习器">
+              <span class="tool-icon tool-icon--study" aria-hidden="true">∑</span>
+              <span class="tool-main"><strong>速算练习器</strong><span class="tool-meta"><span>学习探索</span></span></span>
+              <span class="tool-arrow" aria-hidden="true">↗</span>
+            </a>
+          </li>
+          <li class="tool-card" data-category="daily">
+            <a class="tool-link" href="/%E9%9A%8F%E6%9C%BA%E6%95%B0" aria-label="打开随机数生成器">
+              <span class="tool-icon tool-icon--daily" aria-hidden="true">◷</span>
+              <span class="tool-main"><strong>随机数生成器</strong><span class="tool-meta"><span>日常效率</span></span></span>
+              <span class="tool-arrow" aria-hidden="true">↗</span>
+            </a>
+          </li>
+          <li class="tool-card" data-category="dev">
+            <a class="tool-link" href="/Markdown%E9%A2%84%E8%A7%88" aria-label="打开Markdown预览器">
+              <span class="tool-icon tool-icon--dev" aria-hidden="true">⌘</span>
+              <span class="tool-main"><strong>Markdown预览器</strong><span class="tool-meta"><span>开发网络</span></span></span>
+              <span class="tool-arrow" aria-hidden="true">↗</span>
+            </a>
+          </li>
+          <li class="tool-card" data-category="daily">
+            <a class="tool-link" href="/%E8%AE%A1%E6%97%B6%E5%99%A8" aria-label="打开计时器">
+              <span class="tool-icon tool-icon--daily" aria-hidden="true">◷</span>
+              <span class="tool-main"><strong>计时器</strong><span class="tool-meta"><span>日常效率</span></span></span>
+              <span class="tool-arrow" aria-hidden="true">↗</span>
+            </a>
+          </li>
+          <li class="tool-card" data-category="dev">
+            <a class="tool-link" href="/%E8%BF%9B%E5%88%B6%E8%BD%AC%E6%8D%A2%E5%99%A8" aria-label="打开进制转换工具">
+              <span class="tool-icon tool-icon--dev" aria-hidden="true">⌘</span>
+              <span class="tool-main"><strong>进制转换工具</strong><span class="tool-meta"><span>开发网络</span></span></span>
+              <span class="tool-arrow" aria-hidden="true">↗</span>
+            </a>
+          </li>
+          <li class="tool-card" data-category="dev">
+            <a class="tool-link" href="/%E6%91%A9%E6%96%AF%E5%AF%86%E7%A0%81%E8%BD%AC%E6%8D%A2%E5%99%A8" aria-label="打开摩斯密码转换器">
+              <span class="tool-icon tool-icon--dev" aria-hidden="true">⌘</span>
+              <span class="tool-main"><strong>摩斯密码转换器</strong><span class="tool-meta"><span>开发网络</span></span></span>
+              <span class="tool-arrow" aria-hidden="true">↗</span>
+            </a>
+          </li>
+          <li class="tool-card" data-category="game">
+            <a class="tool-link" href="/%E8%B4%AA%E5%90%83%E8%9B%87" aria-label="打开贪吃蛇游戏">
+              <span class="tool-icon tool-icon--game" aria-hidden="true">♞</span>
+              <span class="tool-main"><strong>贪吃蛇游戏</strong><span class="tool-meta"><span>游戏娱乐</span></span></span>
+              <span class="tool-arrow" aria-hidden="true">↗</span>
+            </a>
+          </li>
+          <li class="tool-card" data-category="daily">
+            <a class="tool-link" href="/%E6%B1%87%E7%8E%87%E8%BD%AC%E6%8D%A2%E5%99%A8" aria-label="打开汇率转换器">
+              <span class="tool-icon tool-icon--daily" aria-hidden="true">◷</span>
+              <span class="tool-main"><strong>汇率转换器</strong><span class="tool-meta"><span>日常效率</span></span></span>
+              <span class="tool-arrow" aria-hidden="true">↗</span>
+            </a>
+          </li>
+          <li class="tool-card" data-category="daily">
+            <a class="tool-link" href="/%E8%BA%AB%E9%AB%98%E8%AE%A1%E7%AE%97%E5%99%A8" aria-label="打开身高预测器">
+              <span class="tool-icon tool-icon--daily" aria-hidden="true">◷</span>
+              <span class="tool-main"><strong>身高预测器</strong><span class="tool-meta"><span>日常效率</span></span></span>
+              <span class="tool-arrow" aria-hidden="true">↗</span>
+            </a>
+          </li>
+          <li class="tool-card" data-category="game">
+            <a class="tool-link" href="/%E6%89%AB%E9%9B%B7%E6%B8%B8%E6%88%8F" aria-label="打开扫雷游戏">
+              <span class="tool-icon tool-icon--game" aria-hidden="true">♞</span>
+              <span class="tool-main"><strong>扫雷游戏</strong><span class="tool-meta"><span>游戏娱乐</span></span></span>
+              <span class="tool-arrow" aria-hidden="true">↗</span>
+            </a>
+          </li>
+          <li class="tool-card" data-category="game">
+            <a class="tool-link" href="/%E5%8F%8D%E5%BA%94%E9%80%9F%E5%BA%A6%E6%B5%8B%E8%AF%95" aria-label="打开反应速度测试器">
+              <span class="tool-icon tool-icon--game" aria-hidden="true">♞</span>
+              <span class="tool-main"><strong>反应速度测试器</strong><span class="tool-meta"><span>游戏娱乐</span></span></span>
+              <span class="tool-arrow" aria-hidden="true">↗</span>
+            </a>
+          </li>
+          <li class="tool-card" data-category="game">
+            <a class="tool-link" href="/%E6%89%8B%E9%80%9F%E6%B5%8B%E8%AF%95" aria-label="打开手速测试器">
+              <span class="tool-icon tool-icon--game" aria-hidden="true">♞</span>
+              <span class="tool-main"><strong>手速测试器</strong><span class="tool-meta"><span>游戏娱乐</span></span></span>
+              <span class="tool-arrow" aria-hidden="true">↗</span>
+            </a>
+          </li>
+          <li class="tool-card" data-category="game">
+            <a class="tool-link" href="/%E7%A0%B8%E9%87%91%E8%9B%8B" aria-label="打开砸金蛋">
+              <span class="tool-icon tool-icon--game" aria-hidden="true">♞</span>
+              <span class="tool-main"><strong>砸金蛋</strong><span class="tool-meta"><span>游戏娱乐</span></span></span>
+              <span class="tool-arrow" aria-hidden="true">↗</span>
+            </a>
+          </li>
+          <li class="tool-card" data-category="dev">
+            <a class="tool-link" href="/%E5%B1%8F%E5%B9%95%E5%BD%95%E5%88%B6" aria-label="打开屏幕录制【电脑版】">
+              <span class="tool-icon tool-icon--dev" aria-hidden="true">⌘</span>
+              <span class="tool-main"><strong>屏幕录制【电脑版】</strong><span class="tool-meta"><span>开发网络</span></span></span>
+              <span class="tool-arrow" aria-hidden="true">↗</span>
+            </a>
+          </li>
+          <li class="tool-card" data-category="creative">
+            <a class="tool-link" href="/%E6%B8%90%E5%8F%98%E8%89%B2" aria-label="打开渐变色调节工具">
+              <span class="tool-icon tool-icon--creative" aria-hidden="true">✦</span>
+              <span class="tool-main"><strong>渐变色调节工具</strong><span class="tool-meta"><span>创意设计</span></span></span>
+              <span class="tool-arrow" aria-hidden="true">↗</span>
+            </a>
+          </li>
+          <li class="tool-card" data-category="creative">
+            <a class="tool-link" href="/%E9%A2%9C%E8%89%B2%E9%85%8D%E7%BD%AE%E5%99%A8" aria-label="打开颜色配置器">
+              <span class="tool-icon tool-icon--creative" aria-hidden="true">✦</span>
+              <span class="tool-main"><strong>颜色配置器</strong><span class="tool-meta"><span>创意设计</span></span></span>
+              <span class="tool-arrow" aria-hidden="true">↗</span>
+            </a>
+          </li>
+          <li class="tool-card" data-category="game">
+            <a class="tool-link" href="/%E7%94%BB%E5%9C%86%E5%BA%A6%E6%B5%8B%E8%AF%95" aria-label="打开画圆度测试">
+              <span class="tool-icon tool-icon--game" aria-hidden="true">♞</span>
+              <span class="tool-main"><strong>画圆度测试</strong><span class="tool-meta"><span>游戏娱乐</span></span></span>
+              <span class="tool-arrow" aria-hidden="true">↗</span>
+            </a>
+          </li>
+        </ul>
+        <div class="empty-state" id="empty-state" hidden>
+          <span class="empty-symbol" aria-hidden="true">⌕</span>
+          <h3>没有找到匹配的工具</h3>
+          <p>试试其他关键词，或重置分类筛选。</p>
+          <button id="clear-filters" type="button" class="reset-filters">查看全部工具</button>
+        </div>
+      </section>
+    </div>
+  </main>
+  <footer class="site-footer" id="footer">
+    <div class="container footer-inner">
+      <div>
+        <p class="footer-title">工具大全 <span>✦</span> 2周年</p>
+        <p class="footer-detail">© Lin.ZK · 2024—2026 版权所有<br>感谢两年相伴，未来继续探索。</p>
+      </div>
+      <div class="footer-links"><a href="mailto:united-grade2@qq.com">联系邮箱：united-grade2@qq.com</a><a href="#tools">浏览工具</a><a href="#top">返回顶部 ↑</a></div>
+    </div>
   </footer>
+  <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+    (() => {
+      'use strict';
+      const byId = id => document.getElementById(id);
+      const root = document.documentElement;
+      const pad = n => String(n).padStart(2,'0');
+      const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      const storage = {
+        get(key) { try { return localStorage.getItem(key); } catch (_) { return null; } },
+        set(key, value) { try { localStorage.setItem(key, value); } catch (_) {} }
+      };
 
-  <script>
-    /* —— 高考倒计时逻辑（2029年：6月7日）—— */
-    function updateGaokaoBanner() {
-      const banner = document.getElementById('exam-countdown-banner');
-
-      const now = new Date();
-      now.setHours(0, 0, 0, 0);
-
-      const targetDate = new Date('2029-06-07T00:00:00');
-      targetDate.setHours(0, 0, 0, 0);
-
-      const diffTime = targetDate - now;
-      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-      // 6月7日及以后自动隐藏
-      if (diffDays <= 0) {
-        banner.style.display = 'none';
-        return;
+      // 深浅主题开关（兼容原版的 darkMode 设置）。
+      function syncTheme() {
+        const dark = root.dataset.theme === 'dark';
+        byId('theme-icon').textContent = dark ? '☀' : '☾';
+        byId('dark-mode-toggle').setAttribute('aria-label', dark ? '切换到浅色模式' : '切换到深色模式');
+        byId('dark-mode-toggle').setAttribute('aria-pressed', String(dark));
+        document.querySelector('meta[name="theme-color"]').content = dark ? '#121426' : '#f7f8fc';
       }
-
-      banner.style.display = 'block';
-
-      const isDark = document.body.classList.contains('dark-mode');
-      const l1 = isDark ? 42 : 48;
-      const l2 = isDark ? 34 : 42;
-      const s = 88;
-
-      let hue;
-      if (diffDays > 300) {
-        // 大于300天：保持美观的固定绿色
-        hue = 135;
-      } else {
-        // 300天~1天：绿(135) → 橙 → 红(0) 渐变
-        hue = Math.round((diffDays / 300) * 135);
-      }
-
-      const c1 = `hsl(${hue} ${s}% ${l1}%)`;
-      const c2 = `hsl(${Math.max(hue - 12, 0)} ${s}% ${l2}%)`;
-      banner.style.background = `linear-gradient(90deg, ${c1}, ${c2})`;
-      banner.style.boxShadow = isDark ? '0 2px 10px rgba(0,0,0,0.6)' : '0 2px 10px rgba(0,0,0,0.18)';
-
-      banner.innerHTML = `📚 距离2029年全国统一高考还有 <span>${diffDays}</span> 天`;
-    }
-    updateGaokaoBanner();
-
-    /* 时间与搜索 */
-    function getDayOfWeek(){return ['星期天','星期一','星期二','星期三','星期四','星期五','星期六'][new Date().getDay()];}
-    function updateTime(){
-      const now=new Date(),y=now.getFullYear(),m=now.getMonth()+1,d=now.getDate(),w=getDayOfWeek();
-      const hh=String(now.getHours()).padStart(2,'0'),mm=String(now.getMinutes()).padStart(2,'0'),ss=String(now.getSeconds()).padStart(2,'0');
-      document.getElementById('current-time').innerText=`${y}年${m}月${d}日 ${w} ${hh}:${mm}:${ss}`;
-    }
-    function searchTools(){
-      const q=document.getElementById('search-input').value.toLowerCase();
-      document.querySelectorAll('#tools-list li').forEach(li=>{
-        const text=li.textContent.toLowerCase();
-        li.style.display=text.includes(q)?'block':'none';
+      byId('dark-mode-toggle').addEventListener('click', () => {
+        const dark = root.dataset.theme !== 'dark';
+        root.dataset.theme = dark ? 'dark' : 'light';
+        storage.set('toolbox-anniversary-theme', root.dataset.theme);
+        storage.set('darkMode', String(dark));
+        syncTheme();
       });
-    }
-    setInterval(updateTime,1000); updateTime();
+      syncTheme();
 
-    /* 暗色模式切换 */
-    const dmBtn=document.getElementById('dark-mode-toggle');
-    dmBtn.addEventListener('click',()=>{
-      dmBtn.classList.add('switching');
-      setTimeout(()=>dmBtn.classList.remove('switching'),500);
-      document.body.classList.toggle('dark-mode');
-      dmBtn.innerText=document.body.classList.contains('dark-mode')?'日':'夜';
-      localStorage.setItem('darkMode',document.body.classList.contains('dark-mode'));
-      updateGaokaoBanner(); // 切换时同步横条渐变（暗/亮两套亮度）
-    });
-    if(localStorage.getItem('darkMode')==='true'){document.body.classList.add('dark-mode'); dmBtn.innerText='日';}
-    else{dmBtn.innerText='夜';}
-    updateGaokaoBanner();
+      // 保留高考倒计时与本地时钟，按日期自动更新。
+      function updateClock() {
+        const now = new Date();
+        const days = ['周日','周一','周二','周三','周四','周五','周六'];
+        byId('current-time').textContent = `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+        byId('current-date').textContent = `${now.getFullYear()}/${pad(now.getMonth()+1)}/${pad(now.getDate())} · ${days[now.getDay()]}`;
+      }
+      function updateCountdown() {
+        const now = new Date();
+        const todayUTC = Date.UTC(now.getFullYear(),now.getMonth(),now.getDate());
+        const days = Math.round((Date.UTC(2029,5,7)-todayUTC)/86400000);
+        byId('exam-countdown-banner').hidden = days <= 0;
+        if (days > 0) byId('exam-days').textContent = String(days);
+      }
+      updateClock(); updateCountdown();
+      setInterval(updateClock,1000);
+      setInterval(updateCountdown,60000);
+
+      // 所有工具入口直接写在 HTML 中；无 JavaScript 时仍可以正常访问。
+      const cards = [...document.querySelectorAll('#tools-list .tool-card')];
+      const filters = [...document.querySelectorAll('.filter-chip')];
+      const search = byId('search-input');
+      const clearSearch = byId('clear-search');
+      let category = 'all';
+      byId('total-tools').textContent = String(cards.length);
+      for (const count of document.querySelectorAll('[data-count-for]')) {
+        count.textContent = String(count.dataset.countFor === 'all'
+          ? cards.length : cards.filter(card => card.dataset.category === count.dataset.countFor).length);
+      }
+      function normalize(value) {
+        return String(value).normalize('NFKC').toLocaleLowerCase().replace(/\s+/g,'');
+      }
+      function render() {
+        const term = normalize(search.value.trim());
+        let visible = 0;
+        for (const card of cards) {
+          const matchCategory = category === 'all' || card.dataset.category === category;
+          const matchKeyword = normalize(card.textContent).includes(term);
+          const match = matchCategory && matchKeyword;
+          card.hidden = !match;
+          if (match) visible++;
+        }
+        byId('result-count').textContent = `当前显示 ${visible} / ${cards.length} 个工具`;
+        byId('empty-state').hidden = visible !== 0;
+        clearSearch.hidden = !search.value;
+      }
+      function selectCategory(chosen) {
+        category = chosen;
+        for (const chip of filters) {
+          const active = chip.dataset.filter === chosen;
+          chip.classList.toggle('is-active',active);
+          chip.setAttribute('aria-pressed',String(active));
+        }
+        render();
+      }
+      for (const chip of filters) chip.addEventListener('click', () => selectCategory(chip.dataset.filter));
+      search.addEventListener('input',render);
+      clearSearch.addEventListener('click', () => { search.value = ''; render(); search.focus(); });
+      byId('clear-filters').addEventListener('click', () => {
+        search.value = ''; selectCategory('all'); search.focus();
+      });
+      byId('tool-search-form').addEventListener('submit', event => {
+        event.preventDefault();
+        render();
+        byId('result-count').scrollIntoView({ behavior: prefersReducedMotion ? 'auto' : 'smooth', block: 'center' });
+      });
+      document.addEventListener('keydown', event => {
+        const active = document.activeElement;
+        const editing = active && (['INPUT','TEXTAREA'].includes(active.tagName) || active.isContentEditable);
+        if (((event.key === '/' && !editing) || ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k')) && !event.altKey) {
+          event.preventDefault(); search.focus();
+        }
+        if (event.key === 'Escape' && active === search) {
+          search.value = ''; render(); search.blur();
+        }
+      });
+      render();
+    })();
   </script>
 </body>
 </html>
