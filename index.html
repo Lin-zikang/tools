@@ -2,7 +2,7 @@
 <html lang="zh">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link
     rel="icon"
     href="https://user-assets.sxlcdn.com/images/1209238/FlWuslNmGTHt1EipxUtq2GI6zqnN.png?imageMogr2/strip/auto-orient/thumbnail/1200x9000%3E/quality/90!/format/png"
@@ -10,254 +10,457 @@
   />
   <title>工具大全</title>
   <style>
-    /* 全局平滑滚动 */
-    html { scroll-behavior: smooth; }
+    /* ============ 主题变量 ============ */
+    :root {
+      --bg: #f2f5f9;
+      --surface: #ffffff;
+      --border: #e1e8f0;
+      --text: #2b3a4a;
+      --muted: #7c8b9a;
+      --accent: #3498db;
+      --accent-strong: #2980b9;
+      --link: #2980b9;
+      --btn-text: #ffffff;
+      --shadow: 0 2px 10px rgba(31, 45, 61, .07);
+      --shadow-lg: 0 12px 26px rgba(31, 45, 61, .14);
+      --ring: rgba(52, 152, 219, .30);
+      --radius: 14px;
+      --pad: 20px;
+    }
 
-    /* Light mode */
+    html.dark-mode {
+      --bg: #22303e;
+      --surface: #2f4152;
+      --border: #3d5468;
+      --text: #e9eef3;
+      --muted: #a9b8c4;
+      --accent: #1abc9c;
+      --accent-strong: #16a085;
+      --link: #35d3b4;
+      --btn-text: #0e2a25;
+      --shadow: 0 2px 10px rgba(0, 0, 0, .30);
+      --shadow-lg: 0 12px 26px rgba(0, 0, 0, .42);
+      --ring: rgba(26, 188, 156, .30);
+    }
+
+    /* ============ 基础 ============ */
+    * { box-sizing: border-box; }
+
+    html {
+      scroll-behavior: smooth;
+      -webkit-text-size-adjust: 100%;
+    }
+
     body {
-      font-family: 'Arial', sans-serif;
-      background: #f0f4f8;
-      color: #333;
       margin: 0;
-      padding: 0;
+      font-family: system-ui, -apple-system, "Segoe UI", "PingFang SC",
+                   "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: flex-start;
-      min-height: 100vh;
       overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+      transition: background-color .3s ease, color .3s ease;
     }
 
-    /* —— 高考倒计时横幅 —— */
+    /* ============ 高考倒计时横幅 ============ */
     #exam-countdown-banner {
       width: 100%;
       color: #fff;
       text-align: center;
-      padding: 12px 20px;
-      font-size: 1.2rem;
-      font-weight: bold;
-      box-shadow: 0 2px 10px rgba(255, 0, 0, 0.25);
+      padding: 11px 16px;
+      font-size: clamp(.88rem, 2.6vw, 1.05rem);
+      font-weight: 700;
+      letter-spacing: .5px;
       display: none;
-      z-index: 10001;
       position: relative;
-    }
-    #exam-countdown-banner span {
-      color: #ffff00;
-      font-size: 1.5rem;
-      margin: 0 4px;
-      text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
+      z-index: 100;
     }
 
-    /* 顶部控制区 */
+    #exam-countdown-banner span {
+      color: #ffff00;
+      font-size: 1.35em;
+      margin: 0 3px;
+      text-shadow: 1px 1px 2px rgba(0, 0, 0, .2);
+    }
+
+    /* ============ 顶部控制区 ============ */
     .top-controls {
       width: 100%;
       max-width: 1100px;
-      padding: 14px 20px 0 20px;
-      box-sizing: border-box;
+      padding: 16px var(--pad) 0;
       display: flex;
       justify-content: flex-end;
       align-items: center;
     }
 
-    /* 顶部横幅 */
+    #dark-mode-toggle {
+      width: 38px;
+      height: 38px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: inherit;
+      font-size: .92rem;
+      font-weight: 700;
+      color: #fff;
+      background: #2c3e50;
+      border: none;
+      border-radius: 50%;
+      cursor: pointer;
+      box-shadow: 0 3px 10px rgba(0, 0, 0, .18);
+      transition: transform .2s ease, background-color .3s ease, color .3s ease;
+    }
+
+    #dark-mode-toggle:hover { transform: scale(1.08); }
+    #dark-mode-toggle:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+    }
+    #dark-mode-toggle.switching { animation: bounce .5s ease-in-out; }
+
+    @keyframes bounce {
+      0%   { transform: scale(1); }
+      50%  { transform: scale(1.12); }
+      100% { transform: scale(1); }
+    }
+
+    html.dark-mode #dark-mode-toggle {
+      background: #e9eef3;
+      color: #2c3e50;
+    }
+
+    /* ============ 顶部横幅 ============ */
     .hero {
       width: 100%;
       max-width: 1100px;
-      padding: 14px 20px 0 20px;
-      box-sizing: border-box;
+      padding: 12px var(--pad) 0;
     }
+
     .hero img {
       width: 100%;
       height: auto;
       display: block;
-      border-radius: 18px;
-      box-shadow: 0 10px 24px rgba(0,0,0,0.12);
+      border-radius: 16px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, .12);
+    }
+
+    html.dark-mode .hero img {
+      box-shadow: 0 8px 24px rgba(0, 0, 0, .4);
     }
 
     /* 原 h1 隐藏（保留可回滚） */
     h1 { display: none; }
 
-    /* —— 副标题 —— */
+    /* ============ 副标题 / 时间 ============ */
     .subtitle {
-      font-size: 1.2rem;
-      color: #7f8c8d;
-      margin: 20px 20px 40px 20px;
+      margin: 18px var(--pad) 0;
+      max-width: 620px;
       text-align: center;
+      font-size: clamp(.95rem, 2.6vw, 1.08rem);
+      line-height: 1.6;
+      color: var(--muted);
+      transition: color .3s ease;
     }
 
     .time {
-      font-size: 1.4rem;
+      margin-top: 10px;
+      text-align: center;
+      font-size: clamp(.95rem, 2.5vw, 1.05rem);
+      font-weight: 600;
       color: #16a085;
-      margin-top: 20px;
+      font-variant-numeric: tabular-nums;
+      letter-spacing: .3px;
     }
 
+    html.dark-mode .time { color: #1abc9c; }
+
+    /* ============ 搜索 ============ */
     .search-container {
       display: flex;
-      justify-content: center;
-      align-items: center;
-      margin-top: 30px;
+      gap: 10px;
       width: 100%;
+      max-width: 520px;
+      margin: 24px auto 0;
+      padding: 0 var(--pad);
     }
 
     #search-input {
-      width: 250px;
-      padding: 10px;
-      font-size: 1.1rem;
-      border: 2px solid #3498db;
-      border-radius: 8px;
-      margin-right: 10px;
-      outline: none;
-    }
-    #search-button {
-      padding: 10px 20px;
-      font-size: 1.1rem;
-      background-color: #3498db;
-      color: #fff;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      transition: background-color 0.3s;
-    }
-    #search-button:hover { background-color: #2980b9; }
-
-    ul {
-      list-style: none;
-      padding: 0;
-      width: 100%;
-      max-width: 700px;
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-      gap: 20px;
-      margin-top: 40px;
-    }
-    li {
-      background: #ecf0f1;
-      border: 1px solid #bdc3c7;
-      padding: 20px;
-      border-radius: 8px;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-      transition: transform 0.3s, box-shadow 0.3s;
-      text-align: center;
-      font-size: 1.1rem;
-      position: relative;
-    }
-    li:hover { transform: translateY(-8px); box-shadow: 0 6px 12px rgba(0,0,0,0.15); }
-    a { text-decoration: none; color: #2980b9; font-weight: bold; transition: color 0.3s; }
-    a:hover { color: #e74c3c; }
-
-    /* —— "新" 标记 —— */
-    .badge-new {
-      position: absolute;
-      top: 8px;
-      right: 8px;
-      background: linear-gradient(135deg, #ff416c, #ff4b2f);
-      color: #fff;
-      padding: 4px 10px;
-      font-size: 0.78rem;
-      font-weight: bold;
+      flex: 1 1 auto;
+      min-width: 0;
+      padding: 11px 14px;
+      font-family: inherit;
+      font-size: 1rem;
+      color: var(--text);
+      background: var(--surface);
+      border: 1.5px solid var(--border);
       border-radius: 10px;
-      box-shadow: 0 3px 10px rgba(255, 65, 108, 0.35);
-      animation: newFloat 2s ease-in-out infinite;
-      letter-spacing: 0.8px;
-      text-shadow: 0 1px 2px rgba(0,0,0,0.15);
-    }
-    @keyframes newFloat {
-      0%, 100% { transform: translateY(0); box-shadow: 0 3px 10px rgba(255, 65, 108, 0.35); }
-      50% { transform: translateY(-3px); box-shadow: 0 6px 16px rgba(255, 65, 108, 0.5); }
+      outline: none;
+      transition: border-color .2s ease, box-shadow .2s ease, background-color .3s ease;
     }
 
-    /* —— "原创游戏" 标记 —— */
+    #search-input::placeholder { color: var(--muted); }
+
+    #search-input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--ring);
+    }
+
+    #search-button {
+      flex: 0 0 auto;
+      padding: 11px 22px;
+      font-family: inherit;
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--btn-text);
+      background: var(--accent);
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: background-color .2s ease, transform .15s ease;
+    }
+
+    #search-button:hover { background: var(--accent-strong); }
+    #search-button:active { transform: scale(.97); }
+    #search-button:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+    }
+
+    /* ============ 工具列表 ============ */
+    #tools-list {
+      list-style: none;
+      width: 100%;
+      max-width: 1100px;
+      margin: 28px auto 0;
+      padding: 0 var(--pad) 48px;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-start; /* 默认左对齐 */
+      gap: 12px;
+      align-content: start;
+    }
+
+    /* 当搜索结果为 1-2 个时，强制居中 */
+    #tools-list.center-results {
+      justify-content: center;
+    }
+
+    #tools-list li {
+      width: 100%; /* 手机端 1 个 */
+      position: relative;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      transition: transform .22s ease, box-shadow .22s ease,
+                  border-color .22s ease, background-color .3s ease;
+    }
+
+    #tools-list li[hidden] { display: none; }
+
+    #tools-list li:hover {
+      transform: translateY(-4px);
+      box-shadow: var(--shadow-lg);
+      border-color: var(--accent);
+    }
+
+    #tools-list a {
+      display: block;
+      padding: 20px 16px;
+      text-align: center;
+      font-size: 1rem;
+      font-weight: 600;
+      line-height: 1.4;
+      color: var(--link);
+      text-decoration: none;
+      border-radius: inherit;
+      transition: color .2s ease;
+    }
+
+    /* 整张卡片可点击 */
+    #tools-list a::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+    }
+
+    #tools-list a:hover { color: var(--accent-strong); }
+    html.dark-mode #tools-list a:hover { color: #e74c3c; }
+
+    #tools-list a:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 3px;
+    }
+
+    /* ============ 标记 ============ */
+    .badge-new,
     .badge-original {
       position: absolute;
       top: 8px;
       right: 8px;
-      background: linear-gradient(135deg, #00c6ff, #0072ff);
+      padding: 3px 9px;
+      font-size: .7rem;
+      font-weight: 700;
+      line-height: 1.5;
+      letter-spacing: .4px;
       color: #fff;
-      padding: 4px 10px;
-      font-size: 0.78rem;
-      font-weight: bold;
-      border-radius: 20px;
-      box-shadow: 0 3px 10px rgba(0, 114, 255, 0.35);
-      animation: originalPulse 2.5s ease-in-out infinite;
-      letter-spacing: 0.5px;
-    }
-    @keyframes originalPulse {
-      0%, 100% { transform: scale(1); box-shadow: 0 3px 10px rgba(0, 114, 255, 0.35); }
-      50% { transform: scale(1.06); box-shadow: 0 5px 14px rgba(0, 114, 255, 0.5); }
+      border-radius: 999px;
+      pointer-events: none;
+      white-space: nowrap;
+      z-index: 1;
     }
 
+    .badge-new {
+      background: linear-gradient(135deg, #ff416c, #ff4b2f);
+      box-shadow: 0 3px 10px rgba(255, 65, 108, .35);
+      animation: newFloat 2s ease-in-out infinite;
+    }
+
+    @keyframes newFloat {
+      0%, 100% { transform: translateY(0); }
+      50%      { transform: translateY(-3px); }
+    }
+
+    .badge-original {
+      background: linear-gradient(135deg, #00c6ff, #0072ff);
+      box-shadow: 0 3px 10px rgba(0, 114, 255, .35);
+      animation: originalPulse 2.5s ease-in-out infinite;
+    }
+
+    @keyframes originalPulse {
+      0%, 100% { transform: scale(1); }
+      50%      { transform: scale(1.06); }
+    }
+
+    /* ============ 页脚 ============ */
     footer {
       margin-top: auto;
       width: 100%;
-      background-color: #34495e;
+      background: #34495e;
       color: #fff;
       text-align: center;
-      padding: 30px 0;
-      font-family: 'Arial', sans-serif;
-      position: relative;
+      padding: 26px var(--pad);
+      transition: background-color .3s ease;
     }
+
     footer p {
-      margin: 0; font-size: 1.5rem; font-weight: bold; color: #fff;
-      animation: glowText 1.5s ease-in-out infinite alternate;
+      margin: 0 0 10px;
+      font-size: 1.05rem;
+      font-weight: 700;
+      letter-spacing: .5px;
     }
+
     footer p span { color: #ffeb3b; }
+
     footer a {
-      color: #ffeb3b; font-weight: bold; text-decoration: none;
-      padding: 5px 10px; border-radius: 8px; transition: color 0.3s, transform 0.3s ease;
+      display: inline-block;
+      padding: 5px 10px;
+      font-size: .92rem;
+      font-weight: 600;
+      color: #ffeb3b;
+      text-decoration: none;
+      border-radius: 8px;
+      transition: color .25s ease, background-color .25s ease;
     }
-    footer a:hover { color: #fff; background-color: rgba(255,255,255,.1); transform: scale(1.2); }
-    @keyframes glowText {
-      0% { text-shadow: 0 0 5px #ffeb3b, 0 0 10px #ffeb3b, 0 0 20px #ffeb3b; }
-      100% { text-shadow: 0 0 5px #f39c12, 0 0 10px #f39c12, 0 0 20px #f39c12; }
+
+    footer a:hover {
+      color: #fff;
+      background: rgba(255, 255, 255, .12);
     }
 
-    /* Dark Mode */
-    body.dark-mode { background: #2c3e50; color: #ecf0f1; }
-    .dark-mode .subtitle { color: #bdc3c7; }
-    .dark-mode .time { color: #1abc9c; }
-    .dark-mode #search-input { background: #34495e; border: 2px solid #1abc9c; color: #ecf0f1; }
-    .dark-mode #search-button { background-color: #f0e6d2; color: #333; }
+    html.dark-mode footer { background: #1a252f; }
 
-    /* 暗色模式下卡片 */
-    .dark-mode ul li {
-      background: #34495e;
-      border: 1px solid #2c3e50;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.35);
-    }
-    .dark-mode ul li:hover { box-shadow: 0 8px 18px rgba(0,0,0,0.45); }
-    .dark-mode a { color: #1abc9c; }
-    .dark-mode a:hover { color: #e74c3c; }
-
-    .dark-mode footer { background-color: #1a252f; }
-    .dark-mode footer p { color: #bdc3c7; }
-    .dark-mode footer a { color: #1abc9c; }
-    .dark-mode .hero img { box-shadow: 0 10px 24px rgba(0,0,0,0.35); }
-
-    /* 明暗按钮 */
-    #dark-mode-toggle {
-      width: 30px;
-      height: 30px;
-      background-color: black;
-      color: white;
-      border: none;
-      border-radius: 50%;
-      cursor: pointer;
-      box-shadow: 0 4px 8px rgba(0,0,0,.2);
-      font-size: 1rem;
+    /* 友情链接行 */
+    .footer-links {
       display: flex;
-      align-items: center;
       justify-content: center;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 6px;
     }
-    body.dark-mode #dark-mode-toggle { background-color: white; color: black; }
-    #dark-mode-toggle.switching { animation: bounce .5s ease-in-out; }
-    @keyframes bounce { 0%{transform:scale(1)} 50%{transform:scale(1.1)} 100%{transform:scale(1)} }
+
+    .footer-divider {
+      color: rgba(255, 255, 255, .35);
+      font-weight: 400;
+      user-select: none;
+    }
+
+    html.dark-mode .footer-divider {
+      color: rgba(255, 255, 255, .25);
+    }
+
+    /* ============ 响应式 ============ */
+    @media (max-width: 600px) {
+      :root { --pad: 14px; }
+
+      .top-controls { padding-top: 12px; }
+      #dark-mode-toggle { width: 34px; height: 34px; font-size: .84rem; }
+      .hero img { border-radius: 12px; }
+      .subtitle { margin-top: 14px; }
+      #tools-list { margin-top: 22px; gap: 10px; }
+      #tools-list a { padding: 16px 14px; font-size: .96rem; }
+      footer { padding: 22px var(--pad); }
+    }
+
+    /* 平板：一行 2 个 */
+    @media (min-width: 640px) {
+      #tools-list { gap: 14px; }
+      #tools-list li {
+        width: calc((100% - 14px) / 2);
+      }
+    }
+
+    /* 电脑：一行 3 个 */
+    @media (min-width: 1024px) {
+      #tools-list { gap: 16px; }
+      #tools-list li {
+        width: calc((100% - 32px) / 3);
+      }
+    }
+
+    /* 减少动效偏好 */
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      *, *::before, *::after {
+        animation-duration: .001ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: .001ms !important;
+      }
+    }
   </style>
+
+  <!-- 提前应用暗色模式，避免闪烁：首次按系统，之后按 localStorage -->
+  <script>
+    (function () {
+      try {
+        var stored = localStorage.getItem('darkMode');
+        var isDark;
+        if (stored === null) {
+          // 首次进入：跟随系统设置，并记录下来
+          isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+          localStorage.setItem('darkMode', isDark);
+        } else {
+          isDark = stored === 'true';
+        }
+        if (isDark) {
+          document.documentElement.classList.add('dark-mode');
+        }
+      } catch (e) {
+        // 忽略隐私模式等异常，默认亮色
+      }
+    })();
+  </script>
 </head>
 <body>
   <div id="exam-countdown-banner"></div>
 
   <div class="top-controls">
-    <button id="dark-mode-toggle">夜</button>
+    <button id="dark-mode-toggle" aria-label="切换日间/夜间模式">夜</button>
   </div>
 
   <div class="hero">
@@ -272,8 +475,14 @@
   <div class="time" id="current-time"></div>
 
   <div class="search-container">
-    <input type="text" id="search-input" placeholder="搜索工具..." oninput="searchTools()" />
-    <button id="search-button">搜索</button>
+    <input
+      type="text"
+      id="search-input"
+      placeholder="搜索工具..."
+      enterkeyhint="search"
+      oninput="searchTools()"
+    />
+    <button id="search-button" type="button">搜索</button>
   </div>
    <ul id="tools-list">
     <li>
@@ -352,12 +561,16 @@
 		<li><a href="/%E7%94%BB%E5%9C%86%E5%BA%A6%E6%B5%8B%E8%AF%95">画圆度测试</a>
     </ul>
   <footer>
-    <p>© <span>Lin.ZK</span> 版权所有 2024-2026</p>
-    <a href="mailto:united-grade2@qq.com">联系邮箱：united-grade2@qq.com</a>
+    <p>© <span>Lin.ZiKang</span> 版权所有 2024-2026</p>
+    <div class="footer-links">
+      <a href="/friends">友情链接</a>
+      <span class="footer-divider">·</span>
+      <a href="mailto:united-grade2@qq.com">联系邮箱：united-grade2@qq.com</a>
+    </div>
   </footer>
 
   <script>
-    /* —— 高考倒计时逻辑（2029年：6月7日）—— */
+    /* ================= 高考倒计时（2029年6月7日） ================= */
     function updateGaokaoBanner() {
       const banner = document.getElementById('exam-countdown-banner');
 
@@ -378,58 +591,92 @@
 
       banner.style.display = 'block';
 
-      const isDark = document.body.classList.contains('dark-mode');
+      const isDark = document.documentElement.classList.contains('dark-mode');
       const l1 = isDark ? 42 : 48;
       const l2 = isDark ? 34 : 42;
       const s = 88;
 
       let hue;
       if (diffDays > 300) {
-        // 大于300天：保持美观的固定绿色
+        // 大于300天：固定绿色
         hue = 135;
       } else {
-        // 300天~1天：绿(135) → 橙 → 红(0) 渐变
+        // 300天~1天：绿(135) → 橙 → 红(0)
         hue = Math.round((diffDays / 300) * 135);
       }
 
       const c1 = `hsl(${hue} ${s}% ${l1}%)`;
       const c2 = `hsl(${Math.max(hue - 12, 0)} ${s}% ${l2}%)`;
       banner.style.background = `linear-gradient(90deg, ${c1}, ${c2})`;
-      banner.style.boxShadow = isDark ? '0 2px 10px rgba(0,0,0,0.6)' : '0 2px 10px rgba(0,0,0,0.18)';
+      banner.style.boxShadow = isDark
+        ? '0 2px 10px rgba(0,0,0,0.6)'
+        : '0 2px 10px rgba(0,0,0,0.18)';
 
       banner.innerHTML = `📚 距离2029年全国统一高考还有 <span>${diffDays}</span> 天`;
     }
-    updateGaokaoBanner();
 
-    /* 时间与搜索 */
-    function getDayOfWeek(){return ['星期天','星期一','星期二','星期三','星期四','星期五','星期六'][new Date().getDay()];}
-    function updateTime(){
-      const now=new Date(),y=now.getFullYear(),m=now.getMonth()+1,d=now.getDate(),w=getDayOfWeek();
-      const hh=String(now.getHours()).padStart(2,'0'),mm=String(now.getMinutes()).padStart(2,'0'),ss=String(now.getSeconds()).padStart(2,'0');
-      document.getElementById('current-time').innerText=`${y}年${m}月${d}日 ${w} ${hh}:${mm}:${ss}`;
+    /* ================= 时间显示 ================= */
+    function getDayOfWeek() {
+      return ['星期天', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'][new Date().getDay()];
     }
-    function searchTools(){
-      const q=document.getElementById('search-input').value.toLowerCase();
-      document.querySelectorAll('#tools-list li').forEach(li=>{
-        const text=li.textContent.toLowerCase();
-        li.style.display=text.includes(q)?'block':'none';
+
+    function updateTime() {
+      const now = new Date();
+      const y = now.getFullYear();
+      const m = now.getMonth() + 1;
+      const d = now.getDate();
+      const w = getDayOfWeek();
+      const hh = String(now.getHours()).padStart(2, '0');
+      const mm = String(now.getMinutes()).padStart(2, '0');
+      const ss = String(now.getSeconds()).padStart(2, '0');
+      document.getElementById('current-time').innerText = `${y}年${m}月${d}日 ${w} ${hh}:${mm}:${ss}`;
+    }
+
+    /* ================= 搜索 ================= */
+    function searchTools() {
+      const q = document.getElementById('search-input').value.trim().toLowerCase();
+      const list = document.getElementById('tools-list');
+      let visibleCount = 0;
+
+      list.querySelectorAll('li').forEach(li => {
+        const text = li.textContent.toLowerCase();
+        const isMatch = q === '' || text.includes(q);
+        li.hidden = !isMatch;
+        if (isMatch) visibleCount++;
       });
-    }
-    setInterval(updateTime,1000); updateTime();
 
-    /* 暗色模式切换 */
-    const dmBtn=document.getElementById('dark-mode-toggle');
-    dmBtn.addEventListener('click',()=>{
+      // 当输入不为空，且可见数量为 1 或 2 个时，居中显示
+      if (q !== '' && visibleCount > 0 && visibleCount <= 2) {
+        list.classList.add('center-results');
+      } else {
+        list.classList.remove('center-results');
+      }
+    }
+
+    document.getElementById('search-button').addEventListener('click', searchTools);
+
+    /* ================= 暗色模式 ================= */
+    const dmBtn = document.getElementById('dark-mode-toggle');
+
+    // 初始化按钮文字（暗色模式类已在 head 中提前设置）
+    let isDark = document.documentElement.classList.contains('dark-mode');
+    dmBtn.innerText = isDark ? '日' : '夜';
+
+    dmBtn.addEventListener('click', () => {
       dmBtn.classList.add('switching');
-      setTimeout(()=>dmBtn.classList.remove('switching'),500);
-      document.body.classList.toggle('dark-mode');
-      dmBtn.innerText=document.body.classList.contains('dark-mode')?'日':'夜';
-      localStorage.setItem('darkMode',document.body.classList.contains('dark-mode'));
-      updateGaokaoBanner(); // 切换时同步横条渐变（暗/亮两套亮度）
+      setTimeout(() => dmBtn.classList.remove('switching'), 500);
+
+      document.documentElement.classList.toggle('dark-mode');
+      const nowDark = document.documentElement.classList.contains('dark-mode');
+      dmBtn.innerText = nowDark ? '日' : '夜';
+      localStorage.setItem('darkMode', nowDark);
+      updateGaokaoBanner(); // 同步横条渐变亮度
     });
-    if(localStorage.getItem('darkMode')==='true'){document.body.classList.add('dark-mode'); dmBtn.innerText='日';}
-    else{dmBtn.innerText='夜';}
+
+    /* ================= 初始化 ================= */
     updateGaokaoBanner();
+    updateTime();
+    setInterval(updateTime, 1000);
   </script>
 </body>
 </html>
