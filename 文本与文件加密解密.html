@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="referrer" content="no-referrer">
 <meta name="color-scheme" content="light">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-JaGzCyhETfAm1LfMm9+Byqw831koeErUfmKHPEQt7CQ='; style-src 'sha256-2eVcWGCudQFaM43G2P45/uPp9fMDyHx4rrVgEUzqEd0='; img-src data:; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-m2ZkJu4Wr++Ie9dSXerxqfDPJJXDdlDQmmq/UP98uzM='; style-src 'sha256-2eVcWGCudQFaM43G2P45/uPp9fMDyHx4rrVgEUzqEd0='; img-src data:; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
 <link rel="icon" type="image/svg+xml"
       href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='6' fill='%234263e8'/%3E%3Cpath d='M12 4.5 18.5 7.3v4.6c0 4.1-2.7 7-6.5 8.2-3.8-1.2-6.5-4.1-6.5-8.2V7.3L12 4.5Z' fill='none' stroke='%23fff' stroke-width='1.4' stroke-linejoin='round'/%3E%3Crect x='9.5' y='10.5' width='5' height='4.8' rx='1' fill='%23fff'/%3E%3Cpath d='M10.8 10.5V9.2a1.2 1.2 0 0 1 2.4 0v1.3' fill='none' stroke='%23fff' stroke-width='1.2'/%3E%3C/svg%3E">
 <title>文本与文件加密解密工具</title>
@@ -103,7 +103,7 @@ button:focus-visible,summary:focus-visible,[role="button"]:focus-visible{outline
     <section class="card result" id="resultCard" aria-label="处理结果" hidden>
       <div class="result-head"><h2 id="resultHeading">处理完成</h2><span class="success" id="successLabel">处理完成</span></div>
       <div id="textResult" hidden><textarea class="text-input code" id="outputText" readonly spellcheck="false" aria-label="处理结果"></textarea><div class="result-action"><span class="subnote" id="resultMeta"></span><div class="buttons"><button type="button" class="secondary" id="copyResult">复制文本</button><button type="button" class="secondary" id="saveText">保存 TXT</button></div></div></div>
-      <div id="fileResult" hidden><div class="result-file"><div class="file-mark" aria-hidden="true"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M7 3h7l5 5v12a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V5a2 2 0 0 1 2-2Z"/><path d="M14 3v6h5m-11 7 3 3 5-6"/></svg></div><div class="file-data"><strong id="resultName"></strong><small id="resultSize"></small></div></div><div class="result-footer"><p id="resultFileHint"></p><button type="button" class="secondary" id="downloadResult" hidden>下载文件</button></div></div>
+      <div id="fileResult" hidden><div class="result-file"><div class="file-mark" aria-hidden="true"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M7 3h7l5 5v12a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V5a2 2 0 0 1 2-2Z"/><path d="M14 3v6h5m-11 7 3 3 5-6"/></svg></div><div class="file-data"><strong id="resultName"></strong><small id="resultSize"></small></div></div><div class="result-footer"><p id="resultFileHint"></p><button type="button" class="secondary" id="downloadResult" hidden>下载文件</button></div><p class="subnote" id="encryptedRenameHint" aria-live="polite" hidden>提示：加密文件下载完成后，建议将文件重命名为便于识别的名称，并保留 .cbox 后缀，以便日后正常识别和解密。仅修改文件名，请勿改动文件内容。</p></div>
     </section>
   </main>
 </div>
@@ -700,6 +700,7 @@ button:focus-visible,summary:focus-visible,[role="button"]:focus-visible{outline
     $('resultSize').textContent = displayBytes(size);
     $('resultFileHint').textContent = saved ? '已直接保存至所选位置。' : '处理完成，点击下载保存。';
     $('downloadResult').hidden = saved;
+    $('encryptedRenameHint').hidden = !(saved && state.operation === 'encrypt');
     state.resultName = filename;
     state.resultBlob = blob;
     bringIntoView('resultCard');
@@ -848,7 +849,14 @@ button:focus-visible,summary:focus-visible,[role="button"]:focus-visible{outline
     $('cancelBtn').onclick = () => { state.canceled=true; $('cancelBtn').disabled=true; $('progressStatus').textContent='正在取消，当前操作完成后停止…'; };
     $('copyResult').onclick = () => copy($('outputText').value,'结果');
     $('saveText').onclick = () => download(new Blob([$('outputText').value],{type:'text/plain;charset=utf-8'}),state.resultName||'加密文本.txt');
-    $('downloadResult').onclick = () => download(state.resultBlob,state.resultName);
+    $('downloadResult').onclick = () => {
+      download(state.resultBlob,state.resultName);
+      if (state.operation === 'encrypt' && state.resultBlob) {
+        $('encryptedRenameHint').hidden = false;
+        bringIntoView('encryptedRenameHint');
+        toast('下载已开始，建议按下方提示重命名加密文件。');
+      }
+    };
     window.addEventListener('beforeunload',e => { if (state.busy) { e.preventDefault(); e.returnValue=''; } });
     render();
   }
