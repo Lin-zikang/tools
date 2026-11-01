@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="referrer" content="no-referrer">
 <meta name="color-scheme" content="light">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-m2ZkJu4Wr++Ie9dSXerxqfDPJJXDdlDQmmq/UP98uzM='; style-src 'sha256-2eVcWGCudQFaM43G2P45/uPp9fMDyHx4rrVgEUzqEd0='; img-src data:; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-6CwjstjpkDeUtoAZzNgLvOEaogNCI+z8OvY2knsDVQI='; style-src 'sha256-7y04DMBu8dFD8vbMuqSX0PFvVNwPVTcOBM6E0el+jbM='; img-src data:; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
 <link rel="icon" type="image/svg+xml"
       href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='6' fill='%234263e8'/%3E%3Cpath d='M12 4.5 18.5 7.3v4.6c0 4.1-2.7 7-6.5 8.2-3.8-1.2-6.5-4.1-6.5-8.2V7.3L12 4.5Z' fill='none' stroke='%23fff' stroke-width='1.4' stroke-linejoin='round'/%3E%3Crect x='9.5' y='10.5' width='5' height='4.8' rx='1' fill='%23fff'/%3E%3Cpath d='M10.8 10.5V9.2a1.2 1.2 0 0 1 2.4 0v1.3' fill='none' stroke='%23fff' stroke-width='1.2'/%3E%3C/svg%3E">
 <title>文本与文件加密解密工具</title>
@@ -29,6 +29,7 @@
 .result{margin-top:14px;padding:21px 24px}.result-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}.result-head h2{font-size:15px;font-weight:750;letter-spacing:-.025em;margin:0}.success{display:inline-flex;align-items:center;gap:7px;color:var(--green);font-size:11px;font-weight:750;background:#ebf8f0;padding:5px 10px;border-radius:99px}.success:before{content:"✓";font-weight:900}.result .text-input{min-height:150px}.result-action{display:flex;justify-content:space-between;gap:10px;align-items:center;margin-top:12px}.result-action .subnote{margin:0}.result-file{display:flex;align-items:center;gap:12px;min-width:0;padding:13px 14px;background:#f8faff;border:1px solid #e8eef9;border-radius:12px}.result-file .file-mark{width:39px;height:39px}.result-file strong{font-size:13px;word-break:break-word}.result-file small{display:block;margin-top:3px;color:#8794ab;font-size:11px}.result-file .file-data{overflow:hidden}.result-footer{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:12px}.result-footer p{font-size:11px;color:#8390a5;margin:0}
 .toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);z-index:40;background:#233553;color:white;border-radius:11px;padding:12px 17px;max-width:min(500px,calc(100% - 30px));width:max-content;box-shadow:0 13px 45px #12204438;font-size:12px;text-align:center;line-height:1.6}.toast.error{background:#8d3547}.overlay{position:fixed;inset:0;z-index:80;background:#f2f5f9ed;display:flex;align-items:center;justify-content:center;padding:20px}.overlay-inner{max-width:440px;background:white;padding:28px;border:1px solid #e0e7f0;box-shadow:var(--shadow);border-radius:18px;text-align:center}.overlay h2{font-size:19px}.overlay p{font-size:13px;color:var(--muted)}
 @media(min-width:901px){.settings{position:relative;top:0}}@media(max-width:900px){.wrap{width:min(660px,calc(100% - 36px))}.header{min-height:118px;padding:24px 0}.workspace{grid-template-columns:minmax(0,1fr)}.actions{margin-top:15px}.text-input,.drop{min-height:200px}}@media(max-width:520px){.wrap{width:calc(100% - 26px);padding-bottom:30px}.header{min-height:0;padding:21px 2px 22px;gap:10px;align-items:flex-start}.brand{gap:10px}.brand-name{font-size:clamp(16px,4.65vw,19px);line-height:1.32}.brand-desc{font-size:10px;line-height:1.45}.logo{width:37px;height:37px;border-radius:11px}.logo svg{width:19px;height:19px}.offline{font-size:10px;padding:7px 9px}.work,.settings{padding:17px;border-radius:16px}.switches{gap:10px}.seg button{padding:8px 16px}.seg.seg-small button{padding:8px 13px}.text-input{min-height:205px}.drop{min-height:202px}.card-head{margin-bottom:16px}.actions{border-radius:15px;padding:13px 15px;flex-direction:column;align-items:stretch;gap:11px}.actions .action-context{order:2;text-align:center}.buttons{order:1}.buttons .primary{flex:1}.result{padding:17px;border-radius:15px}.result-action{align-items:stretch;flex-direction:column}.result-action .buttons .secondary{flex:1}.result-footer{flex-direction:column;align-items:stretch}.result-footer .secondary{width:100%}.advanced-grid{gap:10px}.progress-card{padding:13px 15px}}
+#encryptedRenameHint:not([hidden]){background:#fff7e6;border:1px solid #f2e1bf;border-left:3px solid #e8c37b;border-radius:9px;padding:9px 11px;margin-top:10px}
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{transition:none!important;scroll-behavior:auto!important;animation:none!important}}
 
 /* Persistent validation feedback; unlike a toast it remains available to assistive tech. */
@@ -113,9 +114,9 @@ button:focus-visible,summary:focus-visible,[role="button"]:focus-visible{outline
 <script>(() => {
   'use strict';
   const $ = id => document.getElementById(id);
-  const encoder = new TextEncoder();
-  const decoder = new TextDecoder('utf-8', { fatal: true });
-  const webCrypto = globalThis.crypto;
+  const encoder = typeof window.TextEncoder === 'function' ? new window.TextEncoder() : null;
+  const decoder = typeof window.TextDecoder === 'function' ? new window.TextDecoder('utf-8', { fatal: true }) : null;
+  const webCrypto = window.crypto;
   const subtle = webCrypto && webCrypto.subtle;
   const MAGIC1 = new Uint8Array([67, 78, 86, 49]); // CNV1, legacy
   const MAGIC2 = new Uint8Array([67, 78, 86, 50]); // CNV2
@@ -126,7 +127,7 @@ button:focus-visible,summary:focus-visible,[role="button"]:focus-visible{outline
   const MAX_ITER = 2000000;
   const SIZES = [262144, 1048576, 4194304, 8388608];
   const FALLBACK_MAX = (typeof navigator.deviceMemory === 'number' && navigator.deviceMemory <= 4 ? 64 : 128) * 1024 * 1024;
-  const PICKER = typeof window.showSaveFilePicker === 'function' && window.isSecureContext;
+  let PICKER = typeof window.showSaveFilePicker === 'function' && window.isSecureContext === true;
   const MAX_FILENAME_BYTES = 220;
   const AUTH_ERROR = '认证失败：密钥错误，或文件内容已损坏、被篡改。';
   const ALGS = Object.freeze({
@@ -193,8 +194,9 @@ button:focus-visible,summary:focus-visible,[role="button"]:focus-visible{outline
   function safeName(raw) {
     // Keep the extension when limiting long names; avoid path separators and reserved names.
     const fallback = '解密文件';
-    let name = String(raw || '').normalize('NFC')
-      .replace(/[<>:"/\\|?*\u0000-\u001f\u007f\u202a-\u202e\u2066-\u2069]/g, '_')
+    let name = String(raw || '');
+    if (typeof name.normalize === 'function') name = name.normalize('NFC');
+    name = name.replace(/[<>:"/\\|?*\u0000-\u001f\u007f\u202a-\u202e\u2066-\u2069]/g, '_')
       .trim().replace(/[. ]+$/g, '');
     if (!name || name === '.' || name === '..') return fallback;
     if (/^(CON|PRN|AUX|NUL|COM[1-9]|LPT[1-9])(?:\.|$)/i.test(name)) name = '_' + name;
@@ -224,12 +226,14 @@ button:focus-visible,summary:focus-visible,[role="button"]:focus-visible{outline
   }
   function setPill(id, active) { $(id).classList.toggle('on', active); $(id).setAttribute('aria-pressed', String(active)); }
   function bringIntoView(elementId) {
-    requestAnimationFrame(() => {
+    const schedule = typeof window.requestAnimationFrame === 'function' ? window.requestAnimationFrame.bind(window) : cb => setTimeout(cb, 0);
+    schedule(() => {
       const node = $(elementId);
       if (!node.hidden && typeof node.scrollIntoView === 'function') {
         const reduced = typeof window.matchMedia === 'function'
           && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-        node.scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'nearest' });
+        try { node.scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'nearest' }); }
+        catch { node.scrollIntoView(); }
       }
     });
   }
@@ -318,7 +322,7 @@ button:focus-visible,summary:focus-visible,[role="button"]:focus-visible{outline
     $('genPassword').hidden = !encrypt; $('genRaw').hidden = !encrypt;
     $('password').placeholder = encrypt ? '至少 12 字符，推荐随机生成' : '输入加密时使用的主口令';
     $('rawKey').placeholder = encrypt ? '生成或粘贴 HEX 密钥' : '输入加密时使用的 HEX 密钥';
-    $('extraOptions').hidden = !encrypt && state.detected?.x !== 1;
+    $('extraOptions').hidden = !encrypt && (!state.detected || state.detected.x !== 1);
     $('extraOptions').querySelector('summary').textContent = encrypt ? '附加口令（可选）' : '附加口令（必填）';
     $('runText').textContent = state.prepared ? '保存并解密' : (encrypt ? '开始加密' : (text || !PICKER ? '开始解密' : '验证密钥与文件名'));
     $('counter').textContent = `${$('sourceText').value.length.toLocaleString('zh-CN')} 字符`;
@@ -375,7 +379,7 @@ button:focus-visible,summary:focus-visible,[role="button"]:focus-visible{outline
   }
   function makeManifest() {
     const a = $('algorithm').value;
-    if (!Object.hasOwn(ALGS, a)) fail('不支持该加密算法。');
+    if (!Object.prototype.hasOwnProperty.call(ALGS, a)) fail('不支持该加密算法。');
     const c = Number($('chunkSize').value);
     if (!SIZES.includes(c)) fail('无效的分块大小。');
     const saltSize = Number($('saltSize').value);
@@ -393,7 +397,7 @@ button:focus-visible,summary:focus-visible,[role="button"]:focus-visible{outline
     return validateManifest(m, 2);
   }
   function validateManifest(m, expectedVersion) {
-    if (!m || Array.isArray(m) || typeof m !== 'object' || !Object.hasOwn(ALGS, m.a) || m.v !== expectedVersion) fail('密文版本或算法不受支持。');
+    if (!m || Array.isArray(m) || typeof m !== 'object' || !Object.prototype.hasOwnProperty.call(ALGS, m.a) || m.v !== expectedVersion) fail('密文版本或算法不受支持。');
     if (m.v === 1 ? m.c !== 1048576 : !SIZES.includes(m.c)) fail('密文分块参数无效。');
     if (m.k === 'P') {
       if (!Number.isSafeInteger(m.i) || m.i < MIN_ITER || m.i > MAX_ITER || !['SHA-256','SHA-512'].includes(m.h) || ![0,1].includes(m.x)) fail('口令派生参数无效。');
@@ -421,12 +425,23 @@ button:focus-visible,summary:focus-visible,[role="button"]:focus-visible{outline
     catch { fail('密文头部解析失败。'); }
     return { manifest: validateManifest(manifest, version), header: bytes.slice(0, 8 + n) };
   }
+  function readBlobBuffer(blob) {
+    if (typeof blob.arrayBuffer === 'function') return blob.arrayBuffer();
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = () => reject(reader.error || new Error('文件读取失败。'));
+      reader.onabort = () => reject(new Error('文件读取已取消。'));
+      reader.readAsArrayBuffer(blob);
+    });
+  }
+
   async function readHeader(blob) {
     if (!Number.isSafeInteger(blob.size) || blob.size < 24) fail('密文文件过短或大小无效。');
-    const first = new Uint8Array(await blob.slice(0, 8).arrayBuffer());
+    const first = new Uint8Array(await readBlobBuffer(blob.slice(0, 8)));
     const n = get32(first, 4);
     if (n < 10 || n > MAX_HEADER || 8 + n + 5 > blob.size) fail('密文头部已损坏或截断。');
-    return parseHeader(new Uint8Array(await blob.slice(0, 8 + n).arrayBuffer()));
+    return parseHeader(new Uint8Array(await readBlobBuffer(blob.slice(0, 8 + n))));
   }
   function fromText(value) {
     if (value.length > 24000000) fail('文本密文过长，请使用文件模式。');
@@ -539,7 +554,7 @@ button:focus-visible,summary:focus-visible,[role="button"]:focus-visible{outline
   async function readRecord(blob, offset, index, parsed, keys) {
     if (index >= 0xffffffff) fail('文件块数量超过安全上限。');
     if (offset + 5 > blob.size) fail('密文记录头缺失，文件可能已截断。');
-    const frame = new Uint8Array(await blob.slice(offset,offset+5).arrayBuffer());
+    const frame = new Uint8Array(await readBlobBuffer(blob.slice(offset,offset+5)));
     const size = get32(frame), type = frame[4];
     const a = ALGS[parsed.manifest.a];
     const maxData = parsed.manifest.c + a.iv + (a.mode === 'GCM' ? 16 : 48);
@@ -547,7 +562,7 @@ button:focus-visible,summary:focus-visible,[role="button"]:focus-visible{outline
     if (size < a.iv + (a.mode === 'GCM' ? 16 : 48) || size > maxSize || offset + 5 + size > blob.size) fail('密文块长度无效或文件已截断。');
     if ((index === 0 && type !== 1) || (index > 0 && type !== 2 && type !== 3)) fail('密文块顺序不合法。');
     if (type === 3 && size > a.iv + (a.mode === 'GCM' ? 16 : 48)) fail('结束块长度无效。');
-    const body = new Uint8Array(await blob.slice(offset+5,offset+5+size).arrayBuffer());
+    const body = new Uint8Array(await readBlobBuffer(blob.slice(offset+5,offset+5+size)));
     const plain = await openRecord(body,type,index,parsed.manifest,parsed.header,keys);
     return { type, plain, next: offset+5+size };
   }
@@ -593,8 +608,16 @@ button:focus-visible,summary:focus-visible,[role="button"]:focus-visible{outline
     const writer = await handle.createWritable();
     return {
       bytes: 0,
-      async write(part) { await writer.write(part); this.bytes += part.byteLength || part.size || 0; },
-      async close() { await writer.close(); return null; },
+      async write(part) {
+        try { await writer.write(part); }
+        catch (error) { const e = new Error('浏览器无法流式写入文件。'); e.nativeWriteFailure = true; throw e; }
+        this.bytes += part.byteLength || part.size || 0;
+      },
+      async close() {
+        try { await writer.close(); }
+        catch (error) { const e = new Error('浏览器无法完成文件保存。'); e.nativeWriteFailure = true; throw e; }
+        return null;
+      },
       async abort() { try { await writer.abort(); } catch { /* browser may have closed it */ } },
       name: handle.name
     };
@@ -607,7 +630,7 @@ button:focus-visible,summary:focus-visible,[role="button"]:focus-visible{outline
     for (let off = 0; off < total; off += manifest.c) {
       checkCancel();
       const end = Math.min(off + manifest.c,total);
-      const plain = kind === 'file' ? new Uint8Array(await file.slice(off,end).arrayBuffer()) : textBytes.subarray(off,end);
+      const plain = kind === 'file' ? new Uint8Array(await readBlobBuffer(file.slice(off,end))) : textBytes.subarray(off,end);
       await sink.write(await seal(plain,2,index++,manifest,parsed.header,keys));
       done = end;
       showProgress(`正在加密 · ${displayBytes(done)} / ${displayBytes(total)}`,2+96*done/Math.max(total,1));
@@ -645,15 +668,35 @@ button:focus-visible,summary:focus-visible,[role="button"]:focus-visible{outline
     showProgress('完整性验证通过',100,true);
     return meta;
   }
-  async function useSink(handle, fn) {
-    const sink = await createSink(handle);
+  function disableDirectSave() {
+    PICKER = false;
+    updateContext();
+    updateFileHelp();
+  }
+
+  async function useSink(handle, fn, fallbackSize = 0) {
+    let sink, saved = Boolean(handle);
+    try { sink = await createSink(handle); }
+    catch (error) {
+      if (!handle) throw error;
+      // Some browsers expose a picker/handle but cannot create a writable stream.
+      disableDirectSave();
+      if (fallbackSize > FALLBACK_MAX) fail(`当前浏览器无法直接写入磁盘，且文件超过内存保存上限 ${displayBytes(FALLBACK_MAX)}。请使用支持文件流式写入的桌面浏览器。`);
+      sink = blobSink('');
+      saved = false;
+    }
     try {
       const value = await fn(sink);
       checkCancel();
       const blob = await sink.close();
-      return { blob, value, bytes: sink.bytes };
+      return { blob, value, bytes: sink.bytes, saved };
     } catch (error) {
       await sink.abort();
+      if (handle && error && error.nativeWriteFailure) {
+        disableDirectSave();
+        if (fallbackSize > FALLBACK_MAX) fail(`当前浏览器无法直接写入磁盘，且文件超过内存保存上限 ${displayBytes(FALLBACK_MAX)}。请使用支持文件流式写入的桌面浏览器。`);
+        return useSink(null,fn);
+      }
       throw error;
     }
   }
@@ -674,12 +717,15 @@ button:focus-visible,summary:focus-visible,[role="button"]:focus-visible{outline
       options.excludeAcceptAllOption = false;
     }
     try {
-      return await window.showSaveFilePicker(options);
+      const handle = await window.showSaveFilePicker(options);
+      if (handle && typeof handle.createWritable === 'function') return handle;
     } catch (error) {
-      if (error && error.name === 'AbortError') { const e = new Error('已取消选择保存位置。'); e.canceled = true; throw e; }
-      if (error && error.name === 'SecurityError') fail('浏览器拒绝了流式保存权限。请在安全上下文中使用，并重试。');
-      throw error;
+      // Some Android browsers reject with AbortError before opening a dialog.
+      // This is indistinguishable from clicking Cancel. Never download automatically:
+      // expose a separate download button instead, so no unwanted file is saved.
     }
+    disableDirectSave();
+    return null;
   }
   function textOutput(value, encrypted, manifest) {
     $('resultCard').hidden = false;
@@ -692,13 +738,13 @@ button:focus-visible,summary:focus-visible,[role="button"]:focus-visible{outline
     state.resultName = encrypted ? '加密文本.txt' : '解密文本.txt';
     bringIntoView('resultCard');
   }
-  function fileOutput(filename, size, saved, blob = null) {
+  function fileOutput(filename, size, saved, blob = null, saveFallback = false) {
     $('resultCard').hidden = false; $('textResult').hidden = true; $('fileResult').hidden = false;
     $('successLabel').textContent = state.operation === 'decrypt' ? '认证通过' : '加密完成';
     $('resultHeading').textContent = state.operation === 'decrypt' ? '解密完成' : '加密完成';
     $('resultName').textContent = filename;
     $('resultSize').textContent = displayBytes(size);
-    $('resultFileHint').textContent = saved ? '已直接保存至所选位置。' : '处理完成，点击下载保存。';
+    $('resultFileHint').textContent = saved ? '已直接保存至所选位置。' : (saveFallback ? '浏览器保存位置窗口不可用，已切换为下载模式。请点击「下载文件」保存。' : '处理完成，点击下载保存。');
     $('downloadResult').hidden = saved;
     $('encryptedRenameHint').hidden = !(saved && state.operation === 'encrypt');
     state.resultName = filename;
@@ -714,19 +760,21 @@ button:focus-visible,summary:focus-visible,[role="button"]:focus-visible{outline
     const material = validateKeyFields(m);
     let outputName = suggestedEncryptedName();
     // Call the native picker before the first await: it needs transient user activation.
-    const handle = file && PICKER ? await askSave(outputName,true) : null;
-    if (handle) outputName = handle.name;
+    const attemptedDirectSave = Boolean(file && PICKER);
+    const handle = attemptedDirectSave ? await askSave(outputName,true) : null;
+    if (handle && handle.name) outputName = handle.name;
+    if (file && !handle && file.size > FALLBACK_MAX) fail(`当前浏览器无法直接写入磁盘，且文件超过内存保存上限 ${displayBytes(FALLBACK_MAX)}。请使用支持文件流式写入的桌面浏览器。`);
     showProgress('准备本地加密…',0,true);
     const keys = await deriveKeys(m,material);
     const parsed = { manifest:m,header:headerBytes(m) };
-    const result = await useSink(handle,sink => encryptInto(file?'file':'text',file,text,m,parsed,keys,sink));
+    const result = await useSink(handle,sink => encryptInto(file?'file':'text',file,text,m,parsed,keys,sink),file ? file.size : 0);
     if (file) {
-      fileOutput(outputName,result.bytes,Boolean(handle),result.blob);
+      fileOutput(outputName,result.bytes,result.saved,result.blob,attemptedDirectSave && !result.saved);
     } else {
-      const bytes = new Uint8Array(await result.blob.arrayBuffer());
+      const bytes = new Uint8Array(await readBlobBuffer(result.blob));
       textOutput('CNV2.'+base64url(bytes),true,m);
     }
-    toast('加密完成。');
+    toast(attemptedDirectSave && !result.saved ? '已切换为下载模式，请点击「下载文件」保存。' : '加密完成。');
   }
   async function prepareDecryptFile(file) {
     showProgress('正在读取文件信息…',0,true);
@@ -743,15 +791,20 @@ button:focus-visible,summary:focus-visible,[role="button"]:focus-visible{outline
     toast('密钥正确，原始文件名已确认。请点击「保存并解密」。');
   }
   async function doDecrypt() {
-    if (state.input === 'file' && PICKER && state.prepared && state.prepared.file === state.file) {
+    if (state.input === 'file' && state.prepared && state.prepared.file === state.file) {
       // Second user click: browser picker can suggest the *authenticated, original filename*.
       const p = state.prepared;
-      const handle = await askSave(restoredName(p.meta),false);
-      showProgress('正在解密并写入磁盘…',0,true);
-      const {value} = await useSink(handle,sink => decryptInto(p.file,p.parsed,p.keys,sink,p.meta));
+      const attemptedDirectSave = PICKER;
+      const handle = attemptedDirectSave ? await askSave(restoredName(p.meta),false) : null;
+      if (!handle && p.meta.size > FALLBACK_MAX) {
+        forgetPrepared();
+        fail(`当前浏览器无法直接写入磁盘，且解密文件超过内存保存上限 ${displayBytes(FALLBACK_MAX)}。请使用支持文件流式写入的桌面浏览器。`);
+      }
+      showProgress(handle ? '正在解密并写入磁盘…' : '正在解密…',0,true);
+      const result = await useSink(handle,sink => decryptInto(p.file,p.parsed,p.keys,sink,p.meta),p.meta.size);
       forgetPrepared();
-      fileOutput(handle.name,value.size,true);
-      toast('解密成功，已验证全部数据。');
+      fileOutput(handle && handle.name ? handle.name : restoredName(result.value),result.bytes,result.saved,result.blob,attemptedDirectSave && !result.saved);
+      toast(attemptedDirectSave && !result.saved ? '解密成功，已切换为下载模式，请点击「下载文件」保存。' : '解密成功，已验证全部数据。');
       return;
     }
     const file = state.input === 'file' ? checkFileSize() : null;
@@ -766,7 +819,7 @@ button:focus-visible,summary:focus-visible,[role="button"]:focus-visible{outline
     const {value:meta,blob:plaintext} = await useSink(null,sink => decryptInto(blob,parsed,keys,sink));
     if (meta.kind === 'text' && !file) {
       let decoded;
-      try { decoded = decoder.decode(new Uint8Array(await plaintext.arrayBuffer())); }
+      try { decoded = decoder.decode(new Uint8Array(await readBlobBuffer(plaintext))); }
       catch { fail('密文内容不是有效的 UTF-8 文本，请尝试文件模式。'); }
       textOutput(decoded,false,parsed.manifest);
     } else if (file) {
@@ -785,14 +838,18 @@ button:focus-visible,summary:focus-visible,[role="button"]:focus-visible{outline
   async function copy(text,what) {
     if (!text) { toast('没有可复制的内容。',true); return; }
     try {
-      if (!navigator.clipboard?.writeText) throw new Error('clipboard unavailable');
+      if (!navigator.clipboard || typeof navigator.clipboard.writeText !== 'function') throw new Error('clipboard unavailable');
       await navigator.clipboard.writeText(text);
       toast(`${what}已复制，请注意剪贴板安全。`);
     } catch {
       const node = document.createElement('textarea');
-      node.value = text; node.style.cssText='position:fixed;left:-9999px;top:0;opacity:0';
-      document.body.appendChild(node); node.select();
-      const ok = document.execCommand('copy'); node.remove();
+      node.value = text; node.setAttribute('readonly', '');
+      node.style.cssText='position:fixed;left:0;top:0;opacity:0;pointer-events:none';
+      document.body.appendChild(node);
+      node.focus(); node.select(); node.setSelectionRange(0,node.value.length);
+      let ok = false;
+      try { ok = document.execCommand('copy'); } catch { /* legacy clipboard blocked */ }
+      node.remove();
       toast(ok ? `${what}已复制。` : '复制失败，请手动复制。',!ok);
     }
   }
@@ -808,7 +865,7 @@ button:focus-visible,summary:focus-visible,[role="button"]:focus-visible{outline
     $(buttonId).textContent = input.type === 'text' ? '隐藏' : '显示';
   }
   function bind() {
-    if (!subtle || !webCrypto.getRandomValues || !globalThis.TextEncoder || !globalThis.TextDecoder) {
+    if (!subtle || !webCrypto || typeof webCrypto.getRandomValues !== 'function' || !encoder || !decoder) {
       $('unsupported').hidden = false; return;
     }
     $('encryptTab').onclick = () => changeOperation('encrypt');
@@ -832,7 +889,7 @@ button:focus-visible,summary:focus-visible,[role="button"]:focus-visible{outline
     $('dropzone').onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); if (!state.busy) $('filePicker').click(); } };
     $('dropzone').ondragover = e => { e.preventDefault(); if (!state.busy) $('dropzone').classList.add('drag'); };
     $('dropzone').ondragleave = () => $('dropzone').classList.remove('drag');
-    $('dropzone').ondrop = e => { e.preventDefault(); $('dropzone').classList.remove('drag'); if (!state.busy && e.dataTransfer?.files[0]) selectFile(e.dataTransfer.files[0]); };
+    $('dropzone').ondrop = e => { e.preventDefault(); $('dropzone').classList.remove('drag'); if (!state.busy && e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0]) selectFile(e.dataTransfer.files[0]); };
     $('filePicker').onchange = e => { if (e.target.files[0]) selectFile(e.target.files[0]); };
     $('removeFile').onclick = () => { if (state.busy) return; state.file=null; state.detected=null;$('filePicker').value='';$('selectedFile').hidden=true;$('detected').hidden=true;invalidate(); };
     $('showPassword').onclick = () => showPassword('password','showPassword');
