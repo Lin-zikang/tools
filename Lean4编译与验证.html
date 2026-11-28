@@ -1,0 +1,1606 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#f5f7fb">
+  <meta name="description" content="Lean 4 在线检查与验证：区分编译通过与证明成立，审计 sorry / axiom 漏洞。">
+  <title>Lean 4 编译与验证器</title>
+  <link rel="icon" type="image/png" href="https://user-assets.sxlcdn.com/images/1209238/FlWuslNmGTHt1EipxUtq2GI6zqnN.png?imageMogr2/strip/auto-orient/thumbnail/1200x9000%3E/quality/90!/format/png">
+  <style>
+    /* ===== 基础 ===== */
+    :root {
+      color-scheme: light;
+      --page:#f5f7fb; --panel:#ffffff;
+      --ink:#17243b; --sub:#5f7086; --muted:#7d8da2;
+      --line:#e5eaf2; --line-soft:#eef2f7;
+      --blue:#336de8; --blue-dark:#2559c7; --blue-soft:#eef3ff;
+      --green:#137f5b; --green-soft:#eaf8f2;
+      --red:#ca424c; --red-soft:#fff1f2;
+      --amber:#a8711d; --amber-dark:#855610; --amber-soft:#fff8e8;
+      --code:#26354c;
+      --mono:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono",monospace;
+      --sans:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei","Noto Sans SC",sans-serif;
+      --r-panel:13px;
+      --code-size:16px; --line-height:27px; --gutter:44px; --ed-py:14px; --ed-px:12px;
+      --safe-b:env(safe-area-inset-bottom,0px);
+    }
+    *, *::before, *::after { box-sizing:border-box; }
+    html, body { min-height:100%; }
+    body { margin:0; overflow-x:hidden; background:var(--page); color:var(--ink); font-family:var(--sans); -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility; }
+    button { font:inherit; cursor:pointer; }
+    button:disabled { cursor:default; opacity:.55; }
+    button:focus-visible, textarea:focus-visible, a:focus-visible, summary:focus-visible, select:focus-visible { outline:2px solid #9db9ff; outline-offset:2px; }
+    svg { display:block; flex:none; }
+    .app { min-height:100dvh; display:flex; flex-direction:column; }
+
+    /* ===== 顶栏 ===== */
+    .site-header { background:#fff; border-bottom:1px solid var(--line); }
+    .site-header-inner { max-width:1580px; height:54px; margin:0 auto; padding:0 14px; display:flex; align-items:center; justify-content:space-between; gap:10px; }
+    .brand { display:flex; align-items:center; gap:9px; min-width:0; }
+    .brand-mark { width:32px; height:32px; flex:none; border-radius:9px; background:linear-gradient(135deg,#477df4,#2858c9); color:#fff; display:grid; place-items:center; font-family:Georgia,serif; font-size:22px; font-weight:700; line-height:1; padding-bottom:3px; box-shadow:0 4px 10px #356be726; }
+    .brand-title { font-size:14.5px; font-weight:750; letter-spacing:-.4px; line-height:1.25; white-space:nowrap; }
+    .brand-sub { font-weight:450; color:#73849e; }
+    .brand-subtitle { margin-top:2px; font-size:10px; color:#8290a5; letter-spacing:.15px; white-space:nowrap; }
+    .header-right { display:flex; align-items:center; gap:8px; flex:none; }
+    .service { display:flex; align-items:center; gap:6px; padding:6px 9px; border:1px solid #e7edf6; border-radius:100px; background:#f9fbfe; color:#57708c; font-size:10.5px; font-weight:650; white-space:nowrap; }
+    .service i { width:6px; height:6px; flex:none; border-radius:50%; background:#5b8df0; box-shadow:0 0 0 3px #eaf1ff; }
+    .header-link { display:none; align-items:center; gap:5px; padding:7px 4px; color:var(--sub); text-decoration:none; font-size:12px; }
+    .header-link:hover { color:var(--blue); }
+
+    /* ===== 工作区 ===== */
+    .workspace { width:100%; max-width:1580px; margin:0 auto; padding:12px 12px calc(18px + var(--safe-b)); flex:1; display:flex; flex-direction:column; min-height:0; }
+    .workspace-head { display:flex; align-items:center; gap:10px; margin-bottom:10px; }
+    .workspace-head > div:first-child { display:none; }
+    .workspace-title { margin:0; font-size:17px; font-weight:740; letter-spacing:-.5px; }
+    .workspace-desc { margin:4px 0 0; color:#8190a3; font-size:12px; }
+    .head-tools { display:flex; align-items:center; gap:8px; flex:1; min-width:0; flex-wrap:nowrap; }
+    .tool-button { display:inline-flex; align-items:center; justify-content:center; gap:7px; width:40px; height:40px; padding:0; flex:none; border:1px solid var(--line); border-radius:10px; background:#fff; color:#4f607b; font-size:12.5px; font-weight:600; white-space:nowrap; transition:border-color .16s,color .16s,background .16s; }
+    .tool-button:hover { border-color:#c9d6ea; color:#30538f; }
+    .tool-button:active, .run-button:active { transform:translateY(1px); }
+    .tool-button svg { width:16px; height:16px; }
+    .tool-button .btn-label { display:none; }
+    .run-button { display:inline-flex; align-items:center; justify-content:center; gap:8px; height:40px; min-width:102px; margin-left:auto; padding:0 15px; flex:none; border:0; border-radius:10px; background:var(--blue); color:#fff; font-size:13px; font-weight:670; white-space:nowrap; box-shadow:0 4px 10px #396ce524; transition:background .16s; }
+    .run-button:hover { background:var(--blue-dark); }
+    .run-button svg { width:15px; height:15px; }
+    .run-button[aria-busy="true"] { background:#566d94; box-shadow:none; }
+    .spinner { animation:rotate .8s linear infinite; }
+    @keyframes rotate { to { transform:rotate(360deg); } }
+
+    /* ===== 面板 ===== */
+    .panels { display:flex; flex-direction:column; gap:12px; min-height:0; }
+    .panel { display:flex; flex-direction:column; min-width:0; min-height:0; overflow:hidden; border:1px solid #e6ebf3; border-radius:var(--r-panel); background:var(--panel); box-shadow:0 4px 18px #25375808; }
+    .editor-panel { height:clamp(320px,50dvh,520px); flex:none; }
+    .output-panel { height:clamp(300px,42dvh,520px); min-height:280px; flex:none; }
+    .panel-top, .output-top { display:flex; align-items:center; justify-content:space-between; gap:8px; height:50px; min-height:50px; padding:0 12px; flex:none; border-bottom:1px solid var(--line-soft); }
+    .output-top { padding:0 8px 0 14px; }
+    .file-identity { display:flex; align-items:center; gap:9px; min-width:0; flex:1; color:#43546e; font-size:12.5px; font-weight:700; }
+    .file-icon { display:grid; place-items:center; width:26px; height:26px; flex:none; border-radius:7px; background:#f0f5ff; color:#4174e4; font-family:var(--mono); font-size:11px; font-weight:700; }
+    #fileName { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; min-width:0; }
+    .panel-actions { display:flex; align-items:center; gap:2px; flex:none; }
+    .tiny-btn { display:grid; place-items:center; width:38px; height:38px; border:0; border-radius:8px; background:transparent; color:#8290a4; transition:background .16s,color .16s; }
+    .tiny-btn:hover { background:#f1f5fc; color:#3469de; }
+    .tiny-btn svg { width:16px; height:16px; }
+    .tiny-btn[aria-expanded="true"] { background:var(--blue-soft); color:#3469de; }
+    .panel-foot { display:flex; align-items:center; justify-content:space-between; gap:8px; min-height:38px; padding:0 12px; flex:none; border-top:1px solid var(--line-soft); background:#fcfdff; color:#7f8ea0; font-size:11px; }
+    .foot-left, .foot-right { display:flex; align-items:center; gap:10px; min-width:0; }
+    .foot-left { flex:1 1 auto; }
+    .foot-left span, .foot-right span { white-space:nowrap; }
+    #statusText { min-width:0; overflow:hidden; text-overflow:ellipsis; }
+    #statusDot { display:inline-block; width:7px; height:7px; flex:none; border-radius:50%; background:#aab6c8; }
+    #holeHint { color:#b47a1c; }
+    .mono { font-family:var(--mono); }
+
+    /* ===== 编辑器 ===== */
+    .editor-shell { position:relative; flex:1; min-height:0; overflow:hidden; background:#fff; font:var(--code-size)/var(--line-height) var(--mono); }
+    .gutter { position:absolute; top:0; bottom:0; left:0; z-index:1; width:var(--gutter); overflow:hidden; border-right:1px solid #f1f3f8; background:#fcfdff; color:#a5afbf; text-align:right; user-select:none; pointer-events:none; }
+    #lineNumbers { padding:var(--ed-py) 9px 40px 0; line-height:var(--line-height); }
+    .line-no { position:relative; display:block; height:var(--line-height); line-height:var(--line-height); }
+    .line-no.current { color:#356ad6; font-weight:680; }
+    .line-no.problem { color:#d05967; font-weight:680; }
+    .line-no.hole { color:#b47a1c; }
+    .line-no.hole::before { content:""; position:absolute; left:7px; top:50%; width:4px; height:4px; margin-top:-2px; border-radius:50%; background:#e0a63c; }
+    .editor-area { position:absolute; top:0; right:0; bottom:0; left:var(--gutter); overflow:hidden; }
+    .current-line { position:absolute; top:var(--ed-py); left:0; right:0; z-index:0; height:var(--line-height); background:#f4f7ff; pointer-events:none; }
+    .syntax, #editor { position:absolute; inset:0; margin:0; border:0; border-radius:0; padding:var(--ed-py) var(--ed-px) 40px calc(var(--ed-px) + 5px); font:inherit; font-variant-ligatures:none; letter-spacing:0; white-space:pre; overflow:auto; word-break:normal; overflow-wrap:normal; scrollbar-width:thin; }
+    .syntax { z-index:1; background:transparent; color:var(--code); pointer-events:none; scrollbar-width:none; }
+    .syntax::-webkit-scrollbar { display:none; }
+    .syntax code { display:block; min-width:max-content; min-height:100%; white-space:inherit; font:inherit; }
+    #editor { z-index:2; resize:none; background:transparent; color:transparent; -webkit-text-fill-color:transparent; caret-color:#245ac7; outline:0; }
+    #editor::selection { background:#b7d0ff9c; -webkit-text-fill-color:transparent; }
+    #editor::-moz-selection { background:#b7d0ff9c; }
+    .editor-area.composing .syntax { visibility:hidden; }
+    .editor-area.composing #editor { color:var(--code); -webkit-text-fill-color:var(--code); }
+    .tok-comment { color:#99a6b6; font-style:italic; }
+    .tok-keyword { color:#8060c2; font-weight:600; }
+    .tok-command { color:#ad6a38; font-weight:650; }
+    .tok-string { color:#16866d; }
+    .tok-number { color:#d0783e; }
+    .tok-type { color:#3379bc; }
+    .tok-operator { color:#426aa5; }
+
+    /* ===== 结果区 ===== */
+    .result-tabs { display:flex; align-items:center; gap:18px; height:100%; min-width:0; }
+    .tab { display:flex; align-items:center; gap:6px; height:100%; padding:2px 1px 0; border:0; border-bottom:2px solid transparent; background:none; color:#7b8aa0; font-size:12.5px; font-weight:700; white-space:nowrap; transition:color .16s; }
+    .tab[aria-selected="true"] { color:#2f66d8; border-bottom-color:#3c73e9; }
+    .tab:hover { color:#3467ce; }
+    .count { min-width:17px; padding:2px 5px; border-radius:10px; background:#eff2f7; color:#7e8ca0; font-family:var(--mono); font-size:10px; text-align:center; }
+    .result-body { flex:1; min-height:0; overflow-y:auto; overscroll-behavior-y:contain; scrollbar-width:thin; }
+    .result-body.no-local-scroll { overflow-y:visible; overscroll-behavior-y:auto; }
+    .result-content { padding:14px 14px 22px; }
+    .result-body::-webkit-scrollbar, #editor::-webkit-scrollbar { width:10px; height:10px; }
+    .result-body::-webkit-scrollbar-thumb, #editor::-webkit-scrollbar-thumb { border:3px solid transparent; border-radius:10px; background:#dce3ee; background-clip:content-box; }
+    .result-body::-webkit-scrollbar-thumb:hover, #editor::-webkit-scrollbar-thumb:hover { background:#c9d4e4; background-clip:content-box; }
+
+    .empty-state { display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:100%; padding:36px 18px; text-align:center; color:#8a97aa; }
+    .empty-icon { display:grid; place-items:center; width:52px; height:52px; margin-bottom:14px; border:1px solid #e5ebf6; border-radius:16px; background:#f7f9fd; color:#9aaac3; }
+    .empty-icon svg { width:24px; height:24px; }
+    .empty-state h3 { margin:0 0 6px; color:#65768f; font-size:13.5px; font-weight:700; }
+    .empty-state p { margin:0; max-width:290px; font-size:11.5px; line-height:1.8; }
+    .kbd { padding:3px 6px; border-radius:5px; background:#edf2f9; color:#687b99; font-family:var(--mono); font-size:10.5px; }
+
+    .verdict { display:flex; align-items:flex-start; gap:10px; margin-bottom:12px; padding:13px 14px; border-radius:10px; }
+    .verdict.verified { background:var(--green-soft); color:var(--green); }
+    .verdict.incomplete { background:var(--amber-soft); color:var(--amber-dark); }
+    .verdict.failed { background:var(--red-soft); color:var(--red); }
+    .verdict.loading { background:#f0f4ff; color:#4a6b9f; }
+    .verdict svg { width:18px; height:18px; margin-top:1px; }
+    .verdict strong { display:block; font-size:13.5px; font-weight:750; letter-spacing:-.2px; line-height:1.45; }
+    .verdict small { display:block; margin-top:3px; font-size:11.5px; line-height:1.65; opacity:.86; }
+
+    .notice { margin-bottom:12px; padding:10px 12px; border:1px solid var(--line); border-radius:9px; background:#fbfcff; color:#55677f; font-size:11.5px; line-height:1.75; }
+    .notice.bad { border-color:#f2d5d9; background:#fffafa; }
+    .notice.warn { border-color:#f0dfba; background:#fffcf5; color:#7a5b1f; }
+    .notice-head { display:flex; align-items:center; gap:6px; margin-bottom:5px; color:var(--red); font-size:11.5px; font-weight:700; }
+    .notice.warn .notice-head { color:var(--amber-dark); }
+    .notice-head svg { width:15px; height:15px; }
+    .notice p { margin:0; }
+    .notice code, .hint code { padding:1px 4px; border:1px solid #e7ecf4; border-radius:4px; background:#fff; color:#3c5170; font-family:var(--mono); font-size:10.5px; }
+
+    .banner { display:flex; align-items:flex-start; gap:8px; margin-bottom:12px; padding:10px 11px; border-radius:8px; background:var(--red-soft); color:#984a52; font-size:11.5px; line-height:1.65; }
+    .banner svg { width:16px; height:16px; margin-top:1px; }
+
+    .section-label { display:flex; align-items:center; justify-content:space-between; gap:8px; margin:16px 2px 8px; color:#78889d; font-size:11px; font-weight:720; letter-spacing:.4px; }
+    .section-label span:last-child { font-family:var(--mono); letter-spacing:0; }
+
+    .message { margin-bottom:8px; padding:10px 11px; border:1px solid #e8edf5; border-left:3px solid #dfe6f0; border-radius:8px; background:#fff; }
+    .message.error { border-color:#f4d9de; border-left-color:#d95b67; background:#fffcfc; }
+    .message.warning { border-color:#f5e8c9; border-left-color:#e0ab3f; background:#fffdfa; }
+    .message.info { border-color:#e5eaf4; border-left-color:#8fb1e8; }
+    .message-header { display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:6px; }
+    .severity { display:flex; align-items:center; gap:6px; min-width:0; color:#5171a1; font-size:10.5px; font-weight:700; }
+    .severity .dot { width:6px; height:6px; flex:none; border-radius:50%; background:#5e8ee5; }
+    .message.error .severity { color:var(--red); } .message.error .dot { background:#e46773; }
+    .message.warning .severity { color:var(--amber); } .message.warning .dot { background:#e5b54b; }
+    .location { padding:4px 2px; border:0; background:transparent; color:#6e8cc1; font-family:var(--mono); font-size:10.5px; white-space:nowrap; }
+    .location:hover { text-decoration:underline; }
+    .message pre { margin:0; color:#3d4a60; font:11.5px/1.75 var(--mono); white-space:pre-wrap; overflow-wrap:anywhere; word-break:break-word; }
+
+    .decl-list { margin-bottom:6px; border:1px solid var(--line); border-radius:9px; overflow:hidden; background:#fff; }
+    .decl { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:9px 11px; border-bottom:1px solid var(--line-soft); }
+    .decl:last-child { border-bottom:0; }
+    .decl .name { flex:1; min-width:0; color:#2c3f5c; font-family:var(--mono); font-size:11.5px; overflow-wrap:anywhere; }
+    .decl .reason { flex:none; max-width:62%; padding:2px 6px; border-radius:5px; background:var(--amber-soft); color:#8a6a2a; font-size:10.5px; line-height:1.5; text-align:right; }
+
+    .hole-row { margin-bottom:8px; padding:9px 11px; border:1px solid #f2d5d9; border-radius:8px; background:#fffafa; }
+    .hole-row-head { display:flex; align-items:center; gap:8px; margin-bottom:6px; flex-wrap:wrap; }
+    .hole-row pre { margin:0; color:#5b3a3f; font:11px/1.7 var(--mono); white-space:pre-wrap; overflow-wrap:anywhere; }
+
+    .goal-card { margin-top:8px; padding:13px 14px; border:1px solid #e6ecf6; border-radius:10px; background:#fcfdff; }
+    .goal-card.hole { border-color:#f2d5d9; background:#fffafa; }
+    .goal-card h4 { display:flex; align-items:center; justify-content:space-between; gap:8px; margin:0 0 8px; color:#5274aa; font-size:11.5px; font-weight:730; flex-wrap:wrap; }
+    .goal-card pre { margin:0; color:#283c5b; font:11.5px/1.85 var(--mono); white-space:pre-wrap; overflow-wrap:anywhere; }
+    .goal-label { margin-bottom:4px; color:#8d9cae; font-size:10.5px; }
+    .goal-note { margin:8px 0 0; color:#8391a5; font-size:10.5px; line-height:1.7; }
+    .goal-card.hole .goal-note { color:#8d5b62; }
+    .tag { display:inline-flex; align-items:center; padding:2px 6px; border:1px solid #e2e8f1; border-radius:5px; background:#fff; color:#657791; font-family:var(--mono); font-size:10px; line-height:1.4; white-space:nowrap; }
+    .tag.ok { border-color:#cdeadf; background:#f7fdfa; color:var(--green); }
+    .tag.bad { border-color:#f2d5d9; background:#fffafa; color:var(--red); }
+    .goal-placeholder { padding:26px 14px; text-align:center; color:#92a0b2; font-size:11.5px; line-height:1.9; }
+    .goal-placeholder .tool-button { width:auto; margin:10px auto 0; padding:0 14px; }
+    .line-chips { display:flex; flex-wrap:wrap; gap:6px; }
+    .line-chip { height:38px; padding:0 12px; border:1px solid var(--line); border-radius:7px; background:#fff; color:#5a6c86; font-family:var(--mono); font-size:11px; }
+    .line-chip:hover { border-color:#c9d6ea; }
+    .line-chip.active { border-color:#c5d7ff; background:var(--blue-soft); color:#336de8; }
+    .line-chip.hole { border-color:#f0dfba; background:#fffdf7; color:#8a5a12; }
+    .line-chip.active.hole { border-color:#e8c98a; background:var(--amber-soft); }
+
+    .hint { margin-bottom:12px; padding:10px 12px; border:1px solid #ebf0f7; border-radius:8px; background:#f5f8fd; color:#74869e; font-size:11.5px; line-height:1.7; }
+    .hint .inline-btn { padding:0 2px; border:0; background:none; color:#336de8; font:inherit; text-decoration:underline; }
+    .hint .inline-btn:hover { color:var(--blue-dark); }
+    .hint.stale { border-color:#f0dfba; background:#fffcf5; color:#7a5b1f; }
+    .hint.stale .inline-btn { color:#8a5a12; font-weight:650; }
+
+    details.raw { margin-top:10px; border:1px solid var(--line); border-radius:7px; overflow:hidden; background:#fff; }
+    details.raw summary { padding:8px 10px; color:#657791; font-size:10.5px; cursor:pointer; }
+    details.raw pre { max-height:240px; margin:0; padding:9px 10px; overflow:auto; border-top:1px solid var(--line-soft); color:#3c4b60; font:11px/1.65 var(--mono); white-space:pre-wrap; overflow-wrap:anywhere; }
+    .muted { padding:4px 2px; color:#8a99ac; font-size:11px; }
+    .result-meta { margin-top:10px; color:#8998aa; font-size:10.5px; }
+
+    /* ===== 设置 ===== */
+    .settings-pop { position:fixed; z-index:30; width:min(330px,calc(100vw - 20px)); padding:14px; border:1px solid #dfe6f0; border-radius:12px; background:#fff; box-shadow:0 18px 50px #1f33532b; font-size:12px; }
+    .settings-pop h3 { margin:0 0 10px; color:var(--ink); font-size:13px; font-weight:740; letter-spacing:-.2px; }
+    .setting-row { display:flex; align-items:center; justify-content:space-between; gap:14px; }
+    .setting-row strong { display:block; color:#33455f; font-size:12.5px; font-weight:700; }
+    .setting-row small { display:block; margin-top:3px; color:#8494a9; font-size:11.5px; line-height:1.6; }
+    select { height:34px; max-width:124px; padding:0 8px; border:1px solid var(--line); border-radius:7px; background:#fff; color:#41536d; font:12px var(--sans); }
+    .settings-foot { margin:12px 0 0; padding-top:10px; border-top:1px solid var(--line-soft); color:#8b99ab; font-size:10.5px; line-height:1.6; }
+
+    /* ===== 手动复制兜底 ===== */
+    .copy-modal { position:fixed; inset:0; z-index:45; display:flex; align-items:center; justify-content:center; padding:16px; }
+    .copy-modal[hidden] { display:none; }
+    .copy-modal-mask { position:absolute; inset:0; background:#17243b66; }
+    .copy-modal-panel { position:relative; display:flex; flex-direction:column; width:min(560px,100%); max-height:calc(100dvh - 32px); padding:16px; border:1px solid #dfe6f0; border-radius:13px; background:#fff; box-shadow:0 24px 70px #1422384d; }
+    .copy-modal-panel h3 { margin:0 0 5px; color:var(--ink); font-size:14px; font-weight:740; letter-spacing:-.2px; }
+    .copy-modal-panel p { margin:0 0 10px; color:var(--sub); font-size:11.5px; line-height:1.7; }
+    .copy-modal-text { flex:1; min-height:150px; max-height:44dvh; width:100%; padding:10px; border:1px solid var(--line); border-radius:8px; background:#fcfdff; color:#3d4a60; font:12px/1.7 var(--mono); resize:vertical; }
+    .copy-modal-actions { display:flex; justify-content:flex-end; gap:8px; margin-top:12px; }
+    .copy-modal-actions .tool-button { width:auto; padding:0 14px; }
+    .copy-modal-actions .run-button { min-width:78px; height:37px; margin-left:0; }
+
+    .toast { position:fixed; z-index:40; bottom:calc(20px + var(--safe-b)); left:50%; max-width:calc(100vw - 24px); padding:10px 16px; overflow:hidden; border-radius:9px; background:#253b61; color:#fff; box-shadow:0 12px 35px #253b612f; font-size:11.5px; white-space:nowrap; text-overflow:ellipsis; opacity:0; pointer-events:none; transform:translate(-50%,10px); transition:opacity .2s,transform .2s; }
+    .toast.show { opacity:1; transform:translate(-50%,0); }
+    .sr-only { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }
+
+    /* ===== 平板：≥600 ===== */
+    @media (min-width:600px) {
+      .site-header-inner { height:60px; padding:0 18px; }
+      .brand-mark { width:36px; height:36px; border-radius:10px; font-size:25px; }
+      .brand-title { font-size:16px; }
+      .brand-subtitle { font-size:10.5px; }
+      .service { padding:7px 10px; font-size:11px; }
+      .header-link { display:inline-flex; }
+      .workspace { max-width:900px; padding:18px 18px calc(22px + var(--safe-b)); }
+      .workspace-head { align-items:flex-end; justify-content:space-between; gap:16px; margin-bottom:14px; }
+      .workspace-head > div:first-child { display:block; }
+      .workspace-title { font-size:17px; }
+      .workspace-desc { display:block; margin-top:4px; font-size:11.5px; }
+      .head-tools { flex:none; justify-content:flex-end; flex-wrap:wrap; }
+      .tool-button { width:auto; padding:0 12px; }
+      .tool-button.icon-only { width:40px; padding:0; }
+      .tool-button .btn-label { display:inline; }
+      .tool-button svg { width:15px; height:15px; }
+      .run-button { height:40px; margin-left:0; }
+      .editor-panel { height:clamp(360px,46dvh,560px); }
+      .output-panel { height:clamp(340px,40dvh,560px); }
+      .panel-top, .output-top { height:54px; min-height:54px; padding:0 15px; }
+      .output-top { padding:0 10px 0 16px; }
+      .panel-foot { min-height:38px; padding:0 14px; }
+      :root { --code-size:15px; --line-height:26px; --gutter:50px; --ed-py:16px; --ed-px:14px; }
+      .result-content { padding:16px 16px 24px; }
+      .result-tabs { gap:20px; }
+      .tab { font-size:13px; }
+    }
+
+    /* ===== 桌面：≥1000 ===== */
+    @media (min-width:1000px) {
+      .app { height:100dvh; min-height:0; overflow:hidden; }
+      .site-header-inner { height:70px; padding:0 30px; }
+      .brand-mark { width:38px; height:38px; border-radius:12px; font-size:26px; }
+      .brand-title { font-size:17px; }
+      .brand-subtitle { margin-top:3px; font-size:11.5px; }
+      .service { padding:8px 11px; font-size:12px; }
+      .workspace { max-width:1580px; padding:24px 30px 22px; overflow:hidden; }
+      .workspace-head { align-items:center; margin-bottom:16px; }
+      .workspace-title { font-size:20px; letter-spacing:-.55px; }
+      .workspace-desc { display:block; margin-top:5px; font-size:12px; }
+      .panels { display:grid; grid-template-columns:minmax(0,1.12fr) minmax(360px,.88fr); gap:16px; flex:1; min-height:0; }
+      .editor-panel, .output-panel { height:auto; min-height:0; flex:none; }
+      :root { --r-panel:15px; }
+      .panel { box-shadow:0 6px 26px #25375808; }
+      .panel-top, .output-top { height:57px; min-height:57px; padding:0 18px; }
+      .output-top { padding:0 15px 0 19px; }
+      .tiny-btn { width:31px; height:31px; }
+      .panel-foot { min-height:37px; padding:0 16px; }
+      :root { --code-size:13.5px; --line-height:25px; --gutter:54px; --ed-py:20px; --ed-px:20px; }
+      #lineNumbers { padding:var(--ed-py) 12px 40px 0; }
+      .syntax, #editor { padding:var(--ed-py) var(--ed-px) 40px 24px; }
+      .result-content { padding:18px 18px 28px; }
+      .tool-button { height:37px; }
+      .tool-button.icon-only { width:37px; }
+      .run-button { height:38px; min-width:98px; font-size:13px; }
+      .line-chip { height:32px; padding:0 10px; font-size:10.5px; }
+    }
+
+    /* ===== 矮屏横放：双栏并排 ===== */
+    @media (orientation:landscape) and (max-height:520px) {
+      .app { height:100dvh; min-height:0; overflow:hidden; }
+      .site-header-inner { height:44px; padding:0 12px; }
+      .brand-mark { width:28px; height:28px; border-radius:8px; font-size:19px; }
+      .brand-title { font-size:14px; }
+      .brand-subtitle, .service, .header-link { display:none; }
+      .workspace { max-width:none; padding:8px 10px; overflow:hidden; }
+      .workspace-head { margin-bottom:8px; gap:8px; }
+      .workspace-head > div:first-child { display:none; }
+      .head-tools { flex:1; min-width:0; gap:6px; flex-wrap:nowrap; justify-content:flex-end; }
+      .tool-button { width:36px; height:36px; padding:0; }
+      .tool-button .btn-label { display:none; }
+      .run-button { height:36px; min-width:82px; padding:0 10px; font-size:11.5px; margin-left:auto; }
+      .panels { display:flex; flex-direction:row; gap:8px; flex:1; min-height:0; }
+      .editor-panel, .output-panel { height:auto; min-height:0; flex:1 1 0; }
+      .panel-top, .output-top { height:40px; min-height:40px; padding:0 10px; }
+      .panel-foot { min-height:28px; padding:0 9px; font-size:10px; }
+      .utf8, #envLabel { display:none; }
+      :root { --code-size:13px; --line-height:22px; --gutter:40px; --ed-py:10px; --ed-px:10px; }
+      #lineNumbers { padding:var(--ed-py) 7px 30px 0; }
+      .syntax, #editor { padding:var(--ed-py) var(--ed-px) 30px calc(var(--ed-px) + 4px); }
+      .result-content { padding:11px; }
+      .empty-state { padding:20px 12px; }
+      .verdict { margin-bottom:9px; padding:10px 11px; }
+      .verdict strong { font-size:12.5px; }
+      .verdict small { font-size:10.5px; }
+    }
+
+    @media (max-width:519px) {
+      .settings-pop { top:auto!important; left:10px; right:10px; bottom:calc(10px + var(--safe-b)); width:auto; max-height:72dvh; overflow:auto; }
+      select { height:40px; max-width:150px; font-size:16px; }
+    }
+    @media (max-width:400px) {
+      .foot-left .utf8, .foot-right #envLabel { display:none; }
+      .workspace-desc { display:none; }
+    }
+    @media (max-width:360px) {
+      .service { display:none; }
+      .brand-title { font-size:14px; }
+      .run-button { min-width:88px; padding:0 11px; font-size:12px; }
+      .panel-foot { font-size:10.5px; }
+    }
+    @media (prefers-reduced-motion:reduce) { *, *::before, *::after { transition:none!important; animation:none!important; scroll-behavior:auto!important; } }
+  </style>
+</head>
+<body>
+<div class="app">
+  <header class="site-header">
+    <div class="site-header-inner">
+      <div class="brand" aria-label="Lean 4 云端工作台">
+        <div class="brand-mark" aria-hidden="true">λ</div>
+        <div>
+          <div class="brand-title">Lean 4 <span class="brand-sub">Playground</span></div>
+          <div class="brand-subtitle">轻量云端代码工作台</div>
+        </div>
+      </div>
+      <div class="header-right">
+        <span class="service" title="AXLE 无需 API Key；实际可用性取决于第三方服务"><i aria-hidden="true"></i>AXLE · 无需 Key</span>
+        <a class="header-link" href="https://lean-lang.org/" target="_blank" rel="noopener noreferrer" title="前往 Lean 官网">Lean 官网
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17 17 7M8 7h9v9"/></svg>
+        </a>
+      </div>
+    </div>
+  </header>
+  <main class="workspace">
+    <div class="workspace-head">
+      <div>
+        <h1 class="workspace-title">开始编写与验证</h1>
+        <p class="workspace-desc">Lean 4 + Mathlib · 云端执行 · 自动本地保存</p>
+      </div>
+      <div class="head-tools" role="toolbar" aria-label="编辑器操作">
+        <button type="button" class="tool-button icon-only" id="newBtn" title="新建文件" aria-label="新建文件">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+        </button>
+        <button type="button" class="tool-button icon-only" id="importBtn" title="从设备导入 .lean 文件" aria-label="导入 Lean 文件">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 16V4m0 0-4 4m4-4 4 4M4 16v4h16v-4"/></svg>
+        </button>
+        <input id="fileInput" type="file" accept=".lean,.txt,text/plain" hidden>
+        <button type="button" class="tool-button" id="exportBtn" title="下载当前 .lean 文件到设备" aria-label="下载 Lean 文件">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12m0 0 4-4m-4 4-4-4M4 17v4h16v-4"/></svg><span class="btn-label">下载文件</span>
+        </button>
+        <button type="button" class="run-button" id="runBtn" title="运行代码（Ctrl / ⌘ + Enter）" aria-keyshortcuts="Control+Enter Meta+Enter">
+          <svg id="runIcon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m8.1 4.9 11.4 7.1-11.4 7.1a1.2 1.2 0 0 1-1.8-1V5.9a1.2 1.2 0 0 1 1.8-1Z"/></svg>
+          <span id="runLabel">运行代码</span>
+        </button>
+      </div>
+    </div>
+    <div class="panels">
+      <section class="panel editor-panel" aria-label="Lean 代码编辑器">
+        <div class="panel-top">
+          <div class="file-identity"><span class="file-icon">L4</span><span id="fileName" title="Main.lean">Main.lean</span></div>
+          <div class="panel-actions">
+            <button type="button" class="tiny-btn" id="settingsBtn" title="运行设置" aria-label="运行设置" aria-expanded="false" aria-controls="settingsPop">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2.4"/><circle cx="10" cy="17" r="2.4"/></svg>
+            </button>
+            <button type="button" class="tiny-btn" id="copyCode" title="复制源代码" aria-label="复制源代码">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/></svg>
+            </button>
+          </div>
+        </div>
+        <div class="editor-shell">
+          <div class="gutter" aria-hidden="true"><div id="lineNumbers"></div></div>
+          <div class="editor-area">
+            <div class="current-line" id="currentLine" aria-hidden="true"></div>
+            <pre class="syntax" id="syntax" aria-hidden="true"><code id="highlight"></code></pre>
+            <label class="sr-only" for="editor">Lean 4 代码</label>
+            <textarea id="editor" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" wrap="off" aria-label="Lean 4 代码编辑器"></textarea>
+          </div>
+        </div>
+        <div class="panel-foot">
+          <div class="foot-left"><span id="cursorPosition" class="mono">Ln 1, Col 1</span><span class="utf8">UTF-8</span></div>
+          <div class="foot-right"><span id="holeHint" class="mono"></span><span id="saveState">已自动保存</span></div>
+        </div>
+      </section>
+      <section class="panel output-panel" aria-label="检查结果与证明目标">
+        <div class="output-top">
+          <div class="result-tabs" role="tablist" aria-label="结果视图">
+            <button type="button" class="tab" id="outputTab" role="tab" aria-selected="true" aria-controls="resultBody">运行结果 <span id="issueCount" class="count" hidden>0</span></button>
+            <button type="button" class="tab" id="goalsTab" role="tab" aria-selected="false" aria-controls="resultBody">证明目标</button>
+          </div>
+          <div class="panel-actions">
+            <button type="button" class="tiny-btn" id="copyResult" title="复制当前结果" aria-label="复制当前结果">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/></svg>
+            </button>
+          </div>
+        </div>
+        <div id="resultBody" class="result-body" role="tabpanel" aria-live="polite" aria-atomic="false" aria-labelledby="outputTab"></div>
+        <div class="panel-foot"><div class="foot-left"><span id="statusDot"></span><span id="statusText">准备就绪</span></div><div class="foot-right"><span class="mono" id="envLabel">lean-4.36.0</span><span id="duration">—</span></div></div>
+      </section>
+    </div>
+  </main>
+</div>
+<div class="settings-pop" id="settingsPop" hidden role="dialog" aria-labelledby="settingsTitle">
+  <h3 id="settingsTitle">运行设置</h3>
+  <div class="setting-row">
+    <div><strong>Lean 环境</strong><small>选择本次编译使用的 Lean 版本。</small></div>
+    <select id="envSelect" aria-label="Lean 环境">
+      <option value="lean-4.36.0">4.36.0</option>
+      <option value="lean-4.35.0">4.35.0</option>
+      <option value="lean-4.31.0">4.31.0</option>
+      <option value="lean-4.28.0">4.28.0</option>
+    </select>
+  </div>
+  <p class="settings-foot">不同版本的 Mathlib 与语法支持不同；切换后需重新运行。</p>
+</div>
+<div class="copy-modal" id="copyModal" hidden>
+  <div class="copy-modal-mask" id="copyModalMask"></div>
+  <div class="copy-modal-panel" role="dialog" aria-modal="true" aria-labelledby="copyModalTitle">
+    <h3 id="copyModalTitle">自动复制未成功</h3>
+    <p>请手动选中下方文本复制（Ctrl / ⌘ + C）；手机上可长按选择。</p>
+    <textarea id="copyModalText" class="copy-modal-text" readonly spellcheck="false" wrap="off" aria-label="待复制内容"></textarea>
+    <div class="copy-modal-actions">
+      <button type="button" class="tool-button" id="copyModalSelect" style="height:37px">全选</button>
+      <button type="button" class="run-button" id="copyModalClose">关闭</button>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<script>
+'use strict';
+(() => {
+  const API='https://axle.axiommath.ai/api/v1';
+  const ENVS=['lean-4.36.0','lean-4.35.0','lean-4.31.0','lean-4.28.0'];
+  const DEFAULT_ENV='lean-4.36.0';
+  const STORE='lean-cloud-playground-v4';
+  const DEFER_SCAN_CHARS=24000;
+  const DEFAULT_CODE='import Mathlib\n\nexample : 2 + 2 = 4 := by\n  rfl';
+
+  const $=id=>document.getElementById(id);
+  const esc=s=>String(s).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'",'&#39;');
+  const editor=$('editor');
+  const resultBody=$('resultBody');
+  const syntax=$('syntax');
+  const highlight=$('highlight');
+  const lineNumbers=$('lineNumbers');
+  const currentLine=$('currentLine');
+
+  let filename='Main.lean';
+  let activeTab='output';
+  let lastRun=null;          // {code,ms,messages,analysis,data,networkError}
+  let goals=null;            // {states,truncated,lineOffset,error}
+  let loadingGoals=false;
+  let runController=null;
+  let goalController=null;
+  let requestId=0;
+  let issueLines=new Set();
+  let holeLines=new Set();
+  let saveTimer=null;
+  let toastTimer=null;
+  let currentLineNumber=1;
+  let composing=false;
+  let lastGoalKey='';
+  // 只保留真正可配置的项；import 始终按提交内容检查（requestTool 固定 ignore_imports:false）。
+  let settings={env:DEFAULT_ENV};
+
+  const icons={
+    check:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m8 12 2.5 2.5L16 9"/></svg>',
+    alert:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 2.8 20h18.4L12 3Z"/><path d="M12 9v5m0 3.5h.01"/></svg>',
+    error:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v6m0 4h.01"/></svg>',
+    loading:'<svg class="spinner" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 3a9 9 0 1 1-9 9"/></svg>',
+    terminal:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="m7.5 9 3 3-3 3M13 16h4"/></svg>',
+    goal:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/></svg>'
+  };
+
+  function toast(message){
+    const el=$('toast');
+    el.textContent=message;
+    el.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer=setTimeout(()=>el.classList.remove('show'),2400);
+  }
+  function emptyState(title,message,kind='terminal'){
+    return `<div class="empty-state"><div class="empty-icon">${icons[kind]}</div><h3>${esc(title)}</h3><p>${message}</p></div>`;
+  }
+  function toText(item){
+    if(typeof item==='string') return item;
+    if(item&&typeof item==='object') return String(item.message??item.text??JSON.stringify(item));
+    return String(item??'');
+  }
+  function normalizeCode(src){
+    return String(src||'').replace(/^\uFEFF/,'').replace(/\r\n?/g,'\n')
+      .split('\n').map(l=>l.replace(/[ \t]+$/,'')).join('\n')
+      .replace(/\n{3,}/g,'\n\n').replace(/^\n+/,'').replace(/\n+$/,'');
+  }
+  function cleanSource(src){
+    return String(src||'').replace(/^\uFEFF/,'').replace(/\r\n?/g,'\n').replace(/\n+$/,'');
+  }
+  function parseImports(code){
+    // 先剥离注释与字符串，避免把注释里的 `import ...` 误算成真实 import。
+    return stripNonCode(String(code||'')).split('\n').map(l=>l.trim()).filter(l=>/^import\s+/.test(l)).map(l=>l.replace(/\s+/g,' ').trim());
+  }
+  // 判断撇号是否真的是字符字面量的起始引号：必须能在同一行很近处找到闭合引号。
+  // Lean 标识符允许撇号（α'、h'、x₁'），不能只看前一个字符是不是 ASCII 标识符，
+  // 否则 α' 会被当成字符字面量起点，找不到闭合引号后吞掉后续整段代码。
+  function isCharLiteralStart(src,i){
+    if(i>0){
+      const prev=src.charCodeAt(i-1);
+      if(prev>=128) return false;                     // Unicode 标识符（α'、β' 等）后的撇号
+      if(/[A-Za-z0-9_]/.test(src[i-1])) return false; // ASCII 标识符 / 数字后的撇号
+    }
+    return /^'(?:\\u\{[0-9A-Fa-f]+\}|\\.|[^'\\\n])'/.test(src.slice(i,i+16));
+  }
+  // 把注释、字符串、字符字面量替换为空格（保留换行），用于扫描 sorry / admit 与声明。
+  function stripNonCode(src){
+    let out='',i=0,state='code',depth=0;
+    const push=c=>{out+=(c==='\n'?'\n':' ');};
+    while(i<src.length){
+      const c=src[i],n=src[i+1];
+      if(state==='code'){
+        if(c==='-'&&n==='-'){state='line';out+='  ';i+=2;continue;}
+        if(c==='/'&&n==='-'){state='block';depth=1;out+='  ';i+=2;continue;}
+        if(c==='"'){state='str';out+=' ';i++;continue;}
+        if(c==="'"&&isCharLiteralStart(src,i)){state='char';out+=' ';i++;continue;}
+        out+=c;i++;continue;
+      }
+      if(state==='line'){ if(c==='\n'){state='code';out+='\n';} else out+=' '; i++;continue; }
+      if(state==='block'){
+        if(c==='/'&&n==='-'){depth++;out+='  ';i+=2;continue;}
+        if(c==='-'&&n==='/'){depth--;out+='  ';i+=2;if(depth===0)state='code';continue;}
+        push(c);i++;continue;
+      }
+      if(state==='str'){
+        if(c==='\\'){out+='  ';i+=2;continue;}
+        if(c==='"'){state='code';out+=' ';i++;continue;}
+        push(c);i++;continue;
+      }
+      if(state==='char'){
+        if(c==='\\'){out+='  ';i+=2;continue;}
+        if(c==="'"){state='code';out+=' ';i++;continue;}
+        push(c);i++;continue;
+      }
+    }
+    return out;
+  }
+  function scanHoles(code){
+    const lines=stripNonCode(code).split('\n'),holes=[];
+    lines.forEach((line,idx)=>{
+      const re=/\b(sorry|admit)\b/g;
+      let m;
+      while((m=re.exec(line))) holes.push({line:idx+1,col:m.index+1,kind:m[1]});
+    });
+    return holes;
+  }
+  // 大文件里每次按键都全文扫描 sorry/admit 代价很高：小文件即时扫描，大文件防抖到打字停顿后。
+  let holeTimer=0;
+  function applyHoles(code){
+    clearTimeout(holeTimer);holeTimer=0;
+    holeLines=new Set(scanHoles(code).map(h=>h.line));
+  }
+  function scheduleHoleScan(){
+    clearTimeout(holeTimer);
+    holeTimer=setTimeout(()=>{
+      holeTimer=0;
+      holeLines=new Set(scanHoles(editor.value).map(h=>h.line));
+      refreshMarks();
+    },140);
+  }
+  function scanAxioms(code){
+    const lines=stripNonCode(code).split('\n'),out=[];
+    lines.forEach((line,idx)=>{
+      const m=line.match(/^\s*(?:@\[[^\]]*\]\s*)?(?:private\s+|protected\s+)?(?:axiom|constant)\s+([^:\s{(]+)/);
+      if(m) out.push({line:idx+1,name:m[1]});
+    });
+    return out;
+  }
+  function countDeclarations(code){
+    const re=/^\s*(?:@\[[^\]]*\]\s*)?(?:private\s+|protected\s+|noncomputable\s+|partial\s+|unsafe\s+)*(?:theorem|lemma|example|def|abbrev|opaque|instance|axiom|structure|inductive|class)\b/;
+    return stripNonCode(code).split('\n').filter(l=>re.test(l)).length;
+  }
+  // AXLE 在 tool_messages.infos 里会给出 sorry / admit 处被放弃的目标：`-:4:2: info: unsolved goals at sorry:\n⊢ q`
+  function parseHoleGoals(infos){
+    const result=[];
+    for(const text of infos){
+      const m=text.match(/^-:(\d+):(\d+): info: unsolved goals at (sorry|admit):\s*\n?([\s\S]*)$/);
+      if(m) result.push({line:Number(m[1]),col:Number(m[2]),kind:m[3],goal:m[4].trim()});
+    }
+    return result;
+  }
+  // 只认消息开头的定位前缀：AXLE 的 `-:4:2:` 或 `Main.lean:4:2:`。
+  // 旧写法会把正文里的 `foo:12:3:` 也当成行号，这里改为锚定行首。
+  function messageLocation(text){
+    const axle=text.match(/^\s*-:(\d+):(\d+)(?=\s|:|-|\n|$)/);
+    if(axle) return {line:Number(axle[1]),col:Number(axle[2])};
+    const file=text.match(/^\s*[^\s:]+:(\d+):(\d+)(?:-\d+:\d+)?:/);
+    if(file) return {line:Number(file[1]),col:Number(file[2])};
+    return null;
+  }
+  function collectMessages(data){
+    const out=[];
+    for(const [key,label] of [['lean_messages','Lean'],['tool_messages','AXLE']]){
+      const group=(data&&data[key])||{};
+      for(const [field,type] of [['errors','error'],['warnings','warning'],['infos','info']]){
+        for(const item of Array.isArray(group[field])?group[field]:[]){
+          const text=toText(item).trim();
+          if(!text) continue;
+          const loc=messageLocation(text);
+          out.push({source:label,type,text,line:loc?loc.line:null,col:loc?loc.col:null,hidden:false});
+        }
+      }
+    }
+    return out;
+  }
+  function analyzeCheck(data,code,ms){
+    const messages=collectMessages(data);
+    const errors=messages.filter(m=>m.type==='error').length;
+    const warnings=messages.filter(m=>m.type==='warning').length;
+    const toolErrors=((data.tool_messages&&data.tool_messages.errors)||[]).length;
+    const okay=data.okay===true;
+    const compiled=okay&&errors===0&&toolErrors===0;
+    const failedNames=Array.isArray(data.failed_declarations)?data.failed_declarations.filter(n=>typeof n==='string'&&n.trim()):[];
+    const toolWarnings=((data.tool_messages&&data.tool_messages.warnings)||[]).map(toText);
+    const failed=failedNames.map(name=>{
+      const axiom=toolWarnings.find(w=>w.startsWith(`In '${name}':`)||w.startsWith(`In "${name}":`));
+      const axiomName=axiom&&(axiom.match(/Axiom '([^']+)'/)?.[1]||axiom.match(/Axiom "([^"]+)"/)?.[1]);
+      if(axiomName) return {name,reason:`依赖非标准公理 ${axiomName}`};
+      if(toolWarnings.some(w=>w.startsWith(`Declaration '${name}' is incomplete`))) return {name,reason:'含 sorry 或存在错误'};
+      if(toolWarnings.some(w=>/unsafe/i.test(w)&&w.includes(name))) return {name,reason:'使用了 unsafe 定义'};
+      return {name,reason:compiled?'未通过声明审计':'编译错误'};
+    });
+
+    const effective=typeof data.content==='string'?data.content:null;
+    const submittedImports=parseImports(code);
+    const effectiveImports=effective?parseImports(effective):submittedImports.slice();
+    const importsRewritten=effective?!sameList(submittedImports,effectiveImports):false;
+    const contentDiffers=effective?normalizeCode(effective)!==normalizeCode(code):false;
+    const lineOffset=effective&&importsRewritten?Math.max(0,effective.split('\n').length-code.split('\n').length):0;
+    // AXLE 注入默认头时行号会整体下移，把消息里的行号换算回编辑器坐标。
+    if(lineOffset) for(const m of messages) if(m.line) m.line=Math.max(1,m.line-lineOffset);
+
+    const holeGoals=parseHoleGoals(((data.tool_messages&&data.tool_messages.infos)||[]).map(toText));
+    const map=new Map();
+    for(const h of scanHoles(code)) map.set(h.line,{...h});
+    for(const g of holeGoals){
+      const line=Math.max(1,g.line-lineOffset);
+      const prev=map.get(line);
+      map.set(line,{line,col:g.col||(prev&&prev.col)||1,kind:(prev&&prev.kind)||g.kind||'sorry',goal:g.goal});
+    }
+    const holes=[...map.values()].sort((a,b)=>a.line-b.line);
+    const axioms=scanAxioms(code);
+
+    for(const m of messages){
+      if(importsRewritten&&/Imports mismatch detected/i.test(m.text)) m.hidden=true;
+      if(/unsolved goals at sorry/i.test(m.text)) m.hidden=true;
+    }
+
+    const declCount=countDeclarations(code);
+    const verdict=!compiled?'failed':((failed.length||holes.length||axioms.length)?'incomplete':(importsRewritten?'fidelity':(declCount===0?'empty':'verified')));
+    return {env:settings.env,ms,okay,compiled,errors,warnings,failed,holes,axioms,declCount,verdict,
+      importsRewritten,contentDiffers,effective,lineOffset,submittedImports,effectiveImports,messages};
+  }
+  function sameList(a,b){
+    return a.length===b.length&&a.every((v,i)=>v===b[i]);
+  }
+  function verdictMeta(a){
+    if(a.verdict==='failed') return {css:'failed',icon:'error',title:'编译失败'};
+    if(a.verdict==='incomplete') return {css:'incomplete',icon:'alert',title:'编译通过 · 验证未通过'};
+    if(a.verdict==='fidelity') return {css:'incomplete',icon:'alert',title:'检查完成 · 不作验证结论'};
+    if(a.verdict==='empty') return {css:'verified',icon:'check',title:'编译通过 · 未包含声明'};
+    return {css:'verified',icon:'check',title:'验证通过'};
+  }
+  function verdictSubtitle(a){
+    const sec=(a.ms/1000).toFixed(2)+' 秒';
+    if(a.verdict==='failed') return `${a.errors} 个错误${a.warnings?` · ${a.warnings} 个警告`:''} · ${sec}`;
+    if(a.verdict==='incomplete'){
+      const parts=[];
+      if(a.failed.length) parts.push(`${a.failed.length} 个声明未完成`);
+      if(a.holes.length) parts.push(`${a.holes.length} 处 sorry/admit`);
+      if(a.axioms.length) parts.push(`${a.axioms.length} 个 axiom`);
+      if(!parts.length) parts.push('存在未完成项');
+      if(a.importsRewritten) parts.push('import 被替换');
+      return `${parts.join(' · ')} · ${sec}`;
+    }
+    if(a.verdict==='fidelity') return `${a.failed.length} 个未完成声明 · import 被替换 · ${sec}`;
+    if(a.verdict==='empty') return `无可验证声明 · ${sec}`;
+    return `${a.declCount} 个声明 · 0 个错误 · 0 个未完成${a.warnings?` · ${a.warnings} 个警告`:''} · ${sec}`;
+  }
+  function verdictBlock(a,stale){
+    const meta=verdictMeta(a);
+    if(stale) return `<div class="verdict incomplete">${icons.alert}<div><strong>上次结果 · ${meta.title}</strong><small>${esc(verdictSubtitle(a))}</small></div></div>`;
+    return `<div class="verdict ${meta.css}">${icons[meta.icon]}<div><strong>${meta.title}</strong><small>${esc(verdictSubtitle(a))}</small></div></div>`;
+  }
+  function fidelityNotice(a){
+    if(!a.importsRewritten) return '';
+    return `<div class="notice bad">
+      <div class="notice-head">${icons.alert}<span>受检代码被替换</span></div>
+      <p>你写的 import：<code>${esc(a.submittedImports.join(' · ')||'（无）')}</code>；实际使用：<code>${esc(a.effectiveImports.join(' · ')||'（无）')}</code>。结论不对应你的源码。</p>
+      <details class="raw"><summary>实际受检代码</summary><pre>${esc(a.effective||'')}</pre></details>
+    </div>`;
+  }
+  function failedSection(a){
+    return `<div class="section-label"><span>${a.verdict==='failed'?'未通过的声明':'未完成的声明'}</span><span>${a.failed.length}</span></div>
+      <div class="decl-list">${a.failed.map(d=>`<div class="decl"><span class="name">${esc(d.name)}</span><span class="reason">${esc(d.reason)}</span></div>`).join('')}</div>`;
+  }
+  function holesSection(a){
+    return `<div class="section-label"><span>漏洞 · sorry / admit</span><span>${a.holes.length} 处</span></div>
+      <div class="notice warn"><p><code>sorry</code> / <code>admit</code> 会插入 <code>sorryAx</code>：编译可通过，命题并未证明。</p></div>
+      ${a.holes.map(h=>`<div class="hole-row"><div class="hole-row-head"><button type="button" class="location" data-line="${h.line}" data-col="${h.col||1}">行 ${h.line}:${h.col||1}</button><span class="tag bad">${esc(h.kind)}</span></div>${h.goal?`<pre>${esc(h.goal)}</pre>`:'<div class="muted">未返回该行剩余目标。</div>'}</div>`).join('')}`;
+  }
+  function axiomsSection(a){
+    return `<div class="section-label"><span>信任假设 · axiom / constant</span><span>${a.axioms.length} 个</span></div>
+      <div class="notice warn"><p><code>axiom</code> 不产生证明，依赖它的结论不可验证。</p></div>
+      <div class="decl-list">${a.axioms.map(x=>`<div class="decl"><span class="name">${esc(x.name)}</span><span class="reason">axiom · 行 ${x.line}</span></div>`).join('')}</div>`;
+  }
+  function messagesSection(a){
+    const visible=a.messages.filter(m=>!m.hidden);
+    if(!visible.length) return '';
+    let body=`<div class="section-label"><span>编译器信息</span><span>${visible.length} 条</span></div>`;
+    for(const m of visible){
+      const name=m.type==='error'?'错误':m.type==='warning'?'警告':'信息';
+      body+=`<article class="message ${m.type}"><div class="message-header"><div class="severity"><span class="dot"></span>${name}<span style="font-weight:500;color:#9ca7b8">· ${esc(m.source)}</span></div>${m.line?`<button type="button" class="location" data-line="${m.line}" data-col="${m.col||1}" title="跳转到代码位置">行 ${m.line}:${m.col||1}</button>`:''}</div><pre>${esc(m.text)}</pre></article>`;
+    }
+    return body;
+  }
+  function settingsKey(){return settings.env;}
+  function isStaleRun(){
+    return Boolean(lastRun&&lastRun.analysis&&(lastRun.code!==editor.value||lastRun.settingsKey!==settingsKey()));
+  }
+  function renderOutput(){
+    if(runController){
+      resultBody.innerHTML=`<div class="result-content"><div class="verdict loading">${icons.loading}<div><strong>正在云端检查</strong><small>编译并审计漏洞与公理依赖。</small></div></div><div class="goal-placeholder">可继续编辑，或点击「停止运行」。</div></div>`;
+      return;
+    }
+    if(!lastRun){
+      resultBody.innerHTML=emptyState('准备开始','点击「运行代码」，或按 <span class="kbd">Ctrl / ⌘ + Enter</span>');
+      return;
+    }
+    if(lastRun.networkError){
+      resultBody.innerHTML=`<div class="result-content"><div class="verdict failed">${icons.error}<div><strong>云端请求失败</strong><small>未获得检查结果。</small></div></div><article class="message error"><div class="message-header"><div class="severity"><span class="dot"></span>请求错误</div></div><pre>${esc(lastRun.networkError)}</pre></article><div class="hint">请检查网络与 AXLE 服务。若以 <code>file://</code> 打开，可能受跨域限制，可改用本地静态服务器。</div></div>`;
+      return;
+    }
+    const a=lastRun.analysis;
+    const stale=isStaleRun();
+    let body=verdictBlock(a,stale)+`<div id="staleSlot">${stale?staleHintHTML():''}</div>`;
+    body+=fidelityNotice(a);
+    if(a.failed.length) body+=failedSection(a);
+    if(a.holes.length) body+=holesSection(a);
+    if(a.axioms.length) body+=axiomsSection(a);
+    body+=messagesSection(a);
+    if(a.contentDiffers&&!a.importsRewritten) body+='<div class="result-meta">AXLE 归一化了空白与换行，语义不变。</div>';
+    resultBody.innerHTML=`<div class="result-content">${body}</div>`;
+  }
+  function staleHintHTML(){
+    return '<div class="hint stale" id="staleHint">代码或设置已修改，以下是上一次结果。<button type="button" class="inline-btn" id="rerunBtn">重新运行</button></div>';
+  }
+  function syncStaleSlot(){
+    const slot=$('staleSlot');
+    if(!slot) return;
+    const stale=isStaleRun();
+    const shown=Boolean($('staleHint'));
+    if(stale&&!shown) slot.innerHTML=staleHintHTML();
+    else if(!stale&&shown) slot.innerHTML='';
+  }
+  /* ===== 状态与编辑器 ===== */
+  function setStatus(state,message){
+    const colors={idle:'#aab6c8',loading:'#527eec',success:'#2fa97f',error:'#d95b67',warn:'#e5af4d'};
+    $('statusDot').style.backgroundColor=colors[state]||colors.idle;
+    $('statusText').textContent=message;
+  }
+  function applyRunStatus(){
+    if(!lastRun||!lastRun.analysis) return;
+    const a=lastRun.analysis;
+    if(a.verdict==='failed') setStatus('error',`编译失败：${a.errors} 个错误`);
+    else if(a.verdict==='incomplete'){
+      const parts=[];
+      if(a.failed.length) parts.push(`${a.failed.length} 个声明未完成`);
+      if(a.holes.length) parts.push(`${a.holes.length} 处 sorry/admit`);
+      if(a.axioms.length) parts.push(`${a.axioms.length} 个 axiom 声明`);
+      setStatus('warn','未通过：'+(parts.join(' · ')||'存在未完成项'));
+    }
+    else if(a.verdict==='fidelity') setStatus('warn','受检代码被替换，结果不对应输入');
+    else if(a.verdict==='empty') setStatus('success','编译通过（无声明）');
+    else setStatus('success','验证通过');
+  }
+  function setLoading(loading){
+    $('runBtn').setAttribute('aria-busy',String(loading));
+    $('runLabel').textContent=loading?'停止运行':'运行代码';
+    $('runIcon').outerHTML=loading
+      ?'<svg id="runIcon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>'
+      :'<svg id="runIcon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m8.1 4.9 11.4 7.1-11.4 7.1a1.2 1.2 0 0 1-1.8-1V5.9a1.2 1.2 0 0 1 1.8-1Z"/></svg>';
+  }
+  function persist(){
+    clearTimeout(saveTimer);
+    saveTimer=null;
+    try{
+      localStorage.setItem(STORE,JSON.stringify({code:editor.value,filename,env:settings.env}));
+      $('saveState').textContent='已自动保存';
+    }catch{
+      $('saveState').textContent='本地保存不可用';
+    }
+  }
+  function scheduleSave(){
+    $('saveState').textContent='保存中…';
+    clearTimeout(saveTimer);
+    saveTimer=setTimeout(persist,300);
+  }
+  window.addEventListener('pagehide',persist);
+  document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden') persist();});
+
+  const KEYWORDS=new Set(('theorem lemma example def abbrev opaque instance class structure inductive axiom constant '+
+    'universe variable namespace section end open export import private protected noncomputable partial unsafe mutual '+
+    'where deriving syntax macro macro_rules elab elab_rules notation notation3 infix infixl infixr prefix postfix '+
+    'attribute unseal rec initialize builtin reducible irreducible semireducible local scoped hiding renaming extending '+
+    'set_option by have let if then else match with do return from show suffices intro intros exact apply refine '+
+    'constructor cases induction rcases rintro obtain revert generalize specialize clear rename_i subst injection '+
+    'contradiction exfalso assumption symm trans unfold change convert simp simpa simp_all dsimp simp_rw rw calc '+
+    'ring ring_nf field_simp norm_num norm_cast push_cast linarith nlinarith positivity gcongr omega decide '+
+    'native_decide trivial aesop solve_by_elim repeat first next all_goals any_goals focus try sorry admit '+
+    'using at _root_ fun rfl termination_by decreasing_by fail_if_success guard_target').split(' '));
+  const TYPE_NAMES=new Set(('Nat Int Bool String Char Prop Type Sort List Array Option IO Fin Real Float Unit '+
+    'Empty True False UInt8 UInt16 UInt32 UInt64 USize Subtype PLift ULift Thunk').split(' '));
+  const OPERATORS=new Set(['→','←','↔','∀','∃','∧','∨','¬','⊢',':=','=>','≤','≥','≠','↦','⟨','⟩','▸','∘',
+    '∈','∉','⊆','∩','∪','∑','∏','⨆','⨅','⋃','⋂','⊤','⊥','↪','≫','≪','⁻¹','×','∅']);
+  const TOKENS=/--[^\n]*|\/-|"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\\n])'|#(?:eval|check|print|reduce|synth|check_failure|guard_msgs)\b|[\p{L}_][\p{L}\p{N}_']*|\d+(?:\.\d+)?|→|←|↔|∀|∃|∧|∨|¬|⊢|:=|=>|≤|≥|≠|↦|⟨|⟩|▸|∘|∈|∉|⊆|∩|∪|∑|∏|⨆|⨅|⋃|⋂|⊤|⊥|↪|≫|≪|⁻¹|×|∅/gu;
+  // Lean 允许嵌套块注释；正则只能吃到第一个 `-/`，这里按深度找到真正结束位置。
+  function blockCommentEnd(src,start){
+    let depth=0,i=start;
+    while(i<src.length){
+      if(src[i]==='/'&&src[i+1]==='-'){depth++;i+=2;continue;}
+      if(src[i]==='-'&&src[i+1]==='/'){depth--;i+=2;if(depth===0) return i;continue;}
+      i++;
+    }
+    return src.length;
+  }
+  // 按行输出高亮结果：每行自包含（跨行 token 在行尾闭合、下一行重新打开），
+  // 这样输入时只需替换真正变化的那几行 DOM，而不是重建整篇 innerHTML。
+  function tokenizeLines(src){
+    const lines=[];
+    let current='';
+    const push=(text,type)=>{
+      const parts=String(text).split('\n');
+      for(let i=0;i<parts.length;i++){
+        if(i>0){lines.push(current);current='';}
+        if(parts[i]) current+=type?`<span class="tok-${type}">${esc(parts[i])}</span>`:esc(parts[i]);
+      }
+    };
+    let from=0,m;
+    TOKENS.lastIndex=0;
+    while((m=TOKENS.exec(src))!==null){
+      push(src.slice(from,m.index),null);
+      let token=m[0];
+      if(token==='/-'){
+        const end=blockCommentEnd(src,m.index);
+        token=src.slice(m.index,end);
+        TOKENS.lastIndex=end;
+      }
+      let type=null;
+      if(token.startsWith('--')||token.startsWith('/-')) type='comment';
+      else if(token[0]==='"'||token[0]==="'") type='string';
+      else if(token[0]==='#') type='command';
+      else if(/^\d/.test(token)) type='number';
+      else if(KEYWORDS.has(token)) type='keyword';
+      else if(TYPE_NAMES.has(token)) type='type';
+      else if(OPERATORS.has(token)) type='operator';
+      push(token,type);
+      from=TOKENS.lastIndex;
+    }
+    push(src.slice(from),null);
+    lines.push(current);
+    return lines;
+  }
+  let highlightFrame=0, hlLines=[];
+  function paintHighlight(){
+    cancelAnimationFrame(highlightFrame);
+    highlightFrame=requestAnimationFrame(()=>{
+      const src=editor.value;
+      if(src.length>180000){
+        if(highlight.textContent!==src) highlight.textContent=src;
+        hlLines=[];
+        syntax.scrollTop=scrollTop;
+        syntax.scrollLeft=scrollLeft;
+        return;
+      }
+      const htmlLines=tokenizeLines(src);
+      if(htmlLines.length!==highlight.children.length){
+        highlight.innerHTML=htmlLines.map(h=>`<span class="hl-line">${h}</span>`).join('\n')+'\n';
+      }else{
+        const els=highlight.children;
+        for(let i=0;i<htmlLines.length;i++){
+          if(htmlLines[i]!==hlLines[i]) els[i].innerHTML=htmlLines[i];
+        }
+      }
+      hlLines=htmlLines;
+      syntax.scrollTop=scrollTop;
+      syntax.scrollLeft=scrollLeft;
+    });
+  }
+  let metricsCache=null;
+  function editorMetrics(){
+    if(metricsCache) return metricsCache;
+    const style=getComputedStyle(editor);
+    metricsCache={pad:parseFloat(style.paddingTop)||14,height:parseFloat(style.lineHeight)||26};
+    return metricsCache;
+  }
+  function countLines(value){
+    let lines=1,idx=-1;
+    while((idx=value.indexOf('\n',idx+1))!==-1) lines++;
+    return lines;
+  }
+  // 行数增减时只增删尾部节点，避免每次换行都重建整个行号 DOM。
+  function syncGutter(count){
+    const current=lineNumbers.children.length;
+    if(current===count) return;
+    if(current<count){
+      let html='';
+      for(let i=current+1;i<=count;i++) html+=`<span class="line-no" data-line="${i}">${i}</span>`;
+      lineNumbers.insertAdjacentHTML('beforeend',html);
+    }else{
+      for(let i=current;i>count;i--) lineNumbers.lastElementChild.remove();
+    }
+  }
+  // 只改动状态发生变化的行号，而不是每次按键遍历全部行。
+  let paintedIssue=new Set(),paintedHole=new Set();
+  function lineNode(n){return lineNumbers.children[n-1]||null;}
+  function refreshMarks(){
+    const total=lineNumbers.children.length;
+    const nextIssue=new Set(),nextHole=new Set();
+    for(const n of issueLines) if(n>0&&n<=total) nextIssue.add(n);
+    for(const n of holeLines) if(n>0&&n<=total) nextHole.add(n);
+    for(const n of nextIssue) if(!paintedIssue.has(n)){const el=lineNode(n);if(el) el.classList.add('problem');}
+    for(const n of paintedIssue) if(!nextIssue.has(n)){const el=lineNode(n);if(el) el.classList.remove('problem');}
+    for(const n of nextHole) if(!paintedHole.has(n)){const el=lineNode(n);if(el){el.classList.add('hole');el.title='含 sorry / admit';}}
+    for(const n of paintedHole) if(!nextHole.has(n)){const el=lineNode(n);if(el){el.classList.remove('hole');el.removeAttribute('title');}}
+    paintedIssue=nextIssue;paintedHole=nextHole;
+    $('holeHint').textContent=holeLines.size?`漏洞 ${holeLines.size}`:'';
+  }
+  let currentLineEl=null, lastScrollTop=-1, lastScrollLeft=-1;
+  let scrollTop=0, scrollLeft=0;
+  function captureScroll(){scrollTop=editor.scrollTop;scrollLeft=editor.scrollLeft;}
+  function markCurrentLine(){
+    const next=lineNode(currentLineNumber);
+    if(next===currentLineEl) return;
+    if(currentLineEl) currentLineEl.classList.remove('current');
+    currentLineEl=next;
+    if(currentLineEl) currentLineEl.classList.add('current');
+  }
+  function positionCurrentLine(){
+    const {pad,height}=editorMetrics();
+    const top=`${pad+(currentLineNumber-1)*height-scrollTop}px`;
+    if(currentLine.style.top!==top) currentLine.style.top=top;
+  }
+  function updateIssueBadge(){
+    const count=lastRun&&lastRun.analysis?lastRun.analysis.messages.filter(m=>m.type==='error'||m.type==='warning').length:0;
+    $('issueCount').textContent=String(count);
+    $('issueCount').hidden=count===0;
+  }
+  function lineAtPosition(pos){
+    const value=editor.value;
+    let line=1,lastBreak=-1,idx=value.indexOf('\n');
+    while(idx!==-1&&idx<pos){line++;lastBreak=idx;idx=value.indexOf('\n',idx+1);}
+    return {line,lastBreak};
+  }
+  function cursorInfo(){
+    const pos=editor.selectionStart;
+    const {line,lastBreak}=lineAtPosition(pos);
+    currentLineNumber=line;
+    const column=Array.from(editor.value.slice(lastBreak+1,pos)).length+1;
+    $('cursorPosition').textContent=`Ln ${line}, Col ${column}`;
+    positionCurrentLine();
+    markCurrentLine();
+    maybeRefreshGoals();
+  }
+  function refreshEditor(){
+    syncGutter(countLines(editor.value));
+    refreshMarks();
+    cursorInfo();
+    syncScroll();
+    paintHighlight();
+  }
+  function syncScroll(){
+    if(scrollTop!==lastScrollTop){
+      syntax.scrollTop=scrollTop;
+      lineNumbers.parentElement.scrollTop=scrollTop;
+      lastScrollTop=scrollTop;
+    }
+    if(scrollLeft!==lastScrollLeft){
+      syntax.scrollLeft=scrollLeft;
+      lastScrollLeft=scrollLeft;
+    }
+    positionCurrentLine();
+  }
+  function setCode(code,newName=filename){
+    ++requestId;
+    if(runController){runController.abort();runController=null;setLoading(false);}
+    if(goalController){goalController.abort();goalController=null;}
+    loadingGoals=false;goals=null;lastGoalKey='';
+    editor.value=cleanSource(code)+'\n';
+    filename=newName;
+    $('fileName').textContent=filename;
+    $('fileName').title=filename;
+    editor.scrollTop=0;editor.scrollLeft=0;editor.setSelectionRange(0,0);
+    scrollTop=0;scrollLeft=0;lastScrollTop=-1;lastScrollLeft=-1;
+    lastRun=null;
+    issueLines=new Set();applyHoles(editor.value);
+    $('issueCount').hidden=true;$('duration').textContent='—';
+    setStatus('idle','准备就绪');
+    refreshEditor();render();scheduleSave();
+  }
+  function jumpTo(line,col){
+    const lines=editor.value.split('\n');
+    const target=Math.max(1,Math.min(lines.length,line));
+    const before=lines.slice(0,target-1).join('\n');
+    const start=(target===1?0:before.length+1);
+    const at=start+Math.min(lines[target-1].length,Math.max(0,col-1));
+    editor.focus();editor.setSelectionRange(at,at);
+    const {pad,height}=editorMetrics();
+    const y=(target-1)*height+pad;
+    if(y<editor.scrollTop+height||y>editor.scrollTop+editor.clientHeight-height) editor.scrollTop=Math.max(0,y-editor.clientHeight/3);
+    captureScroll();
+    cursorInfo();syncScroll();
+  }
+  // 用 execCommand('insertText') 走浏览器原生编辑/撤销栈；不支持时退回 setRangeText。
+  let inputSeq=0;
+  function editRange(text,start,end,selectAfter){
+    editor.setSelectionRange(start,end);
+    const before=editor.value,seq=inputSeq;
+    let native=false;
+    try{native=document.execCommand('insertText',false,text);}catch{native=false;}
+    if(!native) editor.setRangeText(text,start,end,selectAfter?'select':'end');
+    if(editor.value!==before&&inputSeq===seq) onChange();
+    return native;
+  }
+  function replaceSelection(text,delta=0){
+    const a=editor.selectionStart,b=editor.selectionEnd;
+    const native=editRange(text,a,b,false);
+    if(delta) editor.setSelectionRange(a+delta,a+delta);
+    else if(!native) editor.setSelectionRange(a+text.length,a+text.length);
+  }
+  function indentBlock(outdent){
+    const v=editor.value;
+    const s=editor.selectionStart,e=editor.selectionEnd;
+    const start=v.lastIndexOf('\n',s-1)+1;
+    let end=v.indexOf('\n',e); if(end<0) end=v.length;
+    const lines=v.slice(start,end).split('\n');
+    if(outdent&&!lines.some(l=>/^(  |\t)/.test(l))) return false;
+    const shifted=lines.map(l=>outdent?l.replace(/^(  |\t)/,''):'  '+l);
+    const next=shifted.join('\n');
+    editRange(next,start,end,true);
+    editor.setSelectionRange(start,start+next.length);
+    cursorInfo();
+    return true;
+  }
+  function onChange(){
+    if(composing) return;
+    if(editor.value.length<=DEFER_SCAN_CHARS) applyHoles(editor.value);
+    else scheduleHoleScan();
+    if(lastRun){
+      if(editor.value!==lastRun.code||lastRun.settingsKey!==settingsKey()) setStatus('warn','代码或设置已变更，结果已过期');
+      else applyRunStatus();
+    }
+    if(goalController){goalController.abort();goalController=null;loadingGoals=false;goals=null;}
+    issueLines=lastRun&&editor.value===lastRun.code
+      ?new Set(lastRun.messages.filter(m=>m.type==='error'&&m.line).map(m=>m.line))
+      :new Set();
+    updateIssueBadge();
+    lastGoalKey='';
+    syncStaleSlot();
+    refreshEditor();
+    if(activeTab==='goals') render();
+    scheduleSave();
+  }
+  editor.addEventListener('compositionstart',()=>{composing=true;editor.closest('.editor-area').classList.add('composing');});
+  editor.addEventListener('compositionend',()=>{composing=false;editor.closest('.editor-area').classList.remove('composing');onChange();});
+  editor.addEventListener('input',()=>{inputSeq++;onChange();});
+  editor.addEventListener('scroll',()=>{captureScroll();syncScroll();},{passive:true});
+  for(const ev of ['click','keyup','select']) editor.addEventListener(ev,cursorInfo);
+  editor.addEventListener('keydown',e=>{
+    if(e.key==='Tab'){
+      e.preventDefault();
+      const multi=editor.selectionStart!==editor.selectionEnd||/^\s+/.test(editor.value.slice(editor.value.lastIndexOf('\n',editor.selectionStart-1)+1,editor.selectionStart));
+      if(e.shiftKey){ if(!indentBlock(true)){const p=editor.selectionStart;const start=editor.value.lastIndexOf('\n',p-1)+1;if(editor.value.slice(start,start+2)==='  '){editor.setSelectionRange(start,start+2);replaceSelection('');}} }
+      else if(multi){ indentBlock(false); }
+      else { replaceSelection('  '); }
+    } else if(e.key==='Enter'&&!e.shiftKey&&!e.ctrlKey&&!e.metaKey){
+      const p=editor.selectionStart;
+      const before=editor.value.slice(editor.value.lastIndexOf('\n',p-1)+1,p);
+      const indent=(before.match(/^\s*/)||[''])[0];
+      if(indent){e.preventDefault();replaceSelection('\n'+indent);}
+    } else if(e.key==='/'&&(e.metaKey||e.ctrlKey)){
+      e.preventDefault();
+      const p=editor.selectionStart;
+      const start=editor.value.lastIndexOf('\n',p-1)+1;
+      const lineEnd=editor.value.indexOf('\n',p);
+      const end=lineEnd<0?editor.value.length:lineEnd;
+      const line=editor.value.slice(start,end);
+      const next=/^\s*--/.test(line)?line.replace(/^([ \t]*)-- ?/,'$1'):line.replace(/^(\s*)/,'$1-- ');
+      editor.setSelectionRange(start,end);replaceSelection(next);
+    }
+  });
+  document.addEventListener('keydown',e=>{
+    if((e.ctrlKey||e.metaKey)&&e.key==='Enter'){e.preventDefault();void run();}
+    if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='s'){e.preventDefault();download();}
+  });
+
+  /* ===== 请求与运行 ===== */
+  function apiError(data,status){
+    const type=String(data&&data.error_type||'');
+    if(type==='LeanTimeout'||/timeout/i.test(type)) return 'Lean 执行超时。请简化证明或减少计算量后重试。';
+    if(type==='LeanResourceExceeded') return 'Lean 超出内存上限（LeanResourceExceeded）。请缩小问题规模。';
+    const detail=data&&(data.detail??data.error??data.user_error??data.message);
+    if(typeof detail==='string'&&detail.trim()) return detail.trim();
+    if(detail) return JSON.stringify(detail);
+    if(status===429) return '请求过于频繁（HTTP 429，AXLE 匿名限流），请稍后再试。';
+    if(status>=500) return `AXLE 服务暂时不可用（HTTP ${status}），请稍后重试。`;
+    return `请求失败（HTTP ${status}）。`;
+  }
+  function friendlyError(err){
+    if(err&&err.name==='TypeError') return '网络请求失败：无法连接 AXLE。请检查网络；若用 file:// 直接打开，可改用本地静态服务器以避开跨域限制。';
+    return (err&&err.message)||'请求失败，请稍后重试。';
+  }
+  async function requestTool(tool,code,controller){
+    const response=await fetch(`${API}/${tool}`,{
+      method:'POST',mode:'cors',cache:'no-store',
+      headers:{'Content-Type':'application/json'},
+      // 严格模式（按提交的 import 检查）是固定行为，不再暴露成无效的设置项。
+      body:JSON.stringify({content:code,environment:settings.env,ignore_imports:false,timeout_seconds:120}),
+      signal:controller.signal
+    });
+    const raw=await response.text();
+    let data;
+    try{data=JSON.parse(raw);}catch{
+      if(!response.ok) throw new Error(apiError({},response.status));
+      throw new Error(`服务器返回了无法解析的内容（HTTP ${response.status}）。`);
+    }
+    if(!response.ok||data.error||data.user_error){throw new Error(apiError(data,response.status));}
+    if(typeof data!=='object'||data===null) throw new Error('API 响应格式不正确。');
+    return data;
+  }
+  function setRunResult(data,code,took,runSettingsKey){
+    const analysis=analyzeCheck(data,code,took);
+    lastRun={data,code,ms:took,messages:analysis.messages,analysis,settingsKey:runSettingsKey};
+    issueLines=new Set(analysis.messages.filter(m=>m.type==='error'&&m.line).map(m=>m.line));
+    clearTimeout(holeTimer);holeTimer=0;
+    holeLines=new Set(analysis.holes.map(h=>h.line));
+    refreshMarks();updateIssueBadge();
+    if(code!==editor.value||runSettingsKey!==settingsKey()) setStatus('warn','代码或设置已变更，结果已过期');
+    else applyRunStatus();
+    $('duration').textContent=`${(took/1000).toFixed(2)} s`;
+    lastGoalKey='';
+    render();
+  }
+  function errorResult(message,code,took){
+    lastRun={code,ms:took,networkError:message,messages:[],analysis:null};
+    $('duration').textContent=`${(took/1000).toFixed(2)} s`;
+    setStatus(code===editor.value?'error':'warn',code===editor.value?'请求失败':'代码已修改，请重新运行');
+    $('issueCount').hidden=true;
+    render();
+  }
+  async function run(){
+    if(runController){
+      runController.abort();runController=null;++requestId;setLoading(false);setStatus('idle','已取消运行');render();return;
+    }
+    const code=editor.value;
+    if(!code.trim()){toast('请先输入 Lean 4 代码');editor.focus();return;}
+    if(goalController){goalController.abort();goalController=null;loadingGoals=false;}
+    goals=null;lastGoalKey='';
+    const own=++requestId;
+    runController=new AbortController();
+    const ctrl=runController;
+    lastRun=null;
+    issueLines=new Set();
+    applyHoles(code);
+    refreshMarks();updateIssueBadge();
+    $('issueCount').hidden=true;
+    setLoading(true);
+    setStatus('loading','正在云端检查…');
+    $('duration').textContent='AXLE';
+    render();
+    const started=performance.now();
+    const settingsAtRun=settingsKey();
+    let timedOut=false;
+    const timer=setTimeout(()=>{timedOut=true;ctrl.abort();},140000);
+    try{
+      const data=await requestTool('check',code,ctrl);
+      if(own!==requestId) return;
+      setRunResult(data,code,Math.round(performance.now()-started),settingsAtRun);
+    }catch(err){
+      if(own!==requestId) return;
+      if(err.name==='AbortError'){
+        if(timedOut) errorResult('请求超时：AXLE 在 140 秒内没有返回结果。请简化代码后重试。',code,Math.round(performance.now()-started));
+        else setStatus('idle','已取消运行');
+      } else {
+        errorResult(friendlyError(err),code,Math.round(performance.now()-started));
+      }
+    }finally{
+      clearTimeout(timer);
+      if(own===requestId){
+        runController=null;
+        setLoading(false);
+        render();
+        if(lastRun&&!lastRun.networkError&&activeTab==='goals'&&lastRun.code===editor.value) void fetchGoals();
+      }
+    }
+  }
+
+  /* ===== 证明目标 ===== */
+  async function fetchGoals(){
+    if(!lastRun||lastRun.networkError||lastRun.code!==editor.value||lastRun.settingsKey!==settingsKey()||loadingGoals) return;
+    if(goals){render();return;}
+    if(goalController) goalController.abort();
+    const ctrl=new AbortController();
+    goalController=ctrl;
+    loadingGoals=true;
+    render();
+    let timedOut=false;
+    const timer=setTimeout(()=>{timedOut=true;ctrl.abort();},140000);
+    try{
+      const data=await requestTool('extract_proof_states',lastRun.code,ctrl);
+      if(ctrl!==goalController) return;
+      const states=Array.isArray(data.proof_states)
+        ?data.proof_states.map(s=>({line:Number(s.line)||0,proof_state:String(s.proof_state??'')})).filter(s=>s.line>0)
+        :[];
+      const effective=typeof data.content==='string'?data.content:null;
+      const rewritten=effective?!sameList(parseImports(lastRun.code),parseImports(effective)):false;
+      const lineOffset=effective&&rewritten?Math.max(0,effective.split('\n').length-lastRun.code.split('\n').length):0;
+      goals={states,truncated:Boolean(data.truncated),lineOffset,error:null,
+        compileErrors:((data.lean_messages&&data.lean_messages.errors)||[]).length};
+    }catch(err){
+      if(ctrl!==goalController) return;
+      if(err.name==='AbortError'&&!timedOut) return;
+      goals={error:timedOut?'证明目标请求超时（140 秒）。请稍后重试。':friendlyError(err),states:[],truncated:false,lineOffset:0};
+    }finally{
+      clearTimeout(timer);
+      if(ctrl===goalController){loadingGoals=false;goalController=null;render();}
+    }
+  }
+  function goalsBanner(a){
+    return `<div class="banner bad">${icons.alert}<div><strong>本文件有 ${a.holes.length} 处 sorry / admit</strong><br>目标被关闭，但未真正证明。</div></div>`;
+  }
+  function goalCardHTML(state,hole,prevGoal,fileHoles){
+    const line=state?state.line:(hole?hole.line:currentLineNumber);
+    const raw=state?String(state.proof_state||'').trim():'';
+    if(hole){
+      const goal=hole.goal||prevGoal||'';
+      return `<div class="goal-card hole">
+        <h4><span class="tag bad">未完成 · ${esc(hole.kind)}</span><span class="mono">行 ${line}</span></h4>
+        ${goal?`<div class="goal-label">被放弃的目标</div><pre>${esc(goal)}</pre>`:'<div class="goal-label">未返回该行的剩余目标</div>'}
+        <p class="goal-note">${raw?`AXLE 返回「${esc(raw)}」：`:''}目标被 sorry 关闭，命题未被证明。</p>
+      </div>`;
+    }
+    if(!state) return '<div class="goal-placeholder">当前代码没有可显示的证明状态。</div>';
+    const closed=/^(no goals|Goals accomplished)/i.test(raw);
+    if(closed){
+      return `<div class="goal-card">
+        <h4><span class="tag ok">已关闭</span><span class="mono">行 ${line}</span></h4>
+        <pre>${esc(raw||'no goals')}</pre>
+        <p class="goal-note">${fileHoles?`本行已闭合，但文件仍有 ${fileHoles} 处 sorry/admit。`:'目标已由有效策略关闭。'}</p>
+      </div>`;
+    }
+    return `<div class="goal-card"><h4><span class="tag">剩余目标</span><span class="mono">行 ${line}</span></h4><pre>${esc(raw)}</pre></div>`;
+  }
+  function renderGoals(){
+    resultBody.setAttribute('aria-live','off');
+    if(runController||loadingGoals){
+      resultBody.innerHTML=`<div class="result-content"><div class="verdict loading">${icons.loading}<div><strong>${runController?'等待编译完成':'正在提取证明目标'}</strong><small>读取每行的策略目标状态。</small></div></div></div>`;
+      return;
+    }
+    if(!lastRun){resultBody.innerHTML=emptyState('还没有证明状态','先运行代码，再切换到证明目标。','goal');return;}
+    if(lastRun.networkError){resultBody.innerHTML=emptyState('无法获取证明目标','先解决运行请求失败的问题。','goal');return;}
+    if(lastRun.code!==editor.value){resultBody.innerHTML=emptyState('代码已更新','重新运行以更新证明目标。','goal');return;}
+    if(lastRun.settingsKey!==settingsKey()){resultBody.innerHTML=emptyState('设置已变更','重新运行以应用当前环境。','goal');return;}
+    if(!goals){
+      resultBody.innerHTML=`<div class="goal-placeholder">需额外请求一次证明状态。<div><button type="button" class="tool-button" id="loadGoals">提取证明目标</button></div></div>`;
+      return;
+    }
+    if(goals.error){
+      resultBody.innerHTML=`<div class="result-content"><div class="verdict failed">${icons.error}<div><strong>证明目标提取失败</strong><small>${esc(goals.error)}</small></div></div><button type="button" class="tool-button" id="retryGoals" style="width:auto;padding:0 14px">重试</button></div>`;
+      return;
+    }
+    const a=lastRun.analysis;
+    const states=goals.states.map(s=>({...s,line:Math.max(1,s.line-(goals.lineOffset||0))}));
+    const holeMap=new Map(a.holes.map(h=>[h.line,h]));
+    const cursorHole=holeMap.get(currentLineNumber);
+    if(!states.length&&!cursorHole&&!a.holes.length){
+      resultBody.innerHTML=emptyState('没有可显示的证明目标',
+        goals.compileErrors?'先修复编译错误。':'没有可提取的 tactic 目标状态。','goal');
+      return;
+    }
+    const filtered=states.filter(s=>s.line<=currentLineNumber);
+    const selected=filtered.length?filtered[filtered.length-1]:(states[0]||null);
+    const activeLine=cursorHole?currentLineNumber:(selected?selected.line:(a.holes[0]?a.holes[0].line:null));
+    const activeHole=activeLine?holeMap.get(activeLine):null;
+    const prevGoal=(()=>{
+      if(!activeLine) return '';
+      const before=states.filter(s=>s.line<activeLine&&s.proof_state.trim()&&!/^(no goals|Goals accomplished)/i.test(s.proof_state.trim()));
+      return before.length?before[before.length-1].proof_state:'';
+    })();
+    const chips=states.map(s=>`<button type="button" class="line-chip ${holeMap.has(s.line)?'hole':''} ${s===selected?'active':''}" data-line="${s.line}" data-col="1">行 ${s.line}${holeMap.has(s.line)?' · 漏洞':''}</button>`).join('');
+    const body=`${a.holes.length?goalsBanner(a):''}
+      <div class="hint">显示最接近光标（行 ${currentLineNumber}）的目标；<code>sorry</code> / <code>admit</code> 标为未证明。</div>
+      ${goalCardHTML(selected,activeHole,prevGoal,a.holes.length)}
+      ${states.length?`<div class="section-label"><span>含证明状态的行</span><span>${states.length} 行</span></div><div class="line-chips">${chips}</div>`:''}
+      ${goals.truncated?'<div class="hint" style="margin-top:12px">内容过长，已截断。</div>':''}
+      ${goals.lineOffset?'<div class="result-meta">AXLE 注入了默认头，行号已对齐。</div>':''}`;
+    resultBody.innerHTML=`<div class="result-content">${body}</div>`;
+    lastGoalKey=`${currentLineNumber}|${states.length}|${editor.value.length}`;
+  }
+  function maybeRefreshGoals(){
+    if(activeTab!=='goals'||loadingGoals||runController||!goals) return;
+    if(lastRun&&lastRun.settingsKey!==settingsKey()) return;
+    const key=`${currentLineNumber}|${goals.states.length}|${editor.value.length}`;
+    if(key===lastGoalKey) return;
+    renderGoals();
+  }
+  
+  // 内容高度会随图片/字体加载变化，用 ResizeObserver 跟踪，而不是每次 render 再排一次 rAF。
+  let resultScrollFrame=0;
+  let resultContentObserver=null;
+  function updateResultScrollClass(){
+    const hasScroll=resultBody.scrollHeight>resultBody.clientHeight+2;
+    resultBody.classList.toggle('no-local-scroll',!hasScroll);
+  }
+  function scheduleResultScroll(){
+    if(resultScrollFrame) return;
+    resultScrollFrame=requestAnimationFrame(()=>{resultScrollFrame=0;updateResultScrollClass();});
+  }
+  function watchResultContent(){
+    if(!resultContentObserver) return;
+    resultContentObserver.disconnect();
+    const content=resultBody.firstElementChild;
+    if(content) resultContentObserver.observe(content);
+  }
+  if('ResizeObserver' in window){
+    resultContentObserver=new ResizeObserver(scheduleResultScroll);
+  }
+
+  function render(){
+    if(activeTab==='goals') renderGoals(); else renderOutput();
+    watchResultContent();
+    updateResultScrollClass();
+  }
+  function setTab(tab){
+    activeTab=tab;
+    $('outputTab').setAttribute('aria-selected',String(tab==='output'));
+    $('goalsTab').setAttribute('aria-selected',String(tab==='goals'));
+    resultBody.setAttribute('aria-live',tab==='output'?'polite':'off');
+    resultBody.setAttribute('aria-labelledby',tab==='output'?'outputTab':'goalsTab');
+    lastGoalKey='';
+    render();
+    if(tab==='goals'&&lastRun&&!lastRun.networkError&&lastRun.code===editor.value&&lastRun.settingsKey===settingsKey()&&!goals&&!loadingGoals) void fetchGoals();
+  }
+
+  /* ===== 交互绑定 ===== */
+  resultBody.addEventListener('click',e=>{
+    const jump=e.target.closest('[data-line]');
+    if(jump) jumpTo(Number(jump.dataset.line),Number(jump.dataset.col||1));
+    if(e.target.closest('#loadGoals')||e.target.closest('#retryGoals')){goals=null;void fetchGoals();}
+    if(e.target.closest('#rerunBtn')) void run();
+  });
+  resultBody.addEventListener('toggle', scheduleResultScroll, true);
+  $('outputTab').addEventListener('click',()=>setTab('output'));
+  $('goalsTab').addEventListener('click',()=>setTab('goals'));
+  $('runBtn').addEventListener('click',()=>void run());
+  $('newBtn').addEventListener('click',()=>{setCode('import Mathlib\n\n','Main.lean');editor.focus();toast('已新建文件');});
+  $('importBtn').addEventListener('click',()=>$('fileInput').click());
+  $('fileInput').addEventListener('change',async e=>{
+    const file=e.target.files&&e.target.files[0];
+    if(!file) return;
+    try{
+      if(file.size>1024*1024){toast('文件不能超过 1 MB');return;}
+      const content=await file.text();
+      setCode(content,(file.name||'Main.lean').replace(/[\\/:*?"<>|']/g,'').slice(0,80)||'Main.lean');
+      toast('文件已导入');
+    }catch{toast('无法读取此文件');}
+    finally{e.target.value='';}
+  });
+  function download(){
+    const blob=new Blob([editor.value],{type:'text/plain;charset=utf-8'});
+    const url=URL.createObjectURL(blob);
+    const link=document.createElement('a');
+    link.href=url;
+    link.download=filename.endsWith('.lean')?filename:((filename.replace(/\.[^.]+$/,'')||'Main')+'.lean');
+    document.body.appendChild(link);link.click();link.remove();
+    setTimeout(()=>URL.revokeObjectURL(url),1000);
+    toast('Lean 源代码已保存');
+  }
+  $('exportBtn').addEventListener('click',download);
+  
+  const copyModal=$('copyModal');
+  let copyReturnFocus=null;
+  function openCopyModal(text){
+    copyReturnFocus=document.activeElement;
+    const area=$('copyModalText');
+    area.value=text;
+    copyModal.hidden=false;
+    area.focus({preventScroll:true});
+    area.select();
+    area.setSelectionRange(0,area.value.length);
+  }
+  function closeCopyModal(){
+    if(copyModal.hidden) return;
+    copyModal.hidden=true;
+    const back=copyReturnFocus;
+    copyReturnFocus=null;
+    if(back&&typeof back.focus==='function'&&document.contains(back)) back.focus({preventScroll:true});
+  }
+  $('copyModalMask').addEventListener('click',closeCopyModal);
+  $('copyModalClose').addEventListener('click',closeCopyModal);
+  $('copyModalSelect').addEventListener('click',()=>{
+    const area=$('copyModalText');
+    area.focus({preventScroll:true});
+    area.select();
+    area.setSelectionRange(0,area.value.length);
+  });
+  document.addEventListener('keydown',e=>{
+    if(e.key==='Escape'&&!copyModal.hidden){e.preventDefault();closeCopyModal();}
+  });
+
+  function execCopy(text){
+    const active=document.activeElement;
+    const temp=document.createElement('textarea');
+    temp.value=text;
+    temp.setAttribute('readonly','');
+    temp.style.cssText='position:fixed;top:0;left:0;width:1px;height:1px;padding:0;border:none;outline:none;box-shadow:none;background:transparent;opacity:0;font-size:16px;';
+    document.body.appendChild(temp);
+    let ok=false;
+    try{
+      // iOS/旧版 Safari 必须先聚焦，否则选区可能为空、复制到空内容。
+      temp.focus({preventScroll:true});
+      if(/ipad|ipod|iphone/i.test(navigator.userAgent)){
+        const range=document.createRange();
+        range.selectNodeContents(temp);
+        const sel=window.getSelection();
+        if(sel){sel.removeAllRanges();sel.addRange(range);}
+        temp.setSelectionRange(0,999999);
+      }else{
+        temp.select();
+        temp.setSelectionRange(0,text.length);
+      }
+      ok=document.execCommand('copy');
+    }catch(err){
+      console.warn('Fallback copy failed:',err);
+      ok=false;
+    }finally{
+      temp.remove();
+      if(active&&typeof active.focus==='function'&&document.contains(active)) active.focus({preventScroll:true});
+    }
+    return ok;
+  }
+
+  async function copy(text){
+    const str=String(text??'');
+    if(!str){toast('没有可复制的内容');return;}
+    if(navigator.clipboard&&window.isSecureContext){
+      try{
+        await navigator.clipboard.writeText(str);
+        toast('已复制到剪贴板');
+        return;
+      }catch(e){
+        console.warn('Clipboard API failed, falling back to execCommand',e);
+      }
+    }
+    if(execCopy(str)){toast('已复制到剪贴板');return;}
+    openCopyModal(str);
+  }
+
+  $('copyCode').addEventListener('click',()=>void copy(editor.value));
+  $('copyResult').addEventListener('click',()=>{
+    if(activeTab==='goals'){
+      if(!goals) return toast('请先提取证明目标');
+      if(goals.error) return toast('证明目标提取失败，没有可复制的目标');
+      return void copy(goals.states.map(s=>`行 ${s.line-(goals.lineOffset||0)}\n${s.proof_state}`).join('\n\n'));
+    }
+    if(!lastRun) return toast('暂无可复制的结果');
+    if(lastRun.networkError) return void copy(lastRun.networkError);
+    const a=lastRun.analysis;
+    let text=`${verdictMeta(a).title}\n${verdictSubtitle(a)}`;
+    if(isStaleRun()) text='【结果已过期：代码或设置已修改，请重新运行】\n'+text;
+    if(a.failed.length) text+=`\n未完成声明：${a.failed.map(d=>`${d.name}（${d.reason}）`).join('、')}`;
+    if(a.holes.length) text+=`\n漏洞：${a.holes.map(h=>`行 ${h.line} ${h.kind}${h.goal?' ⊢ '+h.goal.replace(/\n/g,' ⏎ '):''}`).join('；')}`;
+    if(a.axioms.length) text+=`\naxiom：${a.axioms.map(x=>`${x.name}（行 ${x.line}）`).join('、')}`;
+    if(a.importsRewritten) text+=`\n注意：AXLE 替换了 import（${a.effectiveImports.join(' ')}），受检对象与输入不一致。`;
+    const visible=a.messages.filter(m=>!m.hidden).map(m=>`[${m.type}] ${m.text}`).join('\n\n');
+    void copy(visible?text+'\n\n'+visible:text);
+  });
+
+  /* ===== 运行设置 ===== */
+  const pop=$('settingsPop');
+  const settingsBtn=$('settingsBtn');
+  function openSettings(){
+    pop.hidden=false;
+    settingsBtn.setAttribute('aria-expanded','true');
+    if(window.matchMedia('(min-width:520px)').matches){
+      const rect=settingsBtn.getBoundingClientRect();
+      pop.style.top=Math.round(rect.bottom+8)+'px';
+      pop.style.left='auto';
+      pop.style.right=Math.round(Math.max(8,window.innerWidth-rect.right))+'px';
+    }else{
+      pop.style.top='';pop.style.left='';pop.style.right='';
+    }
+    $('envSelect').value=settings.env;
+  }
+  function closeSettings(){
+    pop.hidden=true;
+    settingsBtn.setAttribute('aria-expanded','false');
+  }
+  settingsBtn.addEventListener('click',()=>{pop.hidden?openSettings():closeSettings();});
+  document.addEventListener('click',e=>{
+    if(pop.hidden) return;
+    if(pop.contains(e.target)||settingsBtn.contains(e.target)) return;
+    closeSettings();
+  });
+  document.addEventListener('keydown',e=>{
+    if(e.key==='Escape'&&!pop.hidden){closeSettings();settingsBtn.focus();}
+  });
+  function resetGoals(){
+    if(goalController){goalController.abort();goalController=null;}
+    loadingGoals=false;goals=null;lastGoalKey='';
+    if(activeTab==='goals') render();
+  }
+  $('envSelect').addEventListener('change',e=>{
+    const value=String(e.target.value||'');
+    if(!ENVS.includes(value)) return;
+    settings.env=value;
+    $('envLabel').textContent=value;
+    persist();
+    resetGoals();
+    if(lastRun) setStatus('warn','环境已切换，请重新运行');
+    if(activeTab==='output') render();
+    toast('环境已切换为 '+value);
+  });
+
+  /* ===== 标签页键盘 ===== */
+  for(const [tab,el] of [['output',$('outputTab')],['goals',$('goalsTab')]]){
+    el.addEventListener('keydown',e=>{
+      if(!['ArrowLeft','ArrowRight','Home','End'].includes(e.key)) return;
+      e.preventDefault();
+      const next=(e.key==='ArrowLeft'||e.key==='Home')?'output':'goals';
+      setTab(next);
+      (next==='output'?$('outputTab'):$('goalsTab')).focus();
+    });
+  }
+
+  /* ===== 启动 ===== */
+  let initial=DEFAULT_CODE;
+  try{
+    const saved=JSON.parse(localStorage.getItem(STORE)||localStorage.getItem('lean-cloud-playground-v3')||'null');
+    if(saved&&typeof saved.code==='string'){
+      initial=saved.code;
+      if(typeof saved.filename==='string'&&saved.filename) filename=saved.filename;
+      if(ENVS.includes(saved.env)) settings.env=saved.env;
+    }
+  }catch{}
+  if(location.hash.startsWith('#code=')){
+    try{initial=decodeURIComponent(location.hash.slice(6));filename='Shared.lean';}catch{}
+  }
+  filename=filename.replace(/[\\/:*?"<>|']/g,'').slice(0,80)||'Main.lean';
+  editor.value=cleanSource(initial)+'\n';
+  editor.setSelectionRange(0,0);
+  captureScroll();
+  $('fileName').textContent=filename;
+  $('fileName').title=filename;
+  $('envLabel').textContent=settings.env;
+  applyHoles(editor.value);
+  refreshEditor();
+  render();
+  persist();
+  window.addEventListener('resize',()=>{captureScroll();metricsCache=null;cursorInfo();syncScroll();if(!pop.hidden)closeSettings();scheduleResultScroll();});
+})();
+</script>
+</body>
+</html>

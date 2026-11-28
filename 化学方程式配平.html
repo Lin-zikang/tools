@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#0b1320" />
+  <meta name="color-scheme" content="light dark" />
+  <title>化学方程式配平器</title>
+  <link
+    rel="icon"
+    href="https://user-assets.sxlcdn.com/images/1209238/FlWuslNmGTHt1EipxUtq2GI6zqnN.png?imageMogr2/strip/auto-orient/thumbnail/1200x9000%3E/quality/90!/format/png"
+    type="image/png"
+  />
+  <style>
+    :root{
+      --bg:#f4f7fb; --panel:rgba(255,255,255,.86); --panel-solid:#fff; --text:#142033;
+      --muted:#66758a; --line:#dce5ef; --accent:#0b7a75; --accent-2:#0f5f9b; --danger:#c83c4a;
+      --success:#16794a; --warn:#a96405; --shadow:0 18px 50px rgba(18,42,66,.12);
+      --radius:22px; --radius-sm:14px; --mono:"SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;
+    }
+    @media (prefers-color-scheme:dark){
+      :root{--bg:#09111d;--panel:rgba(15,25,39,.88);--panel-solid:#0f1927;--text:#eaf1f8;--muted:#99a9bb;--line:#26374b;--accent:#42c7bc;--accent-2:#55a9e2;--danger:#ff7c89;--success:#5bd99b;--warn:#f2b45f;--shadow:0 18px 50px rgba(0,0,0,.35)}
+    }
+    *{box-sizing:border-box}
+    html{scroll-behavior:smooth}
+    body{margin:0;min-height:100vh;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;color:var(--text);background:
+      radial-gradient(circle at 8% -10%,rgba(15,95,155,.16),transparent 30%),
+      radial-gradient(circle at 95% 10%,rgba(11,122,117,.16),transparent 28%),var(--bg);}
+    button,input,textarea{font:inherit}
+    button{cursor:pointer}
+    .shell{width:min(1160px,calc(100% - 28px));margin:0 auto;padding:34px 0 56px}
+    .hero{display:grid;grid-template-columns:1fr auto;gap:22px;align-items:end;margin-bottom:24px}
+    .brand{display:flex;gap:14px;align-items:center;margin-bottom:12px}
+    .logo{width:48px;height:48px;border-radius:15px;display:grid;place-items:center;color:white;font-weight:800;letter-spacing:-.06em;background:linear-gradient(135deg,var(--accent),var(--accent-2));box-shadow:0 10px 26px rgba(11,122,117,.25)}
+    h1{font-size:clamp(30px,4vw,50px);letter-spacing:-.045em;line-height:1.05;margin:0}
+    .subtitle{max-width:760px;color:var(--muted);font-size:clamp(14px,1.7vw,17px);line-height:1.75;margin:0}
+    .status-pill{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line);background:var(--panel);padding:9px 12px;border-radius:999px;color:var(--muted);font-size:13px;white-space:nowrap;backdrop-filter:blur(12px)}
+    .dot{width:8px;height:8px;border-radius:50%;background:var(--success);box-shadow:0 0 0 4px color-mix(in srgb,var(--success) 14%,transparent)}
+    .grid{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(300px,.65fr);gap:20px;align-items:start}
+    .card{background:var(--panel);border:1px solid color-mix(in srgb,var(--line) 85%,transparent);border-radius:var(--radius);box-shadow:var(--shadow);backdrop-filter:blur(16px);overflow:hidden}
+    .card-body{padding:24px}
+    .card-head{padding:21px 24px 0;display:flex;justify-content:space-between;gap:16px;align-items:center}
+    .eyebrow{font-size:12px;font-weight:800;letter-spacing:.13em;text-transform:uppercase;color:var(--accent)}
+    .card h2{font-size:20px;margin:3px 0 0;letter-spacing:-.02em}
+    .input-wrap{position:relative;margin-top:16px}
+    textarea{width:100%;min-height:142px;resize:vertical;border:1px solid var(--line);border-radius:18px;background:color-mix(in srgb,var(--panel-solid) 92%,transparent);color:var(--text);padding:19px 18px 46px;outline:none;font-family:var(--mono);font-size:16px;line-height:1.6;transition:.2s border,.2s box-shadow}
+    textarea:focus{border-color:var(--accent);box-shadow:0 0 0 4px color-mix(in srgb,var(--accent) 13%,transparent)}
+    .input-hint{position:absolute;left:18px;right:18px;bottom:13px;display:flex;justify-content:space-between;gap:10px;color:var(--muted);font-size:12px;pointer-events:none}
+    .actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px}
+    .btn{border:1px solid var(--line);border-radius:13px;padding:11px 15px;background:var(--panel-solid);color:var(--text);font-weight:750;transition:transform .14s ease,border-color .14s ease,background .14s ease}
+    .btn:hover{transform:translateY(-1px);border-color:color-mix(in srgb,var(--accent) 55%,var(--line))}
+    .btn.primary{border-color:transparent;color:white;background:linear-gradient(135deg,var(--accent),var(--accent-2));box-shadow:0 9px 20px color-mix(in srgb,var(--accent) 23%,transparent)}
+    .btn.ghost{background:transparent}
+    .shortcut{font-size:11px;opacity:.72;margin-left:7px}
+    .message{display:none;margin-top:14px;padding:12px 14px;border-radius:13px;font-size:13px;line-height:1.55;border:1px solid}
+    .message.show{display:block}
+    .message.error{color:var(--danger);border-color:color-mix(in srgb,var(--danger) 30%,var(--line));background:color-mix(in srgb,var(--danger) 8%,transparent)}
+    .message.ok{color:var(--success);border-color:color-mix(in srgb,var(--success) 30%,var(--line));background:color-mix(in srgb,var(--success) 8%,transparent)}
+    .result{margin-top:18px;padding:20px;border-radius:18px;border:1px solid var(--line);background:linear-gradient(180deg,color-mix(in srgb,var(--panel-solid) 98%,transparent),color-mix(in srgb,var(--accent) 3%,var(--panel-solid)))}
+    .result-top{display:flex;justify-content:space-between;gap:16px;align-items:flex-start}
+    .result-label{color:var(--muted);font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase}
+    .equation{font-family:"STIX Two Text","Cambria Math","Times New Roman",serif;font-size:clamp(22px,4vw,36px);line-height:1.6;margin-top:8px;overflow-wrap:anywhere}
+    .coef{font-weight:800;color:var(--accent-2);margin-right:2px}
+    .arrow{padding:0 .25em;color:var(--muted)}
+    sub{font-size:.64em;vertical-align:-.3em} sup{font-size:.6em;vertical-align:.55em}
+    .result-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}
+    .mini{padding:8px 10px;font-size:12px;border-radius:10px}
+    .verify{margin-top:18px;border-top:1px solid var(--line);padding-top:16px}
+    .verify-head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:10px}
+    .verify-title{font-size:13px;font-weight:800}
+    .badge{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:750;padding:6px 9px;border-radius:999px;background:color-mix(in srgb,var(--success) 10%,transparent);color:var(--success);border:1px solid color-mix(in srgb,var(--success) 25%,transparent)}
+    .table-wrap{overflow:auto;border:1px solid var(--line);border-radius:13px}
+    table{width:100%;border-collapse:collapse;min-width:440px;font-size:13px}
+    th,td{padding:10px 12px;text-align:right;border-bottom:1px solid var(--line)} th:first-child,td:first-child{text-align:left}
+    tr:last-child td{border-bottom:0} th{color:var(--muted);font-weight:750;background:color-mix(in srgb,var(--panel-solid) 72%,transparent)}
+    .side{display:grid;gap:20px}
+    .examples{display:grid;gap:9px;margin-top:14px}
+    .example{border:1px solid var(--line);background:transparent;color:var(--text);border-radius:13px;padding:11px 12px;text-align:left;transition:.14s ease}
+    .example:hover{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 6%,transparent);transform:translateY(-1px)}
+    .example b{display:block;font-size:13px;margin-bottom:4px}.example code{font-family:var(--mono);font-size:12px;color:var(--muted);white-space:normal}
+    .support-list{display:grid;gap:11px;margin-top:15px}
+    .support-item{display:grid;grid-template-columns:26px 1fr;gap:9px;align-items:start;font-size:13px;line-height:1.5;color:var(--muted)}
+    .support-icon{width:24px;height:24px;border-radius:8px;display:grid;place-items:center;background:color-mix(in srgb,var(--accent) 9%,transparent);color:var(--accent);font-size:12px;font-weight:900}
+    .note{font-size:12px;line-height:1.65;color:var(--muted);margin-top:12px;padding:12px 13px;border-radius:12px;background:color-mix(in srgb,var(--warn) 7%,transparent);border:1px solid color-mix(in srgb,var(--warn) 20%,var(--line))}
+    details{border-top:1px solid var(--line);margin-top:16px;padding-top:14px}summary{cursor:pointer;font-size:13px;font-weight:800}details p{font-size:12px;line-height:1.7;color:var(--muted);margin:10px 0 0}
+    footer{text-align:center;color:var(--muted);font-size:12px;margin-top:22px;line-height:1.7}
+    .hidden{display:none!important}
+    @media(max-width:880px){.grid{grid-template-columns:1fr}.side{grid-template-columns:1fr 1fr}.hero{grid-template-columns:1fr}.status-pill{justify-self:start}}
+    @media(max-width:620px){.shell{width:min(100% - 18px,1160px);padding-top:20px}.card-body,.card-head{padding-left:16px;padding-right:16px}.side{grid-template-columns:1fr}.actions .btn{flex:1}.shortcut{display:none}.result{padding:16px}.result-top{display:block}.equation{font-size:24px}.hero{margin-bottom:16px}.brand{align-items:flex-start}.logo{width:42px;height:42px;border-radius:13px}}
+    @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important}}
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <section class="hero">
+      <div>
+        <div class="brand"><div class="logo" aria-hidden="true">Eq</div><div><div class="eyebrow">Stoichiometry Utility</div><h1>化学方程式配平器</h1></div></div>
+        <p class="subtitle">基于元素与电荷守恒的精确整数线性代数配平。无需联网，不上传数据，适用于常见无机、有机、离子及含结晶水化学式。</p>
+      </div>
+      <div class="status-pill"><span class="dot"></span>本地计算</div>
+    </section>
+
+    <section class="grid">
+      <article class="card">
+        <div class="card-head"><div><div class="eyebrow">Balancer</div><h2>输入反应方程式</h2></div></div>
+        <div class="card-body">
+          <div class="input-wrap">
+            <textarea id="equationInput" aria-label="化学方程式输入" spellcheck="false" placeholder="例如：Fe + O2 -> Fe2O3">KMnO4 + HCl -> KCl + MnCl2 + Cl2 + H2O</textarea>
+            <div class="input-hint"><span>支持 →、->、=>、=、⇌、↔、&lt;=&gt;，兼容全角符号</span><span id="charCount">0 字符</span></div>
+          </div>
+          <div class="actions">
+            <button class="btn primary" id="balanceBtn">开始配平 <span class="shortcut">Ctrl/⌘ + Enter</span></button>
+            <button class="btn" id="clearBtn">清空</button>
+            <button class="btn ghost" id="swapBtn">交换左右</button>
+          </div>
+          <div id="message" class="message" role="status" aria-live="polite"></div>
+
+          <section id="resultBox" class="result hidden" aria-live="polite">
+            <div class="result-top">
+              <div style="min-width:0"><div class="result-label">Balanced Equation</div><div id="resultEquation" class="equation"></div></div>
+            </div>
+            <div class="result-actions">
+              <button class="btn mini" id="copyPlainBtn">复制纯文本</button>
+              <button class="btn mini" id="copyUnicodeBtn">复制 Unicode</button>
+            </div>
+            <div class="verify">
+              <div class="verify-head"><div class="verify-title">守恒核验</div><span class="badge">✓ 左右完全一致</span></div>
+              <div class="table-wrap"><table><thead><tr><th>守恒项</th><th>反应物侧</th><th>生成物侧</th><th>差值</th></tr></thead><tbody id="verifyBody"></tbody></table></div>
+            </div>
+          </section>
+        </div>
+      </article>
+
+      <aside class="side">
+        <section class="card"><div class="card-body"><div class="eyebrow">Examples</div><h2>快速示例</h2><div class="examples">
+          <button class="example" data-eq="C2H6 + O2 -> CO2 + H2O"><b>烃类燃烧</b><code>C2H6 + O2 → CO2 + H2O</code></button>
+          <button class="example" data-eq="Al + HCl -> AlCl3 + H2"><b>金属与酸</b><code>Al + HCl → AlCl3 + H2</code></button>
+          <button class="example" data-eq="MnO4- + Fe2+ + H+ -> Mn2+ + Fe3+ + H2O"><b>离子氧化还原</b><code>MnO4- + Fe2+ + H+ → Mn2+ + Fe3+ + H2O</code></button>
+          <button class="example" data-eq="CuSO4·5H2O -> CuSO4 + H2O"><b>结晶水</b><code>CuSO4·5H2O → CuSO4 + H2O</code></button>
+        </div></div></section>
+
+        <section class="card"><div class="card-body"><div class="eyebrow">Syntax</div><h2>支持范围</h2><div class="support-list">
+          <div class="support-item"><span class="support-icon">()</span><span>嵌套圆括号、方括号与花括号，如 <code>Ca(OH)2</code>、<code>K4[Fe(CN)6]</code>。</span></div>
+          <div class="support-item"><span class="support-icon">·</span><span>结晶水与加合物，如 <code>CuSO4·5H2O</code>（也支持英文句点）。</span></div>
+          <div class="support-item"><span class="support-icon">±</span><span>离子电荷，如 <code>Fe3+</code>、<code>SO4^2-</code>、<code>NH4+</code>、<code>e-</code>。</span></div>
+          <div class="support-item"><span class="support-icon">aq</span><span>状态符号会保留显示，如 <code>(s)</code>、<code>(l)</code>、<code>(g)</code>、<code>(aq)</code>。</span></div>
+        </div>
+        <div class="note">支持无空格离子写法，如 <code>Ca2++Cl-</code>、<code>H++OH-</code>，也支持 <code>Fe2+ + MnO4-</code>。为避免歧义，正离子与下一物质之间若不留空格，请使用两个连续的 <code>+</code>：前一个表示电荷，后一个表示物质分隔。</div>
+        <details><summary>算法说明</summary><p>程序把每种物质视为未知系数，将每一种元素的原子数写成守恒方程；若检测到离子，则再加入一行电荷守恒。随后使用 BigInt 支持的精确有理数高斯消元求零空间，再统一化为最大公约数为 1 的正整数系数，因此不会受到普通浮点数舍入误差影响。</p></details>
+        </div></section>
+      </aside>
+    </section>
+    <footer>对特殊反应机理而言，配平结果只保证物料/电荷守恒，不判断反应是否实际发生。</footer>
+  </main>
+
+<script>
+(() => {
+  'use strict';
+
+  const $ = s => document.querySelector(s);
+  const input = $('#equationInput'), balanceBtn = $('#balanceBtn'), resultBox = $('#resultBox');
+  const resultEquation = $('#resultEquation'), verifyBody = $('#verifyBody'), message = $('#message'), charCount = $('#charCount');
+  let lastResult = null;
+
+  const ELEMENTS = new Set(('H He Li Be B C N O F Ne Na Mg Al Si P S Cl Ar K Ca Sc Ti V Cr Mn Fe Co Ni Cu Zn Ga Ge As Se Br Kr Rb Sr Y Zr Nb Mo Tc Ru Rh Pd Ag Cd In Sn Sb Te I Xe Cs Ba La Ce Pr Nd Pm Sm Eu Gd Tb Dy Ho Er Tm Yb Lu Hf Ta W Re Os Ir Pt Au Hg Tl Pb Bi Po At Rn Fr Ra Ac Th Pa U Np Pu Am Cm Bk Cf Es Fm Md No Lr Rf Db Sg Bh Hs Mt Ds Rg Cn Nh Fl Mc Lv Ts Og D T').split(' '));
+
+  function bgcd(a,b){ a=a<0n?-a:a; b=b<0n?-b:b; while(b){ const t=a%b; a=b; b=t; } return a; }
+  function blcm(a,b){ return a===0n||b===0n?0n:(a/bgcd(a,b))*b; }
+  class Frac{
+    constructor(n=0n,d=1n){ n=BigInt(n); d=BigInt(d); if(d===0n) throw new Error('分母不能为 0'); if(d<0n){n=-n;d=-d;} const g=bgcd(n,d); this.n=n/g; this.d=d/g; }
+    add(o){o=F(o); return new Frac(this.n*o.d+o.n*this.d,this.d*o.d)}
+    sub(o){o=F(o); return new Frac(this.n*o.d-o.n*this.d,this.d*o.d)}
+    mul(o){o=F(o); return new Frac(this.n*o.n,this.d*o.d)}
+    div(o){o=F(o); if(o.n===0n) throw new Error('除数不能为 0'); return new Frac(this.n*o.d,this.d*o.n)}
+    neg(){return new Frac(-this.n,this.d)} isZero(){return this.n===0n} isPos(){return this.n>0n}
+  }
+  function F(x){ return x instanceof Frac?x:new Frac(x); }
+
+  function normalizeUnicode(s){
+    const sub={'₀':'0','₁':'1','₂':'2','₃':'3','₄':'4','₅':'5','₆':'6','₇':'7','₈':'8','₉':'9'};
+    const sup={'⁰':'0','¹':'1','²':'2','³':'3','⁴':'4','⁵':'5','⁶':'6','⁷':'7','⁸':'8','⁹':'9','⁺':'+','⁻':'-'};
+    const compat={
+      '＋':'+','﹢':'+','－':'-','﹣':'-','−':'-','–':'-','—':'-',
+      '＝':'=','﹦':'=','＾':'^','．':'.','。':'.','・':'·','･':'·',
+      '（':'(','）':')','［':'[','］':']','【':'[','】':']','｛':'{','｝':'}',
+      '＜':'<','＞':'>','　':' '
+    };
+    // 不直接使用 NFKC：NFKC 会把上/下标数字都压成普通数字，丢失“下标 vs 电荷”的语义。
+    s=[...String(s)].map(c=>{
+      const cp=c.codePointAt(0);
+      if(cp>=0xFF01 && cp<=0xFF5E) return String.fromCodePoint(cp-0xFEE0); // 全角 ASCII（数字/字母/标点）
+      return compat[c]??c;
+    }).join('');
+    s=[...s].map(c=>sub[c]??c).join('').replace(/[∙•⋅⋆]/g,'·');
+    s=s.replace(/[⁰¹²³⁴⁵⁶⁷⁸⁹⁺⁻]+/g,m=>'^'+[...m].map(c=>sup[c]??c).join(''));
+    return s;
+  }
+
+  function splitEquation(eq){
+    eq=normalizeUnicode(eq.trim())
+      .replace(/[⟶⟹⇒]/g,'->')
+      .replace(/[⟷⇄⇆⇋]/g,'⇌');
+    const arrows=['<=>','<->','=>','->','→','⇌','↔','='];
+    let found=null, idx=-1;
+    for(const a of arrows){ const i=eq.indexOf(a); if(i!==-1 && (idx===-1 || i<idx)){ found=a; idx=i; } }
+    if(!found) throw new Error('未找到反应箭头。请使用 →、->、=>、=、⇌、↔ 或 <=>。');
+    const left=eq.slice(0,idx).trim(), right=eq.slice(idx+found.length).trim();
+    if(!left||!right) throw new Error('反应箭头两侧都必须有物质。');
+    const extra=arrows.some(a=>right.includes(a));
+    if(extra) throw new Error('检测到多个反应箭头，请一次只配平一个方程式。');
+    return {left,right,arrow:['⇌','↔','<=>','<->'].includes(found)?'⇌':'→'};
+  }
+
+  function splitSpecies(side){
+    side=normalizeUnicode(side).trim();
+    const parts=[]; let start=0;
+    const nextNonSpace=i=>{ while(i<side.length && /\s/.test(side[i])) i++; return i<side.length?side[i]:''; };
+    // “+”既可能是物质分隔符，也可能是正离子的电荷。
+    // 规则：末尾的 + 保留为电荷；若当前 + 后面的下一个非空白字符仍是 +，
+    // 则当前 + 是电荷、后一个 + 是分隔符。这样 Ca2++Cl-、H++OH-、Fe2+ + MnO4- 都能正确切分。
+    for(let i=0;i<side.length;i++){
+      if(side[i]!=='+') continue;
+      const next=nextNonSpace(i+1);
+      const isChargePlus=(next==='' || next==='+');
+      if(isChargePlus) continue;
+      const part=side.slice(start,i).trim();
+      if(!part) throw new Error('物质分隔符“+”附近存在空项，请检查输入。');
+      parts.push(part); start=i+1;
+    }
+    const tail=side.slice(start).trim();
+    if(!tail) throw new Error('方程式一侧不能以物质分隔符“+”结尾。');
+    parts.push(tail);
+    return parts;
+  }
+
+  function stripLeadingCoefficient(s){
+    const m=s.match(/^\s*(\d+)\s*(?=[A-Za-z\[\(\{])/);
+    return m ? s.slice(m[0].length).trim() : s.trim();
+  }
+
+  function stripState(s){
+    const m=s.match(/\s*(\((?:aq|s|l|g|cr|soln)\))\s*$/i);
+    return m ? {core:s.slice(0,m.index).trim(),state:m[1]} : {core:s.trim(),state:''};
+  }
+
+  function extractCharge(raw){
+    let s=raw.trim();
+    if(/^e(?:\^?1?)?-$/.test(s)) return {base:'',charge:-1,chargeText:'-'};
+    if(/^e(?:\^?1?)?\+$/.test(s)) return {base:'',charge:1,chargeText:'+'};
+    let m=s.match(/\^(\d*)([+-])$/);
+    if(m){ const mag=Number(m[1]||1), sign=m[2]==='+'?1:-1; return {base:s.slice(0,m.index),charge:sign*mag,chargeText:(mag===1?'':mag)+m[2]}; }
+    m=s.match(/([+-])$/);
+    if(!m) return {base:s,charge:0,chargeText:''};
+    const sign=m[1]==='+'?1:-1; let base=s.slice(0,-1); let mag=1;
+    const md=base.match(/(\d+)$/);
+    if(md){
+      const prefix=base.slice(0,md.index);
+      if(/^[A-Z][a-z]?$/.test(prefix) || /[\]\)]$/.test(prefix)) { mag=Number(md[1]); base=prefix; }
+    }
+    return {base,charge:sign*mag,chargeText:(mag===1?'':mag)+m[1]};
+  }
+
+  function mergeCounts(dst,src,mult=1){ for(const [el,c] of Object.entries(src)) dst[el]=(dst[el]||0)+c*mult; return dst; }
+
+  function parseSegment(segment){
+    let seg=segment.trim(); if(!seg) throw new Error('化学式中出现空的“·”分段。');
+    let mult=1; const lead=seg.match(/^(\d+)(?=[A-Z\[\(\{])/); if(lead){mult=Number(lead[1]);if(!Number.isSafeInteger(mult)||mult<=0) throw new Error('分段前系数必须是安全范围内的正整数。');seg=seg.slice(lead[1].length);}
+    const opens={'(':')','[':']','{':'}'};
+    function parseAt(i,closing=null){
+      const out={};
+      while(i<seg.length){
+        const ch=seg[i];
+        if(closing && ch===closing) return {counts:out,index:i+1};
+        if(opens[ch]){
+          const inner=parseAt(i+1,opens[ch]); i=inner.index;
+          const nm=seg.slice(i).match(/^\d+/); const k=nm?Number(nm[0]):1; if(nm)i+=nm[0].length;
+          if(!Number.isSafeInteger(k)||k<=0) throw new Error('括号后的下标必须是安全范围内的正整数。');
+          mergeCounts(out,inner.counts,k); continue;
+        }
+        if(ch===')'||ch===']'||ch==='}') throw new Error(`括号不匹配：在 “${segment}” 中遇到多余的 ${ch}`);
+        if(/[A-Z]/.test(ch)){
+          let sym=ch; i++; if(i<seg.length && /[a-z]/.test(seg[i])){sym+=seg[i];i++;}
+          if(!ELEMENTS.has(sym)) throw new Error(`无法识别元素符号 “${sym}”。`);
+          const nm=seg.slice(i).match(/^\d+/); const k=nm?Number(nm[0]):1; if(nm)i+=nm[0].length;
+          if(!Number.isSafeInteger(k)||k<=0) throw new Error('元素下标必须是正整数。');
+          out[sym]=(out[sym]||0)+k; continue;
+        }
+        throw new Error(`无法解析字符 “${ch}”（位于 ${segment}）。`);
+      }
+      if(closing) throw new Error(`括号不匹配：缺少 “${closing}”。`);
+      return {counts:out,index:i};
+    }
+    const parsed=parseAt(0,null).counts; const scaled={}; for(const [e,c] of Object.entries(parsed)) scaled[e]=c*mult; return scaled;
+  }
+
+  function parseSpecies(raw){
+    // 先做兼容字符归一化，再识别用户输入的已有系数，确保全角数字/括号也能处理。
+    const original=stripLeadingCoefficient(normalizeUnicode(raw));
+    const st=stripState(original), chargeInfo=extractCharge(st.core);
+    const base=chargeInfo.base.trim(); const counts={};
+    if(base){ for(const seg of base.split(/[·.]/)) mergeCounts(counts,parseSegment(seg)); }
+    if(!base && chargeInfo.charge===0) throw new Error(`“${raw}” 不是有效物质。`);
+    if(Object.keys(counts).length===0 && chargeInfo.charge===0) throw new Error(`“${raw}” 中没有可识别元素。`);
+    return {raw:original,base,state:st.state,charge:chargeInfo.charge,chargeText:chargeInfo.chargeText,counts};
+  }
+
+  function rref(matrix){
+    const a=matrix.map(r=>r.map(v=>F(v))); const rows=a.length, cols=a[0].length; const pivots=[]; let r=0;
+    for(let c=0;c<cols && r<rows;c++){
+      let p=r; while(p<rows&&a[p][c].isZero()) p++; if(p===rows) continue;
+      [a[r],a[p]]=[a[p],a[r]]; const pv=a[r][c]; for(let j=0;j<cols;j++) a[r][j]=a[r][j].div(pv);
+      for(let i=0;i<rows;i++) if(i!==r&&!a[i][c].isZero()){ const f=a[i][c]; for(let j=0;j<cols;j++) a[i][j]=a[i][j].sub(f.mul(a[r][j])); }
+      pivots.push(c); r++;
+    }
+    return {a,pivots};
+  }
+
+  function integerize(vec){
+    let l=1n; for(const x of vec) l=blcm(l,x.d); let ints=vec.map(x=>x.n*(l/x.d));
+    let g=0n; for(const x of ints) g=bgcd(g,x); if(g>1n) ints=ints.map(x=>x/g);
+    if(ints.every(x=>x<0n)) ints=ints.map(x=>-x);
+    return ints;
+  }
+
+  function solvePositive(matrix){
+    const {a,pivots}=rref(matrix), n=a[0].length; const pivotSet=new Set(pivots); const free=[]; for(let c=0;c<n;c++) if(!pivotSet.has(c)) free.push(c);
+    if(free.length===0) throw new Error('该输入只有零解，无法形成非零配平系数。请检查物质是否完整。');
+
+    const build=vals=>{
+      const x=Array.from({length:n},()=>new Frac(0n)); free.forEach((c,i)=>x[c]=new Frac(BigInt(vals[i])));
+      for(let ri=pivots.length-1;ri>=0;ri--){ const pc=pivots[ri]; let s=new Frac(0n); for(const fc of free) s=s.add(a[ri][fc].mul(x[fc])); x[pc]=s.neg(); }
+      return x;
+    };
+    let best=null, bestScore=null;
+    const consider=vals=>{
+      const x=build(vals); if(!x.every(v=>v.isPos())) return;
+      const ints=integerize(x); if(!ints.every(v=>v>0n)) return;
+      const max=ints.reduce((m,v)=>v>m?v:m,0n), sum=ints.reduce((s,v)=>s+v,0n); const score=[max,sum];
+      if(!best || score[0]<bestScore[0] || (score[0]===bestScore[0]&&score[1]<bestScore[1])){best=ints;bestScore=score;}
+    };
+    consider(Array(free.length).fill(1));
+    const dim=free.length, limit=dim<=2?12:dim===3?8:dim===4?5:3;
+    if(dim<=5){
+      const vals=Array(dim).fill(1); let visited=0, maxVisit=50000;
+      (function rec(k){ if(visited>=maxVisit)return; if(k===dim){visited++;consider(vals);return;} for(let v=1;v<=limit;v++){vals[k]=v;rec(k+1);if(visited>=maxVisit)break;} })(0);
+    }
+    if(!best) throw new Error('方程存在数学零空间，但未找到所有物质系数均为正数的配平。请检查是否加入了多余物质，或补全反应物/生成物。');
+    return best;
+  }
+
+  function balanceEquation(text){
+    const eq=splitEquation(text), leftRaw=splitSpecies(eq.left), rightRaw=splitSpecies(eq.right);
+    if(leftRaw.length===0||rightRaw.length===0) throw new Error('箭头两侧至少各需要一种物质。');
+    const left=leftRaw.map(parseSpecies), right=rightRaw.map(parseSpecies), all=[...left,...right];
+    if(all.length>40) throw new Error('一次最多处理 40 种物质，以避免浏览器运算量过大。');
+    const elements=[...new Set(all.flatMap(s=>Object.keys(s.counts)))].sort();
+    if(elements.length===0) throw new Error('没有检测到任何元素。');
+    const hasCharge=all.some(s=>s.charge!==0);
+    const rows=elements.map(el=>all.map((s,i)=>(s.counts[el]||0)*(i<left.length?1:-1)));
+    if(hasCharge) rows.push(all.map((s,i)=>s.charge*(i<left.length?1:-1)));
+    const coefs=solvePositive(rows);
+    return {left,right,all,elements,hasCharge,coefs,arrow:eq.arrow,leftCount:left.length};
+  }
+
+  function esc(s){return s.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+  function fmtBase(base){
+    if(!base) return 'e';
+    const parts=base.split(/([·.])/); let out='';
+    for(let pi=0;pi<parts.length;pi++){
+      const part=parts[pi]; if(part==='·'||part==='.'){out+='·';continue;}
+      let lead='', rest=part; if(pi>0){const m=rest.match(/^\d+/);if(m){lead=m[0];rest=rest.slice(m[0].length);}}
+      out+=esc(lead)+esc(rest).replace(/(\d+)/g,'<sub>$1</sub>');
+    }
+    return out;
+  }
+  function fmtSpecies(s){ return fmtBase(s.base)+(s.chargeText?`<sup>${esc(s.chargeText)}</sup>`:'')+(s.state?` ${esc(s.state)}`:''); }
+  function plainSpecies(s){ return (s.base||'e')+(s.chargeText?('^'+s.chargeText):'')+(s.state||''); }
+  const subMap={'0':'₀','1':'₁','2':'₂','3':'₃','4':'₄','5':'₅','6':'₆','7':'₇','8':'₈','9':'₉'};
+  const supMap={'0':'⁰','1':'¹','2':'²','3':'³','4':'⁴','5':'⁵','6':'⁶','7':'⁷','8':'⁸','9':'⁹','+':'⁺','-':'⁻'};
+  function unicodeSpecies(s){
+    let base=s.base||'e';
+    // 结晶水/加合物分段前的计量数（如 ·5H2O 中的 5）不能转成下标。
+    const parts=base.split(/([·.])/); let out='';
+    for(let pi=0;pi<parts.length;pi++){
+      const part=parts[pi]; if(part==='·'||part==='.'){out+='·';continue;}
+      let lead='',rest=part;
+      if(pi>0){const m=rest.match(/^\d+/);if(m){lead=m[0];rest=rest.slice(m[0].length);}}
+      out+=lead+rest.replace(/(\d+)/g,m=>[...m].map(d=>subMap[d]).join(''));
+    }
+    if(s.chargeText) out += [...s.chargeText].map(c=>supMap[c]||c).join('');
+    return out+(s.state||'');
+  }
+  function renderResult(res){
+    const leftHtml=res.left.map((s,i)=>`${res.coefs[i]===1n?'':`<span class="coef">${res.coefs[i]}</span>`}${fmtSpecies(s)}`).join(' + ');
+    const rightHtml=res.right.map((s,j)=>{const i=j+res.leftCount;return `${res.coefs[i]===1n?'':`<span class="coef">${res.coefs[i]}</span>`}${fmtSpecies(s)}`}).join(' + ');
+    resultEquation.innerHTML=`${leftHtml}<span class="arrow">${res.arrow}</span>${rightHtml}`;
+    const conservation=[];
+    for(const el of res.elements){
+      let L=0n,R=0n; res.left.forEach((s,i)=>L+=res.coefs[i]*BigInt(s.counts[el]||0)); res.right.forEach((s,j)=>R+=res.coefs[j+res.leftCount]*BigInt(s.counts[el]||0)); conservation.push([el,L,R,L-R]);
+    }
+    if(res.hasCharge){let L=0n,R=0n;res.left.forEach((s,i)=>L+=res.coefs[i]*BigInt(s.charge));res.right.forEach((s,j)=>R+=res.coefs[j+res.leftCount]*BigInt(s.charge));conservation.push(['总电荷',L,R,L-R]);}
+    verifyBody.innerHTML=conservation.map(([k,l,r,d])=>`<tr><td>${esc(k)}</td><td>${l}</td><td>${r}</td><td>${d}</td></tr>`).join('');
+    resultBox.classList.remove('hidden');
+    const plain=res.left.map((s,i)=>(res.coefs[i]===1n?'':res.coefs[i].toString())+plainSpecies(s)).join(' + ')+' '+res.arrow+' '+res.right.map((s,j)=>{const i=j+res.leftCount;return (res.coefs[i]===1n?'':res.coefs[i].toString())+plainSpecies(s)}).join(' + ');
+    const uni=res.left.map((s,i)=>(res.coefs[i]===1n?'':res.coefs[i].toString())+unicodeSpecies(s)).join(' + ')+' '+res.arrow+' '+res.right.map((s,j)=>{const i=j+res.leftCount;return (res.coefs[i]===1n?'':res.coefs[i].toString())+unicodeSpecies(s)}).join(' + ');
+    lastResult={plain,uni};
+  }
+
+  function setMessage(text,type='error'){ message.textContent=text;message.className=`message show ${type}`; }
+  function clearMessage(){message.textContent='';message.className='message';}
+  function doBalance(){
+    clearMessage(); resultBox.classList.add('hidden'); lastResult=null;
+    const text=input.value.trim(); if(!text){setMessage('请输入一个化学方程式。');return;}
+    try{const res=balanceEquation(text);renderResult(res);setMessage('配平完成：已通过元素守恒'+(res.hasCharge?'与电荷守恒':'')+'核验。','ok');}
+    catch(err){setMessage(err && err.message ? err.message : '配平失败，请检查输入格式。');}
+  }
+  async function copyText(t){
+    try{await navigator.clipboard.writeText(t);setMessage('已复制到剪贴板。','ok');}
+    catch{const ta=document.createElement('textarea');ta.value=t;document.body.appendChild(ta);ta.select();document.execCommand('copy');ta.remove();setMessage('已复制到剪贴板。','ok');}
+  }
+  function updateCount(){charCount.textContent=`${input.value.length} 字符`;}
+
+  balanceBtn.addEventListener('click',doBalance);
+  $('#clearBtn').addEventListener('click',()=>{input.value='';updateCount();resultBox.classList.add('hidden');clearMessage();input.focus();});
+  $('#swapBtn').addEventListener('click',()=>{try{const e=splitEquation(input.value);input.value=`${e.right} ${e.arrow} ${e.left}`;updateCount();doBalance();}catch(err){setMessage(err.message);}});
+  $('#copyPlainBtn').addEventListener('click',()=>lastResult&&copyText(lastResult.plain));
+  $('#copyUnicodeBtn').addEventListener('click',()=>lastResult&&copyText(lastResult.uni));
+  input.addEventListener('input',updateCount);
+  input.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key==='Enter'){e.preventDefault();doBalance();}});
+  document.querySelectorAll('.example').forEach(b=>b.addEventListener('click',()=>{input.value=b.dataset.eq;updateCount();doBalance();if(innerWidth<880)document.querySelector('.card').scrollIntoView({behavior:'smooth',block:'start'});}));
+  updateCount(); doBalance();
+})();
+</script>
+</body>
+</html>

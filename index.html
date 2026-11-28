@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link
+    rel="icon"
+    href="https://user-assets.sxlcdn.com/images/1209238/FlWuslNmGTHt1EipxUtq2GI6zqnN.png?imageMogr2/strip/auto-orient/thumbnail/1200x9000%3E/quality/90!/format/png"
+    type="image/png"
+  />
+  <title>工具大全</title>
+  <style>
+    /* ============ 主题变量 ============ */
+    :root {
+      --bg: #f2f5f9;
+      --surface: #ffffff;
+      --border: #e1e8f0;
+      --text: #2b3a4a;
+      --muted: #7c8b9a;
+      --accent: #3498db;
+      --accent-strong: #2980b9;
+      --link: #2980b9;
+      --btn-text: #ffffff;
+      --shadow: 0 2px 10px rgba(31, 45, 61, .07);
+      --shadow-lg: 0 12px 26px rgba(31, 45, 61, .14);
+      --ring: rgba(52, 152, 219, .30);
+      --radius: 14px;
+      --pad: 20px;
+    }
+
+    html.dark-mode {
+      --bg: #22303e;
+      --surface: #2f4152;
+      --border: #3d5468;
+      --text: #e9eef3;
+      --muted: #a9b8c4;
+      --accent: #1abc9c;
+      --accent-strong: #16a085;
+      --link: #35d3b4;
+      --btn-text: #0e2a25;
+      --shadow: 0 2px 10px rgba(0, 0, 0, .30);
+      --shadow-lg: 0 12px 26px rgba(0, 0, 0, .42);
+      --ring: rgba(26, 188, 156, .30);
+    }
+
+    /* ============ 基础 ============ */
+    * { box-sizing: border-box; }
+
+    html {
+      scroll-behavior: smooth;
+      -webkit-text-size-adjust: 100%;
+    }
+
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, "Segoe UI", "PingFang SC",
+                   "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+      transition: background-color .3s ease, color .3s ease;
+    }
+
+    /* ============ 高考倒计时横幅 ============ */
+    #exam-countdown-banner {
+      width: 100%;
+      color: #fff;
+      text-align: center;
+      padding: 11px 16px;
+      font-size: clamp(.88rem, 2.6vw, 1.05rem);
+      font-weight: 700;
+      letter-spacing: .5px;
+      display: none;
+      position: relative;
+      z-index: 100;
+    }
+
+    #exam-countdown-banner span {
+      color: #ffff00;
+      font-size: 1.35em;
+      margin: 0 3px;
+      text-shadow: 1px 1px 2px rgba(0, 0, 0, .2);
+    }
+
+    /* ============ 顶部控制区 ============ */
+    .top-controls {
+      width: 100%;
+      max-width: 1100px;
+      padding: 16px var(--pad) 0;
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+    }
+
+    #dark-mode-toggle {
+      width: 38px;
+      height: 38px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: inherit;
+      font-size: .92rem;
+      font-weight: 700;
+      color: #fff;
+      background: #2c3e50;
+      border: none;
+      border-radius: 50%;
+      cursor: pointer;
+      box-shadow: 0 3px 10px rgba(0, 0, 0, .18);
+      transition: transform .2s ease, background-color .3s ease, color .3s ease;
+    }
+
+    #dark-mode-toggle:hover { transform: scale(1.08); }
+    #dark-mode-toggle:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+    }
+    #dark-mode-toggle.switching { animation: bounce .5s ease-in-out; }
+
+    @keyframes bounce {
+      0%   { transform: scale(1); }
+      50%  { transform: scale(1.12); }
+      100% { transform: scale(1); }
+    }
+
+    html.dark-mode #dark-mode-toggle {
+      background: #e9eef3;
+      color: #2c3e50;
+    }
+
+    /* ============ 顶部横幅 ============ */
+    .hero {
+      width: 100%;
+      max-width: 1100px;
+      padding: 12px var(--pad) 0;
+    }
+
+    .hero img {
+      width: 100%;
+      height: auto;
+      display: block;
+      border-radius: 16px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, .12);
+    }
+
+    html.dark-mode .hero img {
+      box-shadow: 0 8px 24px rgba(0, 0, 0, .4);
+    }
+
+    /* 原 h1 隐藏（保留可回滚） */
+    h1 { display: none; }
+
+    /* ============ 副标题 / 时间 ============ */
+    .subtitle {
+      margin: 18px var(--pad) 0;
+      max-width: 620px;
+      text-align: center;
+      font-size: clamp(.95rem, 2.6vw, 1.08rem);
+      line-height: 1.6;
+      color: var(--muted);
+      transition: color .3s ease;
+    }
+
+    .time {
+      margin-top: 10px;
+      text-align: center;
+      font-size: clamp(.95rem, 2.5vw, 1.05rem);
+      font-weight: 600;
+      color: #16a085;
+      font-variant-numeric: tabular-nums;
+      letter-spacing: .3px;
+    }
+
+    html.dark-mode .time { color: #1abc9c; }
+
+    /* ============ 搜索 ============ */
+    .search-container {
+      display: flex;
+      gap: 10px;
+      width: 100%;
+      max-width: 520px;
+      margin: 24px auto 0;
+      padding: 0 var(--pad);
+    }
+
+    #search-input {
+      flex: 1 1 auto;
+      min-width: 0;
+      padding: 11px 14px;
+      font-family: inherit;
+      font-size: 1rem;
+      color: var(--text);
+      background: var(--surface);
+      border: 1.5px solid var(--border);
+      border-radius: 10px;
+      outline: none;
+      transition: border-color .2s ease, box-shadow .2s ease, background-color .3s ease;
+    }
+
+    #search-input::placeholder { color: var(--muted); }
+
+    #search-input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--ring);
+    }
+
+    #search-button {
+      flex: 0 0 auto;
+      padding: 11px 22px;
+      font-family: inherit;
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--btn-text);
+      background: var(--accent);
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: background-color .2s ease, transform .15s ease;
+    }
+
+    #search-button:hover { background: var(--accent-strong); }
+    #search-button:active { transform: scale(.97); }
+    #search-button:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+    }
+
+    /* ============ 工具列表 ============ */
+    #tools-list {
+      list-style: none;
+      width: 100%;
+      max-width: 1100px;
+      margin: 28px auto 0;
+      padding: 0 var(--pad) 48px;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-start; /* 默认左对齐 */
+      gap: 12px;
+      align-content: start;
+    }
+
+    /* 当搜索结果为 1-2 个时，强制居中 */
+    #tools-list.center-results {
+      justify-content: center;
+    }
+
+    #tools-list li {
+      width: 100%; /* 手机端 1 个 */
+      position: relative;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      transition: transform .22s ease, box-shadow .22s ease,
+                  border-color .22s ease, background-color .3s ease;
+    }
+
+    #tools-list li[hidden] { display: none; }
+
+    #tools-list li:hover {
+      transform: translateY(-4px);
+      box-shadow: var(--shadow-lg);
+      border-color: var(--accent);
+    }
+
+    #tools-list a {
+      display: block;
+      padding: 20px 16px;
+      text-align: center;
+      font-size: 1rem;
+      font-weight: 600;
+      line-height: 1.4;
+      color: var(--link);
+      text-decoration: none;
+      border-radius: inherit;
+      transition: color .2s ease;
+    }
+
+    /* 整张卡片可点击 */
+    #tools-list a::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+    }
+
+    #tools-list a:hover { color: var(--accent-strong); }
+    html.dark-mode #tools-list a:hover { color: #e74c3c; }
+
+    #tools-list a:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 3px;
+    }
+
+    /* ============ 标记 ============ */
+    .badge-new,
+    .badge-original {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      padding: 3px 9px;
+      font-size: .7rem;
+      font-weight: 700;
+      line-height: 1.5;
+      letter-spacing: .4px;
+      color: #fff;
+      border-radius: 999px;
+      pointer-events: none;
+      white-space: nowrap;
+      z-index: 1;
+    }
+
+    .badge-new {
+      background: linear-gradient(135deg, #ff416c, #ff4b2f);
+      box-shadow: 0 3px 10px rgba(255, 65, 108, .35);
+      animation: newFloat 2s ease-in-out infinite;
+    }
+
+    @keyframes newFloat {
+      0%, 100% { transform: translateY(0); }
+      50%      { transform: translateY(-3px); }
+    }
+
+    .badge-original {
+      background: linear-gradient(135deg, #00c6ff, #0072ff);
+      box-shadow: 0 3px 10px rgba(0, 114, 255, .35);
+      animation: originalPulse 2.5s ease-in-out infinite;
+    }
+
+    @keyframes originalPulse {
+      0%, 100% { transform: scale(1); }
+      50%      { transform: scale(1.06); }
+    }
+
+    /* ============ 页脚 ============ */
+    footer {
+      margin-top: auto;
+      width: 100%;
+      background: #34495e;
+      color: #fff;
+      text-align: center;
+      padding: 26px var(--pad);
+      transition: background-color .3s ease;
+    }
+
+    footer p {
+      margin: 0 0 10px;
+      font-size: 1.05rem;
+      font-weight: 700;
+      letter-spacing: .5px;
+    }
+
+    footer p span { color: #ffeb3b; }
+
+    footer a {
+      display: inline-block;
+      padding: 5px 10px;
+      font-size: .92rem;
+      font-weight: 600;
+      color: #ffeb3b;
+      text-decoration: none;
+      border-radius: 8px;
+      transition: color .25s ease, background-color .25s ease;
+    }
+
+    footer a:hover {
+      color: #fff;
+      background: rgba(255, 255, 255, .12);
+    }
+
+    html.dark-mode footer { background: #1a252f; }
+
+    /* 友情链接行 */
+    .footer-links {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .footer-divider {
+      color: rgba(255, 255, 255, .35);
+      font-weight: 400;
+      user-select: none;
+    }
+
+    html.dark-mode .footer-divider {
+      color: rgba(255, 255, 255, .25);
+    }
+
+    /* ============ 响应式 ============ */
+    @media (max-width: 600px) {
+      :root { --pad: 14px; }
+
+      .top-controls { padding-top: 12px; }
+      #dark-mode-toggle { width: 34px; height: 34px; font-size: .84rem; }
+      .hero img { border-radius: 12px; }
+      .subtitle { margin-top: 14px; }
+      #tools-list { margin-top: 22px; gap: 10px; }
+      #tools-list a { padding: 16px 14px; font-size: .96rem; }
+      footer { padding: 22px var(--pad); }
+    }
+
+    /* 平板：一行 2 个 */
+    @media (min-width: 640px) {
+      #tools-list { gap: 14px; }
+      #tools-list li {
+        width: calc((100% - 14px) / 2);
+      }
+    }
+
+    /* 电脑：一行 3 个 */
+    @media (min-width: 1024px) {
+      #tools-list { gap: 16px; }
+      #tools-list li {
+        width: calc((100% - 32px) / 3);
+      }
+    }
+
+    /* 减少动效偏好 */
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      *, *::before, *::after {
+        animation-duration: .001ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: .001ms !important;
+      }
+    }
+  </style>
+
+  <!-- 提前应用暗色模式，避免闪烁：首次按系统，之后按 localStorage -->
+  <script>
+    (function () {
+      try {
+        var stored = localStorage.getItem('darkMode');
+        var isDark;
+        if (stored === null) {
+          // 首次进入：跟随系统设置，并记录下来
+          isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+          localStorage.setItem('darkMode', isDark);
+        } else {
+          isDark = stored === 'true';
+        }
+        if (isDark) {
+          document.documentElement.classList.add('dark-mode');
+        }
+      } catch (e) {
+        // 忽略隐私模式等异常，默认亮色
+      }
+    })();
+  </script>
+</head>
+<body>
+  <div id="exam-countdown-banner"></div>
+
+  <div class="top-controls">
+    <button id="dark-mode-toggle" aria-label="切换日间/夜间模式">夜</button>
+  </div>
+
+  <div class="hero">
+    <img
+      src="https://user-assets.sxlcdn.com/images/1209238/Foxykd40SX97EaO0j9J9MqrZdx4y.png?imageMogr2/strip/auto-orient/thumbnail/1200x9000%3E/quality/90!/format/png"
+      alt="工具大全 横幅"
+    />
+  </div>
+
+  <p class="subtitle">探索常用小工具，让生活与工作更轻松！</p>
+
+  <div class="time" id="current-time"></div>
+
+  <div class="search-container">
+    <input
+      type="text"
+      id="search-input"
+      placeholder="搜索工具..."
+      enterkeyhint="search"
+      oninput="searchTools()"
+    />
+    <button id="search-button" type="button">搜索</button>
+  </div>
+   <ul id="tools-list">
+    <li>
+      <a href="/Lean4%E7%BC%96%E8%AF%91%E4%B8%8E%E9%AA%8C%E8%AF%81">Lean 4 编译与验证器</a>
+      <span class="badge-new">新</span>
+	</li>
+    	<li><a href="/%E6%96%87%E6%9C%AC%E4%B8%8E%E6%96%87%E4%BB%B6%E5%8A%A0%E5%AF%86%E8%A7%A3%E5%AF%86">文本与文件加密解密工具</a>
+    	<li><a href="/SHA%E7%94%9F%E6%88%90">SHA生成器</a>
+    	<li><a href="/%E4%B9%9D%E5%AD%90%E6%A3%8B">九子棋</a>
+    	<li><a href="/%E5%87%BD%E6%95%B0%E6%B1%82%E5%AF%BC%E4%B8%8E%E5%8F%8D%E6%B1%82%E5%AF%BC">函数求导与反求导</a>
+    	<li><a href="/%E4%BA%8C%E7%BB%B4%E7%A0%81%E7%94%9F%E6%88%90%E4%B8%8E%E8%A7%A3%E6%9E%90">二维码生成与解析器</a>
+    	<li><a href="/%E5%8C%96%E5%AD%A6%E6%96%B9%E7%A8%8B%E5%BC%8F%E9%85%8D%E5%B9%B3">化学方程式配平器</a>
+    	<li><a href="https://chess.tools.ug2.team">Chess·国际象棋</a>
+    <li>
+      <a href="/Pong">Pong</a>
+      <span class="badge-original">WZL原创游戏</span>
+	</li>
+    <li>
+      <a href="/YYF/%E8%B6%85%E6%97%B6%E7%A9%BA%E4%BA%95%E5%AD%97%E6%A3%8B">超时空井字棋</a>
+      <span class="badge-original">YYF原创游戏</span>
+	</li>
+    	<li><a href="/%E4%BF%84%E7%BD%97%E6%96%AF%E6%96%B9%E5%9D%97">俄罗斯方块</a>
+    	<li><a href="/%E4%B8%93%E6%B3%A8%E5%8A%9B%E5%A4%9A%E7%BB%B4%E6%B5%8B%E8%AF%84">专注力多维测评</a>
+    	<li><a href="/%E5%AE%AB%E6%A0%BC%E5%88%87%E5%9B%BE">宫格切图器</a>
+    	<li><a href="/Scratch%E8%BF%90%E8%A1%8C%E5%99%A8">Scratch运行器</a>
+    	<li><a href="/%E6%96%87%E6%9C%AC%E6%9F%A5%E9%87%8D%E5%99%A8">文本查重器</a>
+    	<li><a href="/%E5%9B%A0%E5%BC%8F%E5%88%86%E8%A7%A3">因式分解</a>
+    	<li><a href="/%E6%8B%89%E6%A0%BC%E6%9C%97%E6%97%A5%E6%8F%92%E5%80%BC%E5%87%BD%E6%95%B0%E7%94%9F%E6%88%90">拉格朗日插值函数生成器</a>
+	   	<li><a href="/%E7%BD%91%E7%BB%9C%E9%80%9F%E5%BA%A6%E6%B5%8B%E8%AF%95">网络速度测试工具</a>
+	   	<li><a href="/%E5%85%AC%E7%BD%91IP%E6%9F%A5%E8%AF%A2">公网IP查询</a>
+	   	<li><a href="/%E5%9B%9B%E5%AD%90%E6%A3%8B">四子棋</a>
+	   	<li><a href="/%E5%88%86%E8%B4%9D%E6%B5%8B%E8%AF%95">分贝测试器</a>
+	   	<li><a href="/%E5%87%BD%E6%95%B0%E5%9B%BE%E5%83%8F%E7%BB%98%E5%88%B6">函数图像绘制器</a>
+	   	<li><a href="/%E6%A0%A1%E9%9F%B3%E5%99%A8">校音器</a>
+		<li><a href="/%E8%8A%82%E6%8B%8D%E5%99%A8">节拍器</a>
+		<li><a href="/%E4%B8%89%E8%A7%86%E5%9B%BE%E6%8E%A8%E5%88%B03D%E4%BD%93%E7%B4%A0">三视图推到3D体素</a>
+		<li><a href="/%E4%BA%94%E5%AD%90%E6%A3%8B">益智五子棋</a>
+		<li><a href="/%E9%BB%91%E7%99%BD%E6%A3%8B">黑白棋</a>
+		<li><a href="/%E4%B9%9D%E4%BA%95%E6%A3%8B">九井棋游戏</a>
+		<li><a href="/%E8%A7%A3%E6%96%B9%E7%A8%8B">解方程器</a>
+		<li><a href="/%E8%B7%91%E5%88%86%E6%9C%BA">综合性能跑分器</a>
+		<li><a href="/%E6%97%A5%E6%9C%9F%E9%97%B4%E9%9A%94%E6%97%B6%E9%97%B4%E8%AE%A1%E7%AE%97%E5%99%A8">日期间隔时间计算器</a>
+		<li><a href="/%E8%A7%86%E9%A2%91%E5%80%92%E6%94%BE">视频倒放工具</a>
+		<li><a href="/%E6%95%B0%E5%AD%97%E5%8D%8E%E5%AE%B9%E9%81%93">数字华容道</a>
+		<li><a href="/%E5%8D%95%E4%BD%8D%E8%BD%AC%E6%8D%A2">单位转换器</a>
+		<li><a href="/%E8%AE%A1%E7%AE%97%E5%99%A8">计算器</a>
+		<li><a href="/%E8%B4%A8%E5%9B%A0%E6%95%B0%E5%88%86%E8%A7%A3">质因数分解器</a>
+		<li><a href="/%E6%96%87%E6%9C%AC%E6%9B%BF%E6%8D%A2">文本替换器</a>
+		<li><a href="/%E6%97%A5%E5%8E%86">日历（简易版）</a>
+		<li><a href="/IDE">在线IDE</a>
+		<li><a href="/%E8%B4%A8%E6%95%B0%E5%88%A4%E5%AE%9A">质数判定器</a>
+		<li><a href="/%E5%8A%A0%E6%9D%83%E5%B9%B3%E5%9D%87%E5%80%BC%E8%AE%A1%E7%AE%97">加权平均值计算器</a>
+		<li><a href="/%E5%BC%80%E5%BF%83%E6%B6%88%E6%B6%88%E4%B9%90">开心消消乐</a>
+    <li><a href="/%E5%9B%B4%E6%A3%8B">围棋游戏</a>
+		<li><a href="/%E6%95%B0%E7%8B%AC">数独练习</a>
+        <li><a href="/24%E7%82%B9%E8%A7%A3%E6%B3%95%E8%AE%A1%E7%AE%97%E5%99%A8">24点解法计算器</a>
+        <li><a href="/%E7%94%BB%E6%9D%BF">画板【自由绘图器】</a></li>
+        <li><a href="/Base64%E8%BD%AC%E5%9B%BE%E7%89%87">Base64转图片</a></li>
+        <li><a href="/%E5%9B%BE%E7%89%87%E8%BD%ACBase64">图片转Base64</a></li>
+        <li><a href="/BMI%E6%8C%87%E6%95%B0">BMI指数计算器</a></li>
+        <li><a href="/%E6%95%B0%E5%AD%A6%E7%AC%A6%E5%8F%B7%E5%A4%A7%E5%85%A8">数学符号大全</a></li>
+        <li><a href="/%E9%80%9F%E7%AE%97">速算练习器</a></li>
+        <li><a href="/%E9%9A%8F%E6%9C%BA%E6%95%B0">随机数生成器</a></li>
+        <li><a href="/Markdown%E9%A2%84%E8%A7%88">Markdown预览器</a></li>
+        <li><a href="/%E8%AE%A1%E6%97%B6%E5%99%A8">计时器</a></li>
+        <li><a href="/%E8%BF%9B%E5%88%B6%E8%BD%AC%E6%8D%A2%E5%99%A8">进制转换工具</a></li>
+        <li><a href="/%E6%91%A9%E6%96%AF%E5%AF%86%E7%A0%81%E8%BD%AC%E6%8D%A2%E5%99%A8">摩斯密码转换器</a></li>
+        <li><a href="/%E8%B4%AA%E5%90%83%E8%9B%87">贪吃蛇游戏</a></li>
+        <li><a href="/%E6%B1%87%E7%8E%87%E8%BD%AC%E6%8D%A2%E5%99%A8">汇率转换器</a></li>
+        <li><a href="/%E8%BA%AB%E9%AB%98%E8%AE%A1%E7%AE%97%E5%99%A8">身高预测器</a></li>
+        <li><a href="/%E6%89%AB%E9%9B%B7%E6%B8%B8%E6%88%8F">扫雷游戏</a></li>
+        <li><a href="/%E5%8F%8D%E5%BA%94%E9%80%9F%E5%BA%A6%E6%B5%8B%E8%AF%95">反应速度测试器</a></li>
+        <li><a href="/%E6%89%8B%E9%80%9F%E6%B5%8B%E8%AF%95">手速测试器</a></li>
+        <li><a href="/%E7%A0%B8%E9%87%91%E8%9B%8B">砸金蛋</a></li>
+        <li><a href="/%E5%B1%8F%E5%B9%95%E5%BD%95%E5%88%B6">屏幕录制【电脑版】</a></li>
+        <li><a href="/%E6%B8%90%E5%8F%98%E8%89%B2">渐变色调节工具</a></li>
+        <li><a href="/%E9%A2%9C%E8%89%B2%E9%85%8D%E7%BD%AE%E5%99%A8">颜色配置器</a></li>
+		<li><a href="/%E7%94%BB%E5%9C%86%E5%BA%A6%E6%B5%8B%E8%AF%95">画圆度测试</a>
+    </ul>
+  <footer>
+    <p>© <span>Lin.ZiKang</span> 版权所有 2024-2026</p>
+    <div class="footer-links">
+      <a href="/friends">友情链接</a>
+      <span class="footer-divider">·</span>
+      <a href="mailto:united-grade2@qq.com">联系邮箱：united-grade2@qq.com</a>
+    </div>
+  </footer>
+
+  <script>
+    /* ================= 高考倒计时（2029年6月7日） ================= */
+    function updateGaokaoBanner() {
+      const banner = document.getElementById('exam-countdown-banner');
+
+      const now = new Date();
+      now.setHours(0, 0, 0, 0);
+
+      const targetDate = new Date('2029-06-07T00:00:00');
+      targetDate.setHours(0, 0, 0, 0);
+
+      const diffTime = targetDate - now;
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+      // 6月7日及以后自动隐藏
+      if (diffDays <= 0) {
+        banner.style.display = 'none';
+        return;
+      }
+
+      banner.style.display = 'block';
+
+      const isDark = document.documentElement.classList.contains('dark-mode');
+      const l1 = isDark ? 42 : 48;
+      const l2 = isDark ? 34 : 42;
+      const s = 88;
+
+      let hue;
+      if (diffDays > 300) {
+        // 大于300天：固定绿色
+        hue = 135;
+      } else {
+        // 300天~1天：绿(135) → 橙 → 红(0)
+        hue = Math.round((diffDays / 300) * 135);
+      }
+
+      const c1 = `hsl(${hue} ${s}% ${l1}%)`;
+      const c2 = `hsl(${Math.max(hue - 12, 0)} ${s}% ${l2}%)`;
+      banner.style.background = `linear-gradient(90deg, ${c1}, ${c2})`;
+      banner.style.boxShadow = isDark
+        ? '0 2px 10px rgba(0,0,0,0.6)'
+        : '0 2px 10px rgba(0,0,0,0.18)';
+
+      banner.innerHTML = `📚 距离2029年全国统一高考还有 <span>${diffDays}</span> 天`;
+    }
+
+    /* ================= 时间显示 ================= */
+    function getDayOfWeek() {
+      return ['星期天', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'][new Date().getDay()];
+    }
+
+    function updateTime() {
+      const now = new Date();
+      const y = now.getFullYear();
+      const m = now.getMonth() + 1;
+      const d = now.getDate();
+      const w = getDayOfWeek();
+      const hh = String(now.getHours()).padStart(2, '0');
+      const mm = String(now.getMinutes()).padStart(2, '0');
+      const ss = String(now.getSeconds()).padStart(2, '0');
+      document.getElementById('current-time').innerText = `${y}年${m}月${d}日 ${w} ${hh}:${mm}:${ss}`;
+    }
+
+    /* ================= 搜索 ================= */
+    function searchTools() {
+      const q = document.getElementById('search-input').value.trim().toLowerCase();
+      const list = document.getElementById('tools-list');
+      let visibleCount = 0;
+
+      list.querySelectorAll('li').forEach(li => {
+        const text = li.textContent.toLowerCase();
+        const isMatch = q === '' || text.includes(q);
+        li.hidden = !isMatch;
+        if (isMatch) visibleCount++;
+      });
+
+      // 当输入不为空，且可见数量为 1 或 2 个时，居中显示
+      if (q !== '' && visibleCount > 0 && visibleCount <= 2) {
+        list.classList.add('center-results');
+      } else {
+        list.classList.remove('center-results');
+      }
+    }
+
+    document.getElementById('search-button').addEventListener('click', searchTools);
+
+    /* ================= 暗色模式 ================= */
+    const dmBtn = document.getElementById('dark-mode-toggle');
+
+    // 初始化按钮文字（暗色模式类已在 head 中提前设置）
+    let isDark = document.documentElement.classList.contains('dark-mode');
+    dmBtn.innerText = isDark ? '日' : '夜';
+
+    dmBtn.addEventListener('click', () => {
+      dmBtn.classList.add('switching');
+      setTimeout(() => dmBtn.classList.remove('switching'), 500);
+
+      document.documentElement.classList.toggle('dark-mode');
+      const nowDark = document.documentElement.classList.contains('dark-mode');
+      dmBtn.innerText = nowDark ? '日' : '夜';
+      localStorage.setItem('darkMode', nowDark);
+      updateGaokaoBanner(); // 同步横条渐变亮度
+    });
+
+    /* ================= 初始化 ================= */
+    updateGaokaoBanner();
+    updateTime();
+    setInterval(updateTime, 1000);
+  </script>
+</body>
+</html>

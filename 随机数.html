@@ -1,0 +1,222 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light">
+<title>随机数生成器</title>
+<link rel="icon" href="https://user-assets.sxlcdn.com/images/1209238/FlWuslNmGTHt1EipxUtq2GI6zqnN.png?imageMogr2/strip/auto-orient/thumbnail/1200x9000%3E/quality/90!/format/png" type="image/png">
+<style>
+:root{--ink:#182736;--muted:#6b7988;--line:#e6ebf0;--accent:#2867e8;--soft:#eef4ff;--bad:#b42318}*{box-sizing:border-box}[hidden]{display:none!important}body{margin:0;color:var(--ink);background:radial-gradient(ellipse at 15% 0%,#e8f0ff,transparent 50%),#f7f9fc;font:15px/1.6 system-ui,-apple-system,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif}main{width:min(800px,100%);margin:auto;padding:48px 24px 32px}header{text-align:center;margin-bottom:30px}h1{font-size:clamp(28px,5vw,38px);letter-spacing:-1px;line-height:1.3;margin:0 0 10px}header p{color:var(--muted);margin:0}.steps{display:flex;justify-content:center;gap:32px;list-style:none;padding:0;margin:28px 0;color:#8b97a5;font-size:13px}.steps li{display:flex;align-items:center;gap:8px}.steps span{display:grid;place-items:center;background:#e9edf3;width:26px;height:26px;border-radius:50%;font-size:12px}.steps li.active{color:var(--accent);font-weight:650}.steps li.active span{color:white;background:var(--accent)}.steps li.done{color:#456d9d}.card{background:#fff;border:1px solid var(--line);border-radius:24px;padding:32px;box-shadow:0 12px 50px #233b5910;min-width:0}h2{font-size:20px;line-height:1.4;margin:0 0 7px}.intro{color:var(--muted);font-size:13px;margin:0 0 24px}fieldset{border:0;padding:0;margin:0;min-width:0}.pair{display:grid;grid-template-columns:1fr 1fr;gap:16px}.field{margin-bottom:20px}label{display:block;font-weight:600;font-size:13px;margin:0 0 8px}input,select,textarea,button{font:inherit}input,select,textarea{width:100%;border:1px solid #d8e0e9;border-radius:12px;padding:13px 14px;background:#fff;min-width:0;color:var(--ink)}input,textarea{font-family:ui-monospace,SFMono-Regular,Consolas,monospace}textarea{resize:vertical;min-height:75px}input:focus,select:focus,textarea:focus,button:focus-visible,summary:focus-visible{outline:3px solid #c5d8ff;outline-offset:3px}input:disabled,select:disabled,textarea:disabled{background:#f6f7f9}.hint,small{display:block;color:var(--muted);font-size:12px;line-height:1.7;margin-top:8px}.range-hint{margin:-10px 0 22px}.quick{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}button{border:1px solid #dce4ed;background:white;border-radius:12px;min-height:44px;padding:11px 18px;color:var(--ink);font-weight:600;cursor:pointer}button:hover:enabled{background:#f4f7fb}button.primary{background:var(--accent);border-color:var(--accent);color:#fff;box-shadow:0 4px 12px #2867e822}button.primary:hover:enabled{background:#1d56c8}button:disabled{opacity:.5;cursor:default}.quick button{font-size:12px;min-height:34px;padding:4px 13px;border-color:transparent;background:#f1f5fa;color:#56708e}.quick button.selected{color:var(--accent);background:var(--soft)}.wide{width:100%;margin-top:4px;min-height:50px}.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:25px}.actions .primary{margin-left:auto}.subactions{display:flex;justify-content:space-between;align-items:center;margin-top:22px;gap:12px}.text-button{border:0;background:transparent;padding:5px 0;min-height:36px;font-size:13px;color:#52769f}.summary{color:var(--muted);font-size:13px;margin:0 0 20px;overflow-wrap:anywhere}.results{list-style:none;margin:0;padding:0;max-height:520px;overflow:auto}.results li{display:flex;align-items:baseline;gap:18px;padding:13px 5px;border-bottom:1px solid var(--line)}.index{color:#a0adba;font-size:12px;font-weight:500}.number{font:22px/1.6 ui-monospace,SFMono-Regular,Consolas,monospace;color:#285792;overflow-wrap:anywhere;white-space:pre-wrap;min-width:0}.results.hero{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;max-height:none;overflow:visible}.results.hero li{display:flex;flex-direction:column;gap:0;justify-content:center;text-align:center;align-items:center;border:1px solid #e6edfa;background:linear-gradient(145deg,#f8fbff,#edf4ff);border-radius:18px;padding:22px 12px;min-width:0;position:relative;overflow:hidden}.hero .index{position:absolute;left:13px;top:9px;font-size:10px}.hero .number{font-size:clamp(32px,6vw,54px);font-weight:650;letter-spacing:-2px;line-height:1.25;width:100%}.results.solo{grid-template-columns:1fr}.solo li{padding:44px 18px;min-height:230px}.solo .number{font-size:clamp(60px,12vw,96px)}.results.many-small .number{font-size:clamp(27px,4.5vw,38px);letter-spacing:-1px}.number.long{font-size:18px!important;line-height:1.65!important;letter-spacing:0!important;text-align:left}.number.medium{font-size:clamp(24px,4vw,36px)!important;letter-spacing:0!important}.results li.reveal{animation:reveal .5s cubic-bezier(.2,.8,.2,1) both;animation-delay:var(--delay,0ms)}.generating{text-align:center;padding:16px 0 12px}.orbit{position:relative;width:160px;height:160px;display:grid;place-items:center;margin:18px auto 30px;border-radius:50%;background:radial-gradient(circle,#edf4ff 42%,#f6f9ff 68%,transparent 70%)}.orbit:before,.orbit:after{content:"";position:absolute;inset:6px;border:1px solid #c3d6fc;border-radius:50%;border-top:3px solid #477deb;animation:spin 2.8s linear infinite}.orbit:after{inset:22px;animation:spin 4s linear infinite reverse;border-color:#d9e5fc;border-left:3px solid #87acf3}.spark{font:54px/1 ui-monospace,monospace;font-weight:600;color:var(--accent);animation:breathe 1.6s ease-in-out infinite}.dots{color:#7292c4;letter-spacing:10px;font-size:19px;margin:10px 0}.status{font-size:13px;color:var(--muted);margin:20px 0 0;min-height:21px;overflow-wrap:anywhere}.status.error{color:var(--bad)}progress{width:100%;height:7px;margin-top:14px;display:block;border:0;border-radius:8px;overflow:hidden;background:#e9eff8;accent-color:var(--accent)}progress::-webkit-progress-bar{background:#e9eff8}progress::-webkit-progress-value{background:linear-gradient(90deg,#6096ff,#2867e8)}.stats{font-size:12px;color:var(--muted);margin-top:10px;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}.controls{display:flex;justify-content:center;gap:12px;margin-top:18px}.estimate{padding:12px 14px;background:#f5f8fc;border-radius:12px;color:var(--muted);font-size:12px;margin-top:18px;overflow-wrap:anywhere}.check{display:flex;gap:9px;align-items:center;font-weight:400}.check input{width:17px;height:17px}.download-box{margin-top:18px;padding:18px;background:var(--soft);border-radius:14px}.download-box p{font-size:13px;margin:0 0 12px}details{border-top:1px solid var(--line);padding-top:15px;margin-top:20px;font-size:13px;color:var(--muted)}summary{cursor:pointer;color:#58728f;font-size:13px}details p{margin:10px 0}#formatPreview{white-space:pre-wrap;overflow-wrap:anywhere;background:#f6f8fc;border-radius:10px;padding:12px;font:12px/1.7 ui-monospace,monospace;max-height:100px;overflow:auto}.custom{margin-top:16px}.tag{display:inline-block;font-size:11px;color:var(--accent);background:var(--soft);padding:3px 10px;border-radius:20px;margin-bottom:12px}footer{text-align:center;color:#8996a5;font-size:11px;margin-top:22px}@keyframes spin{to{transform:rotate(360deg)}}@keyframes breathe{50%{transform:scale(1.08);opacity:.6}}@keyframes reveal{from{opacity:0;transform:translateY(14px) scale(.96);filter:blur(3px)}to{opacity:1;transform:none;filter:none}}@media(max-width:540px){main{padding:28px 16px}.card{padding:24px 20px;border-radius:20px}.steps{gap:19px;margin:23px 0}.steps li{gap:6px;font-size:12px}.steps span{width:23px;height:23px}.actions button{flex:1;padding:11px 12px}.actions .primary{margin-left:0}.hero li{padding:26px 12px}.solo li{min-height:205px}.subactions{align-items:center}.summary{font-size:12px}}@media(max-width:350px){.pair{grid-template-columns:1fr;gap:0}.steps{gap:10px}.results.hero{grid-template-columns:1fr}}@media(prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important}}@media(prefers-reduced-motion:no-preference){button{transition:background .15s,transform .15s}button.primary:active{transform:scale(.98)}}
+/* 统一页面上下区域色调，避免长页面底部出现渐变色差。 */
+:root{--page:#f5f8fc;--surface:#fff;--surface-soft:#f1f5fb;--line:#e3eaf2;--soft:#edf4ff}
+html,body{min-height:100%;background:var(--page)}
+body{background:var(--page)}
+main{min-height:100vh}
+.card{background:var(--surface);border-color:var(--line);box-shadow:0 12px 50px #233b590d}
+.estimate,#formatPreview{background:var(--surface-soft)}
+.pagination{display:flex;align-items:center;justify-content:center;gap:10px;margin-top:20px;padding:14px;background:var(--surface-soft);border-radius:14px}
+.pagination button{min-height:38px;padding:7px 15px;font-size:13px}
+.page-info{min-width:130px;text-align:center;color:#536b84;font-size:13px;font-variant-numeric:tabular-nums}
+.page-loading{color:var(--muted);font-size:12px;text-align:center;margin:10px 0 0}
+.copy-fallback{margin-top:16px;padding:16px;background:var(--surface-soft);border:1px solid var(--line);border-radius:14px}
+.copy-fallback p{margin:0 0 10px;font-size:13px;color:#536b84}
+.copy-fallback textarea{min-height:110px;background:var(--surface)}
+@media(max-width:540px){.pagination{gap:7px;padding:11px}.pagination button{padding:7px 11px}.page-info{min-width:105px;font-size:12px}}
+</style>
+</head><body><main>
+<header><h1>随机数生成器</h1><p>设置范围，看看这一次的随机结果。</p></header>
+<ol class="steps" aria-label="操作步骤"><li id="step1" class="active" aria-current="step"><span>1</span>设置</li><li id="step2"><span>2</span>结果</li><li id="step3"><span>3</span>保存</li></ol>
+<section class="card" id="setupPanel" aria-labelledby="settingsTitle"><h2 id="settingsTitle" tabindex="-1">想生成什么范围的数字？</h2><p class="intro">先设置范围与数量，生成后再选择是否保存。</p>
+<form id="form" novalidate><fieldset id="settings"><div class="pair"><div class="field"><label for="min">最小值</label><input id="min" value="1" maxlength="4096" spellcheck="false" autocomplete="off" aria-describedby="rangeHint"></div><div class="field"><label for="max">最大值</label><input id="max" value="100" maxlength="4096" spellcheck="false" autocomplete="off" aria-describedby="rangeHint"></div></div><p class="hint range-hint" id="rangeHint">包含两端，生成整数。支持负数、科学计数法，绝对值最大为 1e1000。</p>
+<div class="field"><label for="count">生成数量</label><input id="count" value="1" maxlength="32" spellcheck="false" autocomplete="off" aria-describedby="countHint"><small id="countHint">可输入 1～1e10。超大批量先显示前 20 个，保存时继续分批生成。</small><div class="quick"><button type="button" data-count="1" class="selected">1 个</button><button type="button" data-count="5">5 个</button><button type="button" data-count="10">10 个</button><button type="button" data-count="1000">1 千个</button></div></div></fieldset><button id="previewButton" class="primary wide" type="submit">生成随机数 <span aria-hidden="true">→</span></button></form>
+</section>
+<section class="card" id="loadingPanel" hidden aria-labelledby="loadingTitle"><div class="generating"><div class="orbit" aria-hidden="true"><span class="spark">✦</span></div><h2 id="loadingTitle" tabindex="-1">随机正在发生</h2><p class="intro">让数字轻轻落定。</p><div class="dots" aria-hidden="true">· · ·</div><button id="cancelGenerate" type="button">取消生成</button></div></section>
+<section class="card" id="resultPanel" hidden aria-labelledby="resultTitle"><div class="tag" id="resultTag"></div><h2 id="resultTitle" tabindex="-1">这一次的随机结果</h2><p class="summary" id="resultSummary"></p><ol class="results" id="results"></ol><p class="hint" id="previewNote" hidden></p><div class="subactions"><button id="copy" class="text-button" type="button">复制结果</button><button id="edit" class="text-button" type="button">修改设置</button></div><div class="actions"><button id="again" type="button">再生成一次</button><button id="openSave" class="primary" type="button">保存到 TXT <span aria-hidden="true">→</span></button></div></section>
+<section class="card" id="savePanel" hidden aria-labelledby="saveTitle"><h2 id="saveTitle" tabindex="-1">把这次结果保存下来</h2><p class="intro" id="saveSummary"></p><fieldset id="saveSettings"><div class="field"><label for="filename">文件名</label><input id="filename" value="随机数.txt" maxlength="100" spellcheck="false"></div><div class="field"><label for="format">排列方式</label><select id="format"><option value="line">每行一个</option><option value="comma">逗号分隔</option><option value="space">空格分隔</option><option value="tab">制表符分隔</option><option value="indexed">序号 + 数值</option><option value="custom">自定义格式</option></select><div id="custom" class="custom" hidden><label for="template">每个数的模板</label><textarea id="template" maxlength="2048" spellcheck="false">{n}</textarea><small>{n} 为数值，{i} 为序号；支持 \n、\r、\t、\\。</small><label for="separator" style="margin-top:12px">分隔符</label><input id="separator" value="\n" maxlength="256" spellcheck="false"></div><pre id="formatPreview" aria-label="TXT 排列预览"></pre></div>
+<details><summary>更多保存选项</summary><div class="pair" style="margin-top:16px"><div class="field"><label for="saveMode">保存方式</label><select id="saveMode"><option value="auto">自动选择</option><option value="volumes">分卷下载</option></select></div><div class="field"><label for="volumeSize">每卷大小</label><select id="volumeSize"><option value="8">约 8 MB</option><option value="16">约 16 MB</option><option value="32">约 32 MB</option></select></div></div><label class="check"><input id="bom" type="checkbox">添加 UTF-8 BOM（供旧版文本软件使用）</label><p class="hint" id="saveHint"></p></details><div class="estimate" id="estimate"></div></fieldset>
+<div class="actions"><button id="backResult" type="button">返回结果</button><button id="exportButton" class="primary" type="button">保存 TXT</button></div><progress id="progress" value="0" max="100" aria-label="保存进度" hidden></progress><div class="stats" id="stats"></div><div class="controls" id="jobControls" hidden><button id="pause" type="button">暂停</button><button id="cancel" type="button">取消保存</button></div><div class="download-box" id="downloadBox" hidden><p id="downloadInfo"></p><button id="downloadVolume" class="primary" type="button">下载本卷并继续</button></div>
+<details><summary>关于超大批量</summary><p>结果每页显示 20 个，可使用“上一页 / 下一页”连续预览全部随机序列。数量较大时，新页面会在翻页时即时生成；保存 TXT 会从相同随机种子重放完整序列，因此预览与文件结果一致。</p><p>数量上限为 100 亿，绝对值上限为 1e1000。大量输出需要时间和磁盘空间，100 亿个千位数字约需 10 TB。分卷下载在每卷完成后等待点击；按卷号顺序拼接即可，BOM 只添加到第一卷。</p><p>暂停在当前批次结束后生效。取消会丢弃当前未提交内容，已下载的卷仍会保留。请保持页面打开，刷新或关闭后不能续传。</p></details>
+</section><p id="status" class="status" role="status" aria-live="polite"></p><footer>本机计算 · 无需联网</footer><noscript><p>请启用 JavaScript 后使用。</p></noscript></main><script>
+'use strict';
+/* 结果分页与手动复制兜底界面。由脚本插入，保持单文件结构简洁。 */
+const resultListElement=document.getElementById('results');
+resultListElement.insertAdjacentHTML('afterend','<nav class="pagination" id="pagination" aria-label="结果分页" hidden><button id="prevPage" type="button">上一页</button><span class="page-info" id="pageInfo" aria-live="polite"></span><button id="nextPage" type="button">下一页</button></nav><p class="page-loading" id="pageLoading" hidden>正在生成这一页…</p>');
+document.getElementById('previewNote').insertAdjacentHTML('afterend','<div class="copy-fallback" id="copyFallback" hidden><p>浏览器未开放自动复制，请长按或全选下面的内容后手动复制。</p><textarea id="copyFallbackText" readonly aria-label="待复制的随机数"></textarea><button id="closeCopyFallback" type="button">完成</button></div>');
+document.getElementById('countHint').textContent='可输入 1～1e10。结果每页显示 20 个，可逐页预览全部序列。';
+/* ChaCha20 原始 64 位计数器：同一次生成使用独立随机密钥，保存时重放同一序列。 */
+function makeWords(seed){
+  const state=new Uint32Array(16);state.set([0x61707865,0x3320646e,0x79622d32,0x6b206574]);state.set(seed,4);
+  let block=new Uint32Array(16),pos=16;
+  function rot(x,n){return (x<<n)|(x>>>(32-n));}
+  function q(x,a,b,c,d){x[a]=(x[a]+x[b])>>>0;x[d]=rot(x[d]^x[a],16);x[c]=(x[c]+x[d])>>>0;x[b]=rot(x[b]^x[c],12);x[a]=(x[a]+x[b])>>>0;x[d]=rot(x[d]^x[a],8);x[c]=(x[c]+x[d])>>>0;x[b]=rot(x[b]^x[c],7);}
+  return ()=>{if(pos===16){const x=new Uint32Array(state);for(let i=0;i<10;i++){q(x,0,4,8,12);q(x,1,5,9,13);q(x,2,6,10,14);q(x,3,7,11,15);q(x,0,5,10,15);q(x,1,6,11,12);q(x,2,7,8,13);q(x,3,4,9,14);}for(let i=0;i<16;i++)block[i]=(x[i]+state[i])>>>0;state[12]=(state[12]+1)>>>0;if(state[12]===0){state[13]=(state[13]+1)>>>0;if(state[13]===0)throw new Error('随机序列已用尽，请重新生成。');}pos=0;}return block[pos++];};
+}
+function parseInteger(text, label='数值') {
+  const s=String(text).trim();
+  if (!s || s.length>4096) throw new Error(label+'不能为空，且长度不能超过 4096 字符。');
+  const m=/^([+-]?)(\d+)(?:\.(\d+))?(?:[eE]([+-]?\d{1,5}))?$/.exec(s);
+  if (!m) throw new Error(label+'必须是整数或表示整数的科学计数法（不要使用逗号）。');
+  const exp=m[4]?Number(m[4]):0;
+  if (Math.abs(exp)>1000) throw new Error(label+'的指数须在 -1000～1000 之间。');
+  let digits=(m[2]+(m[3]||'')).replace(/^0+/,'')||'0';
+  if(digits==='0') return 0n;
+  const shift=exp-(m[3]||'').length;
+  if(shift<0){const cut=-shift;if(cut>=digits.length || /[1-9]/.test(digits.slice(-cut))) throw new Error(label+'必须是整数，不能截断小数。');digits=digits.slice(0,-cut);}
+  else {if(digits.length+shift>1001) throw new Error(label+'绝对值不能超过 1e1000。');digits+='0'.repeat(shift);}
+  if(digits.length>1001) throw new Error(label+'绝对值不能超过 1e1000。');
+  const value=BigInt(digits)*(m[1]==='-'?-1n:1n), cap=10n**1000n;
+  if(value>cap || value< -cap) throw new Error(label+'绝对值不能超过 1e1000。');
+  return value;
+}
+function decodeEscapes(s){return s.replace(/\\([\s\S])|\\$/g,(whole,c)=>{const map={n:'\n',r:'\r',t:'\t','\\':'\\'};if(c===undefined || !(c in map))throw new Error('格式中仅支持 \\n、\\r、\\t 和 \\\\ 转义。');return map[c];});}
+function compileTemplate(s){
+  const parts=[],re=/\{([ni])\}/g;let p=0,m;
+  while((m=re.exec(s))){if(m.index>p)parts.push({text:s.slice(p,m.index)});parts.push({token:m[1]});p=re.lastIndex;}
+  if(p<s.length)parts.push({text:s.slice(p)});
+  if(!parts.some(x=>x.token==='n'))throw new Error('每个数的模板必须包含 {n}。');
+  return parts;
+}
+function formatRecord(parts,n,i){let out='';for(const p of parts)out+=p.token?(p.token==='n'?n:String(i)):p.text;return out;}
+/* RNG 池恰为 65536 字节。普通区间走 32 位路径，大区间按位宽拒绝采样。
+   对任意非空区间，每次接受概率 > 1/2；范围两端均被包含。 */
+function makeSampler(minText,maxText,seed){
+  const min=BigInt(minText),max=BigInt(maxText),span=max-min+1n;
+  if(span===1n){const s=min.toString();return ()=>s;}
+  const pool=new Uint32Array(16384);let pos=pool.length;
+  const seeded=seed?makeWords(seed):null;
+  function word(){if(seeded)return seeded();if(pos===pool.length){crypto.getRandomValues(pool);pos=0;}return pool[pos++];}
+  if(span<=4294967296n){
+    const size=Number(span),limit=Math.floor(4294967296/size)*size;
+    const safe=min>=-9007199254740991n && max<=9007199254740991n,base=Number(min);
+    return ()=>{let x;do{x=word();}while(x>=limit);const offset=x%size;return safe?String(base+offset):(min+BigInt(offset)).toString();};
+  }
+  const bits=(span-1n).toString(2).length,words=Math.ceil(bits/32),topBits=bits-(words-1)*32;
+  const topMask=topBits===32?4294967295:2**topBits-1;
+  // 十六进制构建减少大整数左移次数；最高字按位宽遮罩。
+  return ()=>{let x;do{let hex=((word()&topMask)>>>0).toString(16);for(let j=1;j<words;j++)hex+=word().toString(16).padStart(8,'0');x=BigInt('0x'+hex);}while(x>=span);return(min+x).toString();};
+}
+function makeProducer(config){
+  const next=makeSampler(config.min,config.max,config.seed),encoder=new TextEncoder();let done=0;
+  return function chunk(){
+    let chars=0;const rows=[],samples=[],end=Math.min(config.count,done+10000),started=performance.now();
+    while(done<end){const n=next(),i=done+1,row=(done?config.separator:'')+formatRecord(config.parts,n,i);rows.push(row);chars+=row.length;if(done<20)samples.push(n);done++;
+      if(chars>=262144 || (rows.length%64===0 && performance.now()-started>=18))break;
+    }
+    const data=encoder.encode(rows.join(''));return{data,done,samples,finished:done===config.count};
+  };
+}
+/* 一个请求对应一个批次；主线程完成写入后才请求下一批，实现背压。 */
+function workerMain(){let produce;self.onmessage=e=>{try{if(e.data.config)produce=makeProducer(e.data.config);const chunk=produce();self.postMessage(chunk,[chunk.data.buffer]);}catch(err){self.postMessage({error:err.message});}};}
+
+const $=id=>document.getElementById(id),enc=new TextEncoder(),formatPresets={line:['{n}','\n'],comma:['{n}',','],space:['{n}',' '],tab:['{n}','\t'],indexed:['{i}. {n}','\n']};
+let job=null,batch=null,samples=[],lastDownloadURL=null,currentStep=1,currentPage=1,pageBusy=false;
+const pageSize=20;
+const canStream=typeof window.showSaveFilePicker==='function'&&window.isSecureContext;
+function setStatus(text,error=false){$('status').textContent=text;$('status').classList.toggle('error',error);}
+function showStep(step,focus=true){currentStep=step;for(const [i,id] of ['setupPanel','resultPanel','savePanel'].entries())$(id).hidden=step!==i+1;$('loadingPanel').hidden=step!==0;for(let i=1;i<=3;i++){const li=$('step'+i),n=step||2;li.className=i===n?'active':i<n?'done':'';if(i===n)li.setAttribute('aria-current','step');else li.removeAttribute('aria-current');}if(focus)$(step===0?'loadingTitle':step===1?'settingsTitle':step===2?'resultTitle':'saveTitle').focus({preventScroll:true});}
+function readRange(){if(typeof BigInt!=='function'||!globalThis.crypto?.getRandomValues||typeof TextEncoder!=='function')throw new Error('请使用支持 BigInt、Web Crypto 和 TextEncoder 的现代浏览器。');const min=parseInteger($('min').value,'最小值'),max=parseInteger($('max').value,'最大值');if(min>max)throw new Error('最小值不能大于最大值。');const count=parseInteger($('count').value,'生成数量');if(count<1n||count>10000000000n)throw new Error('生成数量须为 1～10,000,000,000。');return{min:min.toString(),max:max.toString(),count:Number(count)};}
+function getFormat(){let t,s;if($('format').value==='custom'){t=decodeEscapes($('template').value);s=decodeEscapes($('separator').value);}else [t,s]=formatPresets[$('format').value];return{parts:compileTemplate(t),separator:s};}
+function cleanFilename(s){s=s.trim().replace(/[\\/:*?"<>|\x00-\x1f]/g,'_').replace(/[. ]+$/,'')||'随机数';return /\.txt$/i.test(s)?s:s+'.txt';}
+function byteLabel(n){const units=['B','KB','MB','GB','TB','PB'];let k=0;while(n>=1000&&k<units.length-1){n/=1000;k++;}return(n<10&&k?n.toFixed(2):n.toFixed(n<100&&k?1:0))+' '+units[k];}
+function upperBytes(c){const len=Math.max(c.min.length,c.max.length);let row=0;for(const p of c.parts)row+=p.token?(p.token==='n'?len:String(c.count).length):enc.encode(p.text).length;return row*c.count+enc.encode(c.separator).length*(c.count-1)+(c.bom?3:0);}
+function readSaveConfig(){if(!batch)throw new Error('请先生成随机数。');return{...batch.config,...getFormat(),bom:$('bom').checked,filename:cleanFilename($('filename').value),volumeBytes:Number($('volumeSize').value)*1024*1024};}
+function updateEstimate(){ $('custom').hidden=$('format').value!=='custom';try{const f=getFormat();$('formatPreview').textContent=(samples.length?samples.slice(0,3):['7','14','21']).map((n,i)=>formatRecord(f.parts,n,i+1)).join(f.separator);if(batch){const c=readSaveConfig();$('estimate').textContent='预计 TXT 大小上限约 '+byteLabel(upperBytes(c))+'。'+(!batch.complete?' 先前显示的数字会保留，其余在保存时分批生成。':' 保存这次已生成的全部 '+c.count.toLocaleString()+' 个结果。');}}catch(e){$('formatPreview').textContent='请检查自定义格式。';$('estimate').textContent=e.message;}$('volumeSize').disabled=!!job||($('saveMode').value==='auto'&&canStream);}
+function setBusy(on){$('settings').disabled=on;$('saveSettings').disabled=on;for(const id of ['previewButton','exportButton','backResult'])$(id).disabled=on;$('jobControls').hidden=!on;$('progress').hidden=!on;$('exportButton').textContent=on?'正在保存…':'保存 TXT';updateEstimate();}
+function shortRange(s){return s.length>22?s.slice(0,7)+'…'+s.slice(-5)+'（'+s.replace('-','').length+' 位）':s;}
+function totalPages(){return batch?Math.ceil(batch.config.count/pageSize):0;}
+function currentPageValues(){const start=(currentPage-1)*pageSize;return batch?batch.values.slice(start,Math.min(start+pageSize,batch.config.count)):[];}
+function showResults(){
+  const count=batch.config.count,list=$('results'),start=(currentPage-1)*pageSize;
+  samples=currentPageValues();list.replaceChildren();
+  list.className='results'+(count<=10?' hero':'')+(count===1?' solo':'')+(count>4&&count<=10?' many-small':'');
+  samples.forEach((value,i)=>{const li=document.createElement('li'),index=document.createElement('span'),number=document.createElement('span');li.className='reveal';li.style.setProperty('--delay',Math.min(i,9)*35+'ms');index.className='index';index.textContent=String(start+i+1).padStart(2,'0');number.className='number'+(value.length>40?' long':value.length>8?' medium':'');number.textContent=value;li.append(index,number);list.append(li);});
+  const pages=totalPages();$('resultTag').textContent=count<=pageSize?'已生成 '+count.toLocaleString()+' 个':'第 '+currentPage.toLocaleString()+' 页 · 共 '+count.toLocaleString()+' 个';
+  $('resultSummary').textContent=shortRange(batch.config.min)+' ～ '+shortRange(batch.config.max)+' · 包含两端，可重复';
+  $('pagination').hidden=pages<=1;$('pageInfo').textContent='第 '+currentPage.toLocaleString()+' / '+pages.toLocaleString()+' 页';$('prevPage').disabled=pageBusy||currentPage<=1;$('nextPage').disabled=pageBusy||currentPage>=pages;
+  $('previewNote').hidden=pages<=1;$('previewNote').textContent=batch.complete?'全部结果已生成，可使用上方按钮逐页查看。':'其余页面会在翻页时即时生成；保存 TXT 时会重放同一随机序列，结果保持一致。';
+  $('copy').textContent=count<=pageSize?'复制全部结果':'复制本页';$('saveSummary').textContent='保存本次 '+count.toLocaleString()+' 个随机整数；与分页预览结果一致。';updateEstimate();
+}
+async function goPage(page){
+  if(!batch||pageBusy||page<1||page>totalPages())return;
+  const needed=Math.min(page*pageSize,batch.config.count);pageBusy=true;$('pageLoading').hidden=false;$('prevPage').disabled=true;$('nextPage').disabled=true;
+  try{while(batch.values.length<needed){const end=Math.min(needed,batch.values.length+128);while(batch.values.length<end)batch.values.push(batch.previewSampler());await new Promise(r=>setTimeout(r,0));}currentPage=page;showResults();$('results').scrollTop=0;setStatus('');}
+  catch(e){setStatus('这一页生成失败：'+e.message,true);}
+  finally{pageBusy=false;$('pageLoading').hidden=true;if(batch){$('prevPage').disabled=currentPage<=1;$('nextPage').disabled=currentPage>=totalPages();}}
+}
+async function generate(){if(job)return;let c;try{c=readRange();}catch(e){setStatus(e.message,true);return;}c.seed=Array.from(crypto.getRandomValues(new Uint32Array(8)));const complete=c.count<=10000&&(Math.max(c.min.length,c.max.length)+1)*c.count<=8*1024*1024;const total=complete?c.count:Math.min(pageSize,c.count);const j={cancelled:false};job=j;setStatus('正在生成…');showStep(0);$('previewButton').disabled=true;batch=null;samples=[];currentPage=1;$('copyFallback').hidden=true;const started=performance.now();try{const next=makeSampler(c.min,c.max,c.seed),values=[];while(values.length<total){if(j.cancelled)throw aborted();const end=Math.min(total,values.length+128);while(values.length<end)values.push(next());await new Promise(r=>setTimeout(r,0));}await new Promise(r=>setTimeout(r,Math.max(0,650-(performance.now()-started))));if(j.cancelled)throw aborted();batch={config:c,values,complete,previewSampler:next};showResults();showStep(2);setStatus('');}catch(e){showStep(1);setStatus(e.name==='AbortError'?'已取消生成。':e.message,e.name!=='AbortError');}finally{job=null;$('previewButton').disabled=false;}}
+function aborted(){return new DOMException('任务已取消','AbortError');}
+function duration(s){if(!isFinite(s))return'计算中';s=Math.ceil(s);if(s<60)return s+' 秒';if(s<3600)return Math.ceil(s/60)+' 分钟';if(s<86400)return(s/3600).toFixed(1)+' 小时';return(s/86400).toFixed(1)+' 天';}
+function report(j,force=false){const now=performance.now();if(!force&&now-j.lastReport<250)return;j.lastReport=now;const secs=Math.max(.001,(now-j.started-j.pausedMs-(j.pauseAt?now-j.pauseAt:0))/1000),speed=j.done/secs,remaining=(j.config.count-j.done)/speed;$('progress').value=j.done/j.config.count*100;$('stats').textContent=j.done.toLocaleString()+' / '+j.config.count.toLocaleString()+' · '+byteLabel(j.bytes)+' · '+Math.round(speed).toLocaleString()+' 个/秒'+(j.done&&j.done<j.config.count?' · 预计剩余 '+duration(remaining):'');}
+async function gate(j){while(j.paused&&!j.cancelled)await new Promise(r=>j.resume=r);if(j.cancelled)throw aborted();}
+function pauseClock(j){if(!j.pauseAt)j.pauseAt=performance.now();}
+function resumeClock(j){if(j.pauseAt){j.pausedMs+=performance.now()-j.pauseAt;j.pauseAt=0;}}
+function startEngine(j){
+  // 创建失败或运行报错时退回主线程；首批尚未提交前可安全重试。
+  try{if(typeof Worker!=='function')throw new Error('Worker unavailable');const code=[makeWords,formatRecord,makeSampler,makeProducer,workerMain].map(f=>f.toString()).join('\n')+'\nworkerMain();';const url=URL.createObjectURL(new Blob([code],{type:'text/javascript'}));try{j.worker=new Worker(url);}finally{URL.revokeObjectURL(url);}j.worker.onmessage=e=>{if(j.pending){const p=j.pending;j.pending=null;e.data.error?p.reject(new Error(e.data.error)):p.resolve(e.data);}};j.worker.onerror=e=>{e.preventDefault();if(j.pending){j.pending.reject(new Error('后台线程无法运行'));j.pending=null;}};}
+  catch(_){j.local=makeProducer(j.config);}
+}
+async function nextChunk(j){
+  if(j.local){await new Promise(r=>setTimeout(r,0));if(j.cancelled)throw aborted();return j.local();}
+  try{return await new Promise((resolve,reject)=>{j.pending={resolve,reject};j.worker.postMessage(j.sent?{}:{config:j.config});j.sent=true;});}
+  catch(e){if(j.cancelled)throw aborted();if(j.done===0){j.worker.terminate();j.worker=null;j.local=makeProducer(j.config);return nextChunk(j);}throw e;}
+}
+function volumeName(j){return j.config.filename.replace(/\.txt$/i,'')+'-part-'+String(j.volume).padStart(4,'0')+'.txt';}
+function makeDownload(blob,name){
+  // 最多保留一个下载 URL，避免连续分卷时旧 Blob 在计时器中堆积。
+  if(lastDownloadURL)URL.revokeObjectURL(lastDownloadURL);
+  const url=URL.createObjectURL(blob),a=document.createElement('a');lastDownloadURL=url;a.href=url;a.download=name;document.body.append(a);
+  try{a.click();}finally{a.remove();setTimeout(()=>{URL.revokeObjectURL(url);if(lastDownloadURL===url)lastDownloadURL=null;},30000);}
+}
+async function offerVolume(j,final){
+  if(!j.parts.length)return;
+  pauseClock(j);j.ready=new Blob(j.parts,{type:'text/plain;charset=utf-8'});j.parts=[];$('downloadInfo').textContent='第 '+j.volume+' 卷 · '+byteLabel(j.ready.size)+(final?' · 最后一卷':' · 下载后继续生成下一卷');$('downloadVolume').textContent=final?'下载最后一卷':'下载本卷并继续';$('downloadBox').hidden=false;setStatus('本卷已生成，等待下载。');$('pause').disabled=true;
+  await new Promise(r=>j.releaseVolume=r);if(j.cancelled)throw aborted();$('downloadBox').hidden=true;$('pause').disabled=false;j.ready=null;j.volume++;j.partBytes=0;resumeClock(j);if(j.paused)pauseClock(j);await gate(j);
+}
+async function exportAll(){
+  if(job)return;let c;try{c=readSaveConfig();}catch(e){setStatus(e.message,true);return;}
+  const j={config:c,done:0,bytes:0,partBytes:0,parts:[],volume:1,paused:false,cancelled:false,started:performance.now(),pausedMs:0,pauseAt:0,lastReport:0};job=j;setBusy(true);$('progress').value=0;$('stats').textContent='';$('pause').textContent='暂停';$('pause').disabled=false;setStatus('准备保存…');
+  try{
+    if($('saveMode').value==='auto'&&canStream){
+      // 文件选择必须在用户点击后的同步调用链中触发。
+      try{const handle=await window.showSaveFilePicker({suggestedName:c.filename,types:[{description:'TXT 文本文档',accept:{'text/plain':['.txt']}}]});if(j.cancelled)throw aborted();j.stream=await handle.createWritable();if(j.cancelled)throw aborted();}
+      catch(e){if(e.name==='AbortError'||j.cancelled)throw e;if(!['SecurityError','NotAllowedError','NotSupportedError'].includes(e.name))throw e;setStatus('当前环境不允许直接写入，改用分卷下载。');}
+    }
+    j.started=performance.now();j.pausedMs=0;j.pauseAt=j.paused?j.started:0;if(c.bom){const bom=new Uint8Array([239,187,191]);if(j.stream)await j.stream.write(bom);else{j.parts.push(bom);j.partBytes+=3;}j.bytes=3;}
+    startEngine(j);setStatus(j.stream?'正在生成并写入 TXT…':'正在生成第 1 卷…');
+    while(j.done<c.count){await gate(j);const chunk=await nextChunk(j);if(j.cancelled)throw aborted();await gate(j);
+      if(j.stream)await j.stream.write(chunk.data);else{j.parts.push(chunk.data);j.partBytes+=chunk.data.byteLength;}
+      j.bytes+=chunk.data.byteLength;j.done=chunk.done;report(j);
+      if(!j.stream&&(j.partBytes>=c.volumeBytes||chunk.finished)){report(j,true);await offerVolume(j,chunk.finished);if(!chunk.finished)setStatus('正在生成第 '+j.volume+' 卷…');}
+    }
+    if(j.cancelled)throw aborted();if(j.stream){setStatus('正在完成文件保存…');$('pause').disabled=true;$('cancel').disabled=true;await j.stream.close();j.stream=null;}
+    report(j,true);setStatus('完成：已生成并保存 '+c.count.toLocaleString()+' 个随机整数'+(j.volume>1?'，共 '+(j.volume-1)+' 卷':'')+'。');
+  }catch(e){if(j.stream){try{await j.stream.abort();}catch(_){}j.stream=null;}setStatus(e.name==='AbortError'?(j.done?'任务已取消；当前未提交内容已丢弃。':'已取消保存。'):'保存失败：'+e.message,e.name!=='AbortError');}
+  finally{j.worker?.terminate();j.pending=null;j.parts=[];j.ready=null;$('downloadBox').hidden=true;$('cancel').disabled=false;job=null;setBusy(false);$('exportButton').textContent='再次保存 TXT';}
+}
+$('pause').addEventListener('click',()=>{const j=job;if(!j||j.ready)return;j.paused=!j.paused;$('pause').textContent=j.paused?'继续':'暂停';if(j.paused){pauseClock(j);setStatus('正在暂停（当前批次结束后生效）…');}else{resumeClock(j);setStatus('正在生成并保存…');j.resume?.();j.resume=null;}});
+$('cancel').addEventListener('click',()=>{const j=job;if(!j)return;j.cancelled=true;j.worker?.terminate();j.pending?.reject(aborted());j.pending=null;j.resume?.();j.releaseVolume?.();setStatus('正在取消…');});
+$('downloadVolume').addEventListener('click',()=>{const j=job;if(!j?.ready||j.cancelled)return;try{makeDownload(j.ready,volumeName(j));$('downloadVolume').disabled=true;j.releaseVolume?.();j.releaseVolume=null;}catch(e){setStatus('下载失败：'+e.message,true);}finally{$('downloadVolume').disabled=false;}});
+
+$('form').addEventListener('submit',e=>{e.preventDefault();generate();});
+$('again').addEventListener('click',generate);
+$('cancelGenerate').addEventListener('click',()=>{if(job)job.cancelled=true;});
+$('edit').addEventListener('click',()=>{showStep(1);setStatus('');});
+$('openSave').addEventListener('click',()=>{showStep(3);setStatus('');$('progress').hidden=true;$('stats').textContent='';$('exportButton').textContent='保存 TXT';updateEstimate();});
+$('backResult').addEventListener('click',()=>{if(!job){showStep(2);setStatus('');}});
+$('exportButton').addEventListener('click',exportAll);
+async function copyText(text){
+  if(navigator.clipboard&&window.isSecureContext){try{await navigator.clipboard.writeText(text);return true;}catch(_){} }
+  const t=document.createElement('textarea');t.value=text;t.readOnly=true;t.setAttribute('aria-hidden','true');Object.assign(t.style,{position:'fixed',left:'0',top:'0',width:'1px',height:'1px',padding:'0',border:'0',opacity:'0.01'});document.body.append(t);
+  try{t.focus({preventScroll:true});t.select();t.setSelectionRange(0,t.value.length);return typeof document.execCommand==='function'&&document.execCommand('copy');}catch(_){return false;}finally{t.remove();}
+}
+$('copy').addEventListener('click',async()=>{if(!batch||pageBusy)return;const values=currentPageValues(),text=values.join('\n');if(await copyText(text)){setStatus('已复制本页 '+values.length.toLocaleString()+' 个结果。');$('copyFallback').hidden=true;}else{$('copyFallbackText').value=text;$('copyFallback').hidden=false;$('copyFallbackText').focus();$('copyFallbackText').select();setStatus('自动复制受浏览器限制，请在文本框中手动复制。',true);}});
+$('prevPage').addEventListener('click',()=>goPage(currentPage-1));
+$('nextPage').addEventListener('click',()=>goPage(currentPage+1));
+$('closeCopyFallback').addEventListener('click',()=>{$('copyFallback').hidden=true;setStatus('');});
+$('saveSettings').addEventListener('input',updateEstimate);$('saveSettings').addEventListener('change',updateEstimate);
+function quickState(){for(const b of document.querySelectorAll('[data-count]'))b.classList.toggle('selected',b.dataset.count===$('count').value);}
+for(const b of document.querySelectorAll('[data-count]'))b.addEventListener('click',()=>{$('count').value=b.dataset.count;quickState();});$('count').addEventListener('input',quickState);
+window.addEventListener('beforeunload',e=>{if(job){e.preventDefault();e.returnValue='';}});
+$('saveHint').textContent=canStream?'自动选择可直接写入单个 TXT；也可手动选择分卷。':'当前浏览器使用分卷下载，每卷完成后点击下载继续。';
+updateEstimate();
+</script>
+</body></html>

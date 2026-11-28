@@ -1,0 +1,724 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <meta name="color-scheme" content="light" />
+  <meta name="theme-color" content="#f5f7fb" />
+  <title>SHA生成器</title>
+  <link
+    rel="icon"
+    href="https://user-assets.sxlcdn.com/images/1209238/FlWuslNmGTHt1EipxUtq2GI6zqnN.png?imageMogr2/strip/auto-orient/thumbnail/1200x9000%3E/quality/90!/format/png"
+    type="image/png"
+  />
+  <style>
+    :root{
+      color-scheme:light;
+      --bg:#f5f7fb;--surface:#ffffff;--surface-soft:#f8fafc;--text:#172033;--muted:#6b7280;
+      --line:#e5eaf1;--line-strong:#d9e0ea;--primary:#2563eb;--primary-hover:#1d4ed8;--primary-soft:#eff6ff;
+      --success:#08775f;--success-bg:#ecfdf5;--warn:#9a6700;--warn-bg:#fff8e6;--danger:#b42318;
+      --shadow:0 14px 40px rgba(23,32,51,.07);--radius:20px;
+    }
+    *{box-sizing:border-box}
+    html{font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;background:var(--bg);color:var(--text);-webkit-text-size-adjust:100%}
+    body{margin:0;min-height:100vh;background:linear-gradient(180deg,#fbfcfe 0,#f5f7fb 48%,#f2f5f9 100%)}
+    button,input,select,textarea{font:inherit}
+    button{cursor:pointer}
+    button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,.dropzone:focus-visible{outline:3px solid rgba(37,99,235,.16);outline-offset:2px}
+    .wrap{width:min(1160px,calc(100% - 40px));margin:auto;padding:36px 0 40px}
+    .topbar{display:flex;align-items:center;justify-content:space-between;gap:18px;margin-bottom:22px}
+    .brand{display:flex;align-items:center;gap:13px;min-width:0}
+    .logo{flex:0 0 auto;width:44px;height:44px;display:grid;place-items:center;border-radius:13px;background:var(--primary);color:#fff;box-shadow:0 8px 22px rgba(37,99,235,.22)}
+    .logo svg{width:23px;height:23px}
+    h1{margin:0;font-size:clamp(25px,3vw,34px);line-height:1.05;letter-spacing:-.035em}
+    .subtitle{margin:6px 0 0;color:var(--muted);font-size:13px;line-height:1.5}
+    .privacy{flex:0 0 auto;display:inline-flex;align-items:center;gap:7px;padding:8px 11px;border:1px solid #cdeee4;border-radius:999px;background:var(--success-bg);color:var(--success);font-size:12px;font-weight:750;white-space:nowrap}
+    .privacy::before{content:"";width:7px;height:7px;border-radius:50%;background:#10b981}
+    .layout{display:grid;grid-template-columns:minmax(0,1.38fr) minmax(330px,.82fr);gap:18px;align-items:start}
+    .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow)}
+    .panel{padding:22px}
+    .controls{display:grid;grid-template-columns:minmax(0,1fr) 180px;gap:12px;margin-bottom:15px}
+    label.caption{display:block;margin:0 0 7px;color:#4b5563;font-size:12px;font-weight:750}
+    select,input[type="number"]{width:100%;height:46px;border:1px solid var(--line-strong);border-radius:12px;background:#fff;color:var(--text);padding:0 13px;outline:0}
+    select:hover,input[type="number"]:hover{border-color:#c9d2df}
+    .tabs{display:flex;gap:4px;width:max-content;max-width:100%;padding:4px;margin-bottom:14px;border-radius:12px;background:#eef2f7}
+    .tab{min-width:92px;border:0;border-radius:9px;background:transparent;color:#64748b;padding:9px 14px;font-size:13px;font-weight:800}
+    .tab.active{background:#fff;color:var(--primary);box-shadow:0 1px 4px rgba(23,32,51,.10)}
+    textarea.input{display:block;width:100%;min-height:300px;resize:vertical;border:1px solid var(--line-strong);border-radius:14px;background:#fff;color:var(--text);padding:15px 16px;outline:0;line-height:1.65;font-size:14px}
+    textarea.input::placeholder,.result::placeholder{color:#9aa4b2}
+    .input-foot{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:8px 2px 0;color:#8a94a3;font-size:11px}
+    .dropzone{min-height:300px;display:grid;place-items:center;padding:28px;border:1.5px dashed #cbd5e1;border-radius:14px;background:var(--surface-soft);text-align:center;transition:border-color .16s ease,background .16s ease}
+    .dropzone:hover,.dropzone.drag{border-color:#7aa7f7;background:#f4f8ff}
+    .drop-inner{max-width:420px}
+    .upload-icon{width:50px;height:50px;margin:0 auto 13px;display:grid;place-items:center;border-radius:14px;background:var(--primary-soft);color:var(--primary)}
+    .upload-icon svg{width:24px;height:24px}
+    .dropzone strong{display:block;font-size:15px;margin-bottom:6px}
+    .dropzone p{margin:0;color:var(--muted);font-size:12px;line-height:1.65}
+    .choose{margin-top:14px;border:1px solid #c7d8fb;border-radius:10px;background:#fff;color:var(--primary);padding:9px 13px;font-size:12px;font-weight:800}
+    .file-info{display:none;margin-top:14px;padding:10px 12px;border:1px solid #dbe6f5;border-radius:10px;background:#fff;text-align:left}
+    .file-info.show{display:block}
+    .file-name{font-size:12px;font-weight:800;overflow-wrap:anywhere}
+    .file-size{margin-top:3px;color:var(--muted);font-size:11px}
+    .actionbar{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-top:16px}
+    .case-toggle{display:inline-flex;align-items:center;gap:8px;color:var(--muted);font-size:12px;user-select:none}
+    .case-toggle input{width:16px;height:16px;accent-color:var(--primary)}
+    .actions{display:flex;gap:8px}
+    .btn{min-height:42px;border:1px solid var(--line-strong);border-radius:11px;background:#fff;color:#475569;padding:10px 14px;font-size:13px;font-weight:800}
+    .btn:hover{background:#f8fafc}
+    .btn.primary{min-width:122px;border-color:var(--primary);background:var(--primary);color:#fff;box-shadow:0 7px 18px rgba(37,99,235,.17)}
+    .btn.primary:hover{background:var(--primary-hover)}
+    .btn.danger{color:var(--danger)}
+    .btn:disabled{opacity:.5;cursor:not-allowed;box-shadow:none}
+    .progress-wrap{display:none;margin-top:15px}
+    .progress-wrap.show{display:block}
+    .progress-head{display:flex;justify-content:space-between;gap:12px;margin-bottom:7px;color:var(--muted);font-size:11px}
+    .progress{height:7px;overflow:hidden;border-radius:999px;background:#e9eef5}
+    .progress i{display:block;width:0;height:100%;border-radius:inherit;background:var(--primary);transition:width .14s linear}
+    .status{min-height:19px;margin-top:10px;color:#7b8797;font-size:11px;line-height:1.55}
+    .status.ok{color:var(--success)}.status.err{color:var(--danger)}.status.warn{color:var(--warn)}
+    .result-card{position:sticky;top:18px}
+    .result-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:11px}
+    .result-head h2{margin:0;font-size:15px;letter-spacing:-.01em}
+    .copy{border:1px solid var(--line-strong);border-radius:9px;background:#fff;color:#526173;padding:7px 10px;font-size:11px;font-weight:800}
+    .copy:not(:disabled):hover{background:#f8fafc;color:var(--primary)}
+    .copy:disabled{opacity:.45;cursor:not-allowed}
+    .result{display:block;width:100%;min-height:184px;resize:vertical;border:1px solid var(--line-strong);border-radius:13px;background:#f8fafc;color:#12305f;padding:14px;outline:0;font-family:"SFMono-Regular",Consolas,"Liberation Mono",monospace;font-size:12px;line-height:1.65;word-break:break-all}
+    .metrics{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:10px}
+    .metric{min-width:0;padding:9px 10px;border-radius:10px;background:#f8fafc}
+    .metric b{display:block;margin-bottom:3px;color:#8a94a3;font-size:10px;font-weight:750}
+    .metric span{display:block;overflow:hidden;text-overflow:ellipsis;color:#475569;font-size:11px;font-weight:800;white-space:nowrap}
+    .hint{margin-top:12px;padding:10px 11px;border-radius:10px;background:#f8fafc;color:#697586;font-size:11px;line-height:1.55}
+    .hint.warn{background:var(--warn-bg);color:var(--warn)}
+    .footnote{margin:17px 2px 0;color:#8a94a3;font-size:11px;line-height:1.65;text-align:center}
+    [hidden]{display:none!important}
+    @media (max-width:940px){
+      .wrap{width:min(820px,calc(100% - 28px));padding-top:28px}.layout{grid-template-columns:1fr}.result-card{position:static}.result{min-height:150px}.controls{grid-template-columns:minmax(0,1fr) 170px}
+    }
+    @media (max-width:640px){
+      .wrap{width:calc(100% - 20px);padding:18px 0 26px}.topbar{align-items:flex-start}.logo{width:40px;height:40px;border-radius:12px}.subtitle{font-size:12px}.privacy{display:none}.panel{padding:15px}.controls{grid-template-columns:1fr;gap:10px}.tabs{width:100%}.tab{flex:1;min-width:0}.dropzone,textarea.input{min-height:225px}.actionbar{display:grid;grid-template-columns:1fr;gap:12px}.actions{display:grid;grid-template-columns:1fr 1fr;width:100%}.btn.primary{grid-column:1/-1;grid-row:1;min-width:0}.metrics{grid-template-columns:1fr 1fr}.result{min-height:138px}.footnote{text-align:left}
+    }
+    @media (max-width:380px){.brand{gap:10px}h1{font-size:24px}.panel{padding:13px}.actions{gap:7px}.metrics{grid-template-columns:1fr}.input-foot{align-items:flex-start;flex-direction:column;gap:3px}}
+    @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <header class="topbar">
+      <div class="brand">
+        <div class="logo" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M8.7 3.8 6.9 20.2M17.1 3.8l-1.8 16.4M4 9.2h16M3.2 14.8h16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></div>
+        <div><h1>SHA生成器</h1><p class="subtitle">文本与文件的快速本地哈希工具</p></div>
+      </div>
+      <div class="privacy">数据不上传</div>
+    </header>
+
+    <section class="layout">
+      <section class="card panel" aria-label="SHA 输入">
+        <div class="controls">
+          <div>
+            <label class="caption" for="algorithm">算法</label>
+            <select id="algorithm">
+              <optgroup label="SHA-1"><option value="SHA-1">SHA-1（兼容用途）</option></optgroup>
+              <optgroup label="SHA-2">
+                <option value="SHA-224">SHA-224</option><option value="SHA-256" selected>SHA-256（推荐）</option><option value="SHA-384">SHA-384</option><option value="SHA-512">SHA-512</option><option value="SHA-512/224">SHA-512/224</option><option value="SHA-512/256">SHA-512/256</option>
+              </optgroup>
+              <optgroup label="SHA-3"><option value="SHA3-224">SHA3-224</option><option value="SHA3-256">SHA3-256</option><option value="SHA3-384">SHA3-384</option><option value="SHA3-512">SHA3-512</option></optgroup>
+              <optgroup label="SHAKE"><option value="SHAKE128">SHAKE128</option><option value="SHAKE256">SHAKE256</option></optgroup>
+            </select>
+          </div>
+          <div id="shakeBox" hidden>
+            <label class="caption" for="shakeBits">输出位数</label>
+            <input id="shakeBits" type="number" min="8" max="65536" step="8" value="256" inputmode="numeric" />
+          </div>
+        </div>
+
+        <div class="tabs" role="tablist" aria-label="输入类型">
+          <button class="tab active" id="textTab" type="button" role="tab" aria-selected="true">文本</button>
+          <button class="tab" id="fileTab" type="button" role="tab" aria-selected="false">文件</button>
+        </div>
+
+        <div id="textPanel">
+          <textarea id="textInput" class="input" spellcheck="false" placeholder="输入或粘贴文本…"></textarea>
+          <div class="input-foot"><span>UTF-8</span><span id="charCount">0 字符</span></div>
+        </div>
+
+        <div id="filePanel" hidden>
+          <div id="dropzone" class="dropzone" tabindex="0" role="button" aria-label="选择或拖入文件">
+            <div class="drop-inner">
+              <div class="upload-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M12 16V4m0 0L7.5 8.5M12 4l4.5 4.5M5 14.5v3A2.5 2.5 0 0 0 7.5 20h9a2.5 2.5 0 0 0 2.5-2.5v-3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+              <strong>拖拽文件到这里</strong><p>大文件自动分块处理，避免一次性占用大量内存。</p>
+              <button class="choose" id="chooseBtn" type="button">选择文件</button><input id="fileInput" type="file" hidden />
+              <div id="fileInfo" class="file-info"><div id="fileName" class="file-name"></div><div id="fileSize" class="file-size"></div></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="actionbar">
+          <label class="case-toggle"><input id="uppercase" type="checkbox" /> 大写结果</label>
+          <div class="actions"><button class="btn" id="clearBtn" type="button">清空</button><button class="btn danger" id="cancelBtn" type="button" hidden>取消</button><button class="btn primary" id="hashBtn" type="button">生成 SHA</button></div>
+        </div>
+
+        <div id="progressWrap" class="progress-wrap"><div class="progress-head"><span id="progressText">处理中…</span><span id="progressPct">0%</span></div><div class="progress"><i id="progressBar"></i></div></div>
+        <div id="status" class="status" aria-live="polite">已就绪。所有计算均在浏览器本地完成。</div>
+      </section>
+
+      <aside class="card panel result-card" aria-label="SHA 结果">
+        <div class="result-head"><h2>哈希结果</h2><button class="copy" id="copyBtn" type="button" disabled>复制</button></div>
+        <textarea id="result" class="result" readonly spellcheck="false" placeholder="结果会显示在这里"></textarea>
+        <div class="metrics">
+          <div class="metric"><b>算法</b><span id="statAlgo">—</span></div><div class="metric"><b>输入大小</b><span id="statSize">—</span></div><div class="metric"><b>耗时</b><span id="statTime">—</span></div><div class="metric"><b>速度</b><span id="statSpeed">—</span></div>
+        </div>
+        <div id="algoNotice" class="hint"></div>
+      </aside>
+    </section>
+    <p class="footnote">SHA 是单向哈希摘要，不是可逆加密。SHA-0 已撤回，因此不提供。</p>
+  </main>
+
+  <script id="worker-source" type="text/plain">
+'use strict';
+
+const MASK64 = (1n << 64n) - 1n;
+
+function rotr32(x, n) { return (x >>> n) | (x << (32 - n)); }
+function rotl32(x, n) { return (x << n) | (x >>> (32 - n)); }
+function rotr64(x, n) {
+  const b = BigInt(n);
+  return ((x >> b) | (x << (64n - b))) & MASK64;
+}
+function rotl64(x, n) {
+  if (n === 0) return x & MASK64;
+  const b = BigInt(n);
+  return ((x << b) | (x >> (64n - b))) & MASK64;
+}
+const HEX_TABLE = Array.from({length:256}, (_,i) => i.toString(16).padStart(2,'0'));
+function hexOf(bytes) {
+  let out = '';
+  for (let i = 0; i < bytes.length; i++) out += HEX_TABLE[bytes[i]];
+  return out;
+}
+function words32ToBytes(words, countBytes) {
+  const out = new Uint8Array(countBytes);
+  for (let i = 0; i < countBytes; i++) {
+    const w = words[i >>> 2] >>> 0;
+    out[i] = (w >>> (24 - ((i & 3) << 3))) & 0xff;
+  }
+  return out;
+}
+function words64ToBytes(words, countBytes) {
+  const out = new Uint8Array(countBytes);
+  for (let i = 0; i < countBytes; i++) {
+    const w = words[Math.floor(i / 8)];
+    out[i] = Number((w >> BigInt(56 - ((i & 7) * 8))) & 0xffn);
+  }
+  return out;
+}
+
+class BlockHash {
+  constructor(blockSize, lengthSize) {
+    this.blockSize = blockSize;
+    this.lengthSize = lengthSize;
+    this.buffer = new Uint8Array(blockSize);
+    this.bufferLength = 0;
+    this.bytesHashed = 0n;
+    this.finished = false;
+  }
+  update(data) {
+    if (this.finished) throw new Error('Hasher already finalized');
+    if (!(data instanceof Uint8Array)) data = new Uint8Array(data);
+    let pos = 0;
+    this.bytesHashed += BigInt(data.length);
+    if (this.bufferLength) {
+      const take = Math.min(this.blockSize - this.bufferLength, data.length);
+      this.buffer.set(data.subarray(0, take), this.bufferLength);
+      this.bufferLength += take;
+      pos += take;
+      if (this.bufferLength === this.blockSize) {
+        this._processBlock(this.buffer, 0);
+        this.bufferLength = 0;
+      }
+    }
+    while (pos + this.blockSize <= data.length) {
+      this._processBlock(data, pos);
+      pos += this.blockSize;
+    }
+    if (pos < data.length) {
+      this.buffer.set(data.subarray(pos), 0);
+      this.bufferLength = data.length - pos;
+    }
+    return this;
+  }
+  _padAndProcess() {
+    const bitLen = this.bytesHashed * 8n;
+    this.buffer[this.bufferLength++] = 0x80;
+    if (this.bufferLength > this.blockSize - this.lengthSize) {
+      this.buffer.fill(0, this.bufferLength);
+      this._processBlock(this.buffer, 0);
+      this.bufferLength = 0;
+    }
+    this.buffer.fill(0, this.bufferLength, this.blockSize - this.lengthSize);
+    let v = bitLen;
+    for (let i = 0; i < this.lengthSize; i++) {
+      this.buffer[this.blockSize - 1 - i] = Number(v & 0xffn);
+      v >>= 8n;
+    }
+    this._processBlock(this.buffer, 0);
+    this.bufferLength = 0;
+  }
+}
+
+class SHA1 extends BlockHash {
+  constructor() {
+    super(64, 8);
+    this.h = new Uint32Array([0x67452301,0xefcdab89,0x98badcfe,0x10325476,0xc3d2e1f0]);
+    this.w = new Uint32Array(80);
+  }
+  _processBlock(data, offset) {
+    const w = this.w;
+    for (let i = 0; i < 16; i++) {
+      const j = offset + i * 4;
+      w[i] = (((data[j] << 24) | (data[j+1] << 16) | (data[j+2] << 8) | data[j+3]) >>> 0);
+    }
+    for (let i = 16; i < 80; i++) w[i] = rotl32((w[i-3]^w[i-8]^w[i-14]^w[i-16]) >>> 0, 1) >>> 0;
+    let a=this.h[0], b=this.h[1], c=this.h[2], d=this.h[3], e=this.h[4];
+    for (let i=0;i<80;i++) {
+      let f,k;
+      if (i<20) { f=(b & c) | ((~b) & d); k=0x5a827999; }
+      else if (i<40) { f=b^c^d; k=0x6ed9eba1; }
+      else if (i<60) { f=(b&c)|(b&d)|(c&d); k=0x8f1bbcdc; }
+      else { f=b^c^d; k=0xca62c1d6; }
+      const t = (rotl32(a,5) + (f>>>0) + e + k + w[i]) >>> 0;
+      e=d; d=c; c=rotl32(b,30)>>>0; b=a; a=t;
+    }
+    this.h[0]=(this.h[0]+a)>>>0; this.h[1]=(this.h[1]+b)>>>0; this.h[2]=(this.h[2]+c)>>>0; this.h[3]=(this.h[3]+d)>>>0; this.h[4]=(this.h[4]+e)>>>0;
+  }
+  digestBytes() { if (!this.finished) { this._padAndProcess(); this.finished=true; } return words32ToBytes(this.h,20); }
+  digestHex() { return hexOf(this.digestBytes()); }
+}
+
+const K256 = new Uint32Array([
+0x428a2f98,0x71374491,0xb5c0fbcf,0xe9b5dba5,0x3956c25b,0x59f111f1,0x923f82a4,0xab1c5ed5,
+0xd807aa98,0x12835b01,0x243185be,0x550c7dc3,0x72be5d74,0x80deb1fe,0x9bdc06a7,0xc19bf174,
+0xe49b69c1,0xefbe4786,0x0fc19dc6,0x240ca1cc,0x2de92c6f,0x4a7484aa,0x5cb0a9dc,0x76f988da,
+0x983e5152,0xa831c66d,0xb00327c8,0xbf597fc7,0xc6e00bf3,0xd5a79147,0x06ca6351,0x14292967,
+0x27b70a85,0x2e1b2138,0x4d2c6dfc,0x53380d13,0x650a7354,0x766a0abb,0x81c2c92e,0x92722c85,
+0xa2bfe8a1,0xa81a664b,0xc24b8b70,0xc76c51a3,0xd192e819,0xd6990624,0xf40e3585,0x106aa070,
+0x19a4c116,0x1e376c08,0x2748774c,0x34b0bcb5,0x391c0cb3,0x4ed8aa4a,0x5b9cca4f,0x682e6ff3,
+0x748f82ee,0x78a5636f,0x84c87814,0x8cc70208,0x90befffa,0xa4506ceb,0xbef9a3f7,0xc67178f2]);
+
+const IV256 = {
+  'SHA-224': [0xc1059ed8,0x367cd507,0x3070dd17,0xf70e5939,0xffc00b31,0x68581511,0x64f98fa7,0xbefa4fa4],
+  'SHA-256': [0x6a09e667,0xbb67ae85,0x3c6ef372,0xa54ff53a,0x510e527f,0x9b05688c,0x1f83d9ab,0x5be0cd19]
+};
+class SHA256Base extends BlockHash {
+  constructor(variant='SHA-256') {
+    super(64,8);
+    this.variant=variant;
+    this.h=new Uint32Array(IV256[variant]);
+    this.w=new Uint32Array(64);
+  }
+  _processBlock(data, offset) {
+    const w=this.w;
+    for (let i=0;i<16;i++) { const j=offset+i*4; w[i]=(((data[j]<<24)|(data[j+1]<<16)|(data[j+2]<<8)|data[j+3])>>>0); }
+    for (let i=16;i<64;i++) {
+      const x=w[i-15], y=w[i-2];
+      const s0=(rotr32(x,7)^rotr32(x,18)^(x>>>3))>>>0;
+      const s1=(rotr32(y,17)^rotr32(y,19)^(y>>>10))>>>0;
+      w[i]=(w[i-16]+s0+w[i-7]+s1)>>>0;
+    }
+    let a=this.h[0],b=this.h[1],c=this.h[2],d=this.h[3],e=this.h[4],f=this.h[5],g=this.h[6],h=this.h[7];
+    for (let i=0;i<64;i++) {
+      const S1=(rotr32(e,6)^rotr32(e,11)^rotr32(e,25))>>>0;
+      const ch=((e&f)^((~e)&g))>>>0;
+      const t1=(h+S1+ch+K256[i]+w[i])>>>0;
+      const S0=(rotr32(a,2)^rotr32(a,13)^rotr32(a,22))>>>0;
+      const maj=((a&b)^(a&c)^(b&c))>>>0;
+      const t2=(S0+maj)>>>0;
+      h=g;g=f;f=e;e=(d+t1)>>>0;d=c;c=b;b=a;a=(t1+t2)>>>0;
+    }
+    this.h[0]=(this.h[0]+a)>>>0;this.h[1]=(this.h[1]+b)>>>0;this.h[2]=(this.h[2]+c)>>>0;this.h[3]=(this.h[3]+d)>>>0;
+    this.h[4]=(this.h[4]+e)>>>0;this.h[5]=(this.h[5]+f)>>>0;this.h[6]=(this.h[6]+g)>>>0;this.h[7]=(this.h[7]+h)>>>0;
+  }
+  digestBytes() { if(!this.finished){this._padAndProcess();this.finished=true;} return words32ToBytes(this.h,this.variant==='SHA-224'?28:32); }
+  digestHex(){return hexOf(this.digestBytes());}
+}
+
+const K512 = [
+'428a2f98d728ae22','7137449123ef65cd','b5c0fbcfec4d3b2f','e9b5dba58189dbbc','3956c25bf348b538','59f111f1b605d019','923f82a4af194f9b','ab1c5ed5da6d8118',
+'d807aa98a3030242','12835b0145706fbe','243185be4ee4b28c','550c7dc3d5ffb4e2','72be5d74f27b896f','80deb1fe3b1696b1','9bdc06a725c71235','c19bf174cf692694',
+'e49b69c19ef14ad2','efbe4786384f25e3','0fc19dc68b8cd5b5','240ca1cc77ac9c65','2de92c6f592b0275','4a7484aa6ea6e483','5cb0a9dcbd41fbd4','76f988da831153b5',
+'983e5152ee66dfab','a831c66d2db43210','b00327c898fb213f','bf597fc7beef0ee4','c6e00bf33da88fc2','d5a79147930aa725','06ca6351e003826f','142929670a0e6e70',
+'27b70a8546d22ffc','2e1b21385c26c926','4d2c6dfc5ac42aed','53380d139d95b3df','650a73548baf63de','766a0abb3c77b2a8','81c2c92e47edaee6','92722c851482353b',
+'a2bfe8a14cf10364','a81a664bbc423001','c24b8b70d0f89791','c76c51a30654be30','d192e819d6ef5218','d69906245565a910','f40e35855771202a','106aa07032bbd1b8',
+'19a4c116b8d2d0c8','1e376c085141ab53','2748774cdf8eeb99','34b0bcb5e19b48a8','391c0cb3c5c95a63','4ed8aa4ae3418acb','5b9cca4f7763e373','682e6ff3d6b2b8a3',
+'748f82ee5defb2fc','78a5636f43172f60','84c87814a1f0ab72','8cc702081a6439ec','90befffa23631e28','a4506cebde82bde9','bef9a3f7b2c67915','c67178f2e372532b',
+'ca273eceea26619c','d186b8c721c0c207','eada7dd6cde0eb1e','f57d4f7fee6ed178','06f067aa72176fba','0a637dc5a2c898a6','113f9804bef90dae','1b710b35131c471b',
+'28db77f523047d84','32caab7b40c72493','3c9ebe0a15c9bebc','431d67c49c100d4c','4cc5d4becb3e42b6','597f299cfc657e2a','5fcb6fab3ad6faec','6c44198c4a475817'
+].map(x=>BigInt('0x'+x));
+const IV512 = {
+  'SHA-384': ['cbbb9d5dc1059ed8','629a292a367cd507','9159015a3070dd17','152fecd8f70e5939','67332667ffc00b31','8eb44a8768581511','db0c2e0d64f98fa7','47b5481dbefa4fa4'],
+  'SHA-512': ['6a09e667f3bcc908','bb67ae8584caa73b','3c6ef372fe94f82b','a54ff53a5f1d36f1','510e527fade682d1','9b05688c2b3e6c1f','1f83d9abfb41bd6b','5be0cd19137e2179'],
+  'SHA-512/224': ['8c3d37c819544da2','73e1996689dcd4d6','1dfab7ae32ff9c82','679dd514582f9fcf','0f6d2b697bd44da8','77e36f7304c48942','3f9d85a86a1d36c8','1112e6ad91d692a1'],
+  'SHA-512/256': ['22312194fc2bf72c','9f555fa3c84c64c2','2393b86b6f53b151','963877195940eabd','96283ee2a88effe3','be5e1e2553863992','2b0199fc2c85b8aa','0eb72ddc81c52ca2']
+};
+class SHA512Base extends BlockHash {
+  constructor(variant='SHA-512') {
+    super(128,16); this.variant=variant; this.h=IV512[variant].map(x=>BigInt('0x'+x)); this.w=new Array(80).fill(0n);
+  }
+  _processBlock(data, offset) {
+    const w=this.w;
+    for(let i=0;i<16;i++){
+      let v=0n; const j=offset+i*8;
+      for(let k=0;k<8;k++) v=(v<<8n)|BigInt(data[j+k]);
+      w[i]=v;
+    }
+    for(let i=16;i<80;i++){
+      const x=w[i-15], y=w[i-2];
+      const s0=rotr64(x,1)^rotr64(x,8)^(x>>7n);
+      const s1=rotr64(y,19)^rotr64(y,61)^(y>>6n);
+      w[i]=(w[i-16]+s0+w[i-7]+s1)&MASK64;
+    }
+    let [a,b,c,d,e,f,g,h]=this.h;
+    for(let i=0;i<80;i++){
+      const S1=rotr64(e,14)^rotr64(e,18)^rotr64(e,41);
+      const ch=(e&f)^((~e)&g);
+      const t1=(h+S1+ch+K512[i]+w[i])&MASK64;
+      const S0=rotr64(a,28)^rotr64(a,34)^rotr64(a,39);
+      const maj=(a&b)^(a&c)^(b&c);
+      const t2=(S0+maj)&MASK64;
+      h=g;g=f;f=e;e=(d+t1)&MASK64;d=c;c=b;b=a;a=(t1+t2)&MASK64;
+    }
+    const vals=[a,b,c,d,e,f,g,h];
+    for(let i=0;i<8;i++) this.h[i]=(this.h[i]+vals[i])&MASK64;
+  }
+  digestBytes(){
+    if(!this.finished){this._padAndProcess();this.finished=true;}
+    const n={'SHA-384':48,'SHA-512':64,'SHA-512/224':28,'SHA-512/256':32}[this.variant];
+    return words64ToBytes(this.h,n);
+  }
+  digestHex(){return hexOf(this.digestBytes());}
+}
+
+const KECCAK_RC = [
+'0000000000000001','0000000000008082','800000000000808a','8000000080008000','000000000000808b','0000000080000001','8000000080008081','8000000000008009',
+'000000000000008a','0000000000000088','0000000080008009','000000008000000a','000000008000808b','800000000000008b','8000000000008089','8000000000008003',
+'8000000000008002','8000000000000080','000000000000800a','800000008000000a','8000000080008081','8000000000008080','0000000080000001','8000000080008008'
+].map(x=>BigInt('0x'+x));
+const KECCAK_R = [
+0,1,62,28,27,
+36,44,6,55,20,
+3,10,43,25,39,
+41,45,15,21,8,
+18,2,61,56,14
+];
+function keccakF(a){
+  const c=new Array(5), d=new Array(5), b=new Array(25);
+  for(let round=0;round<24;round++){
+    for(let x=0;x<5;x++) c[x]=a[x]^a[x+5]^a[x+10]^a[x+15]^a[x+20];
+    for(let x=0;x<5;x++) d[x]=c[(x+4)%5]^rotl64(c[(x+1)%5],1);
+    for(let y=0;y<5;y++) for(let x=0;x<5;x++) a[x+5*y]=(a[x+5*y]^d[x])&MASK64;
+    for(let y=0;y<5;y++) for(let x=0;x<5;x++) {
+      const nx=y, ny=(2*x+3*y)%5;
+      b[nx+5*ny]=rotl64(a[x+5*y],KECCAK_R[x+5*y]);
+    }
+    for(let y=0;y<5;y++) for(let x=0;x<5;x++) a[x+5*y]=(b[x+5*y]^((~b[((x+1)%5)+5*y])&b[((x+2)%5)+5*y]))&MASK64;
+    a[0]=(a[0]^KECCAK_RC[round])&MASK64;
+  }
+}
+class KeccakHash {
+  constructor(rateBytes, suffix, outBytes){
+    this.rate=rateBytes; this.suffix=suffix; this.outBytes=outBytes; this.state=new Array(25).fill(0n); this.buffer=new Uint8Array(rateBytes); this.bufferLength=0; this.finished=false;
+  }
+  _absorbBlock(block){
+    for(let i=0;i<this.rate;i++) this.state[i>>>3]^=BigInt(block[i])<<BigInt((i&7)*8);
+    keccakF(this.state);
+  }
+  update(data){
+    if(this.finished) throw new Error('Hasher already finalized');
+    if(!(data instanceof Uint8Array)) data=new Uint8Array(data);
+    let pos=0;
+    if(this.bufferLength){
+      const take=Math.min(this.rate-this.bufferLength,data.length);
+      this.buffer.set(data.subarray(0,take),this.bufferLength); this.bufferLength+=take; pos+=take;
+      if(this.bufferLength===this.rate){this._absorbBlock(this.buffer);this.bufferLength=0;}
+    }
+    while(pos+this.rate<=data.length){this._absorbBlock(data.subarray(pos,pos+this.rate));pos+=this.rate;}
+    if(pos<data.length){this.buffer.set(data.subarray(pos),0);this.bufferLength=data.length-pos;}
+    return this;
+  }
+  digestBytes(){
+    if(!this.finished){
+      const block=new Uint8Array(this.rate); block.set(this.buffer.subarray(0,this.bufferLength)); block[this.bufferLength]^=this.suffix; block[this.rate-1]^=0x80; this._absorbBlock(block); this.finished=true;
+    }
+    const out=new Uint8Array(this.outBytes); let pos=0;
+    while(pos<out.length){
+      const take=Math.min(this.rate,out.length-pos);
+      for(let i=0;i<take;i++) out[pos+i]=Number((this.state[i>>>3]>>BigInt((i&7)*8))&0xffn);
+      pos+=take;
+      if(pos<out.length) keccakF(this.state);
+    }
+    return out;
+  }
+  digestHex(){return hexOf(this.digestBytes());}
+}
+
+function createHasher(algorithm, shakeBits){
+  switch(algorithm){
+    case 'SHA-1': return new SHA1();
+    case 'SHA-224': return new SHA256Base('SHA-224');
+    case 'SHA-256': return new SHA256Base('SHA-256');
+    case 'SHA-384': return new SHA512Base('SHA-384');
+    case 'SHA-512': return new SHA512Base('SHA-512');
+    case 'SHA-512/224': return new SHA512Base('SHA-512/224');
+    case 'SHA-512/256': return new SHA512Base('SHA-512/256');
+    case 'SHA3-224': return new KeccakHash(144,0x06,28);
+    case 'SHA3-256': return new KeccakHash(136,0x06,32);
+    case 'SHA3-384': return new KeccakHash(104,0x06,48);
+    case 'SHA3-512': return new KeccakHash(72,0x06,64);
+    case 'SHAKE128': return new KeccakHash(168,0x1f,Math.ceil(shakeBits/8));
+    case 'SHAKE256': return new KeccakHash(136,0x1f,Math.ceil(shakeBits/8));
+    default: throw new Error('Unsupported algorithm: '+algorithm);
+  }
+}
+
+if (typeof module !== 'undefined') module.exports={createHasher,hexOf};
+
+const cancelledJobs = new Set();
+const waitTurn = () => new Promise(resolve => setTimeout(resolve, 0));
+const NATIVE_ALGORITHMS = new Set(['SHA-1','SHA-256','SHA-384','SHA-512']);
+
+async function nativeHex(algorithm, data) {
+  if (!self.crypto || !self.crypto.subtle || !NATIVE_ALGORITHMS.has(algorithm)) return null;
+  const digest = await self.crypto.subtle.digest(algorithm, data);
+  return hexOf(new Uint8Array(digest));
+}
+
+self.onmessage = async (event) => {
+  const m = event.data || {};
+  if (m.type === 'cancel') { cancelledJobs.add(m.jobId); return; }
+  if (m.type !== 'hash') return;
+
+  const { jobId, algorithm, inputType, text, file, shakeBits } = m;
+  const nativeMaxBytes = Math.max(0, Number(m.nativeMaxBytes) || 0);
+  const started = performance.now();
+  let lastProgressAt = 0;
+  const progress = (processed, total, force = false) => {
+    const now = performance.now();
+    if (!force && now - lastProgressAt < 80) return;
+    lastProgressAt = now;
+    postMessage({ type:'progress', jobId, processed, total, percent: total ? processed / total * 100 : 100 });
+  };
+
+  try {
+    let inputBytes = 0;
+    let hex = null;
+
+    if (inputType === 'file') {
+      const total = file.size;
+      if (NATIVE_ALGORITHMS.has(algorithm) && total <= nativeMaxBytes) {
+        const buf = await file.arrayBuffer();
+        if (cancelledJobs.has(jobId)) throw new Error('__CANCELLED__');
+        hex = await nativeHex(algorithm, buf);
+        inputBytes = total;
+        progress(total, total, true);
+      } else {
+        const hasher = createHasher(algorithm, shakeBits || 256);
+        const chunkSize = total >= 1024 * 1024 * 1024 ? 16 * 1024 * 1024 : 8 * 1024 * 1024;
+        if (total === 0) progress(0, 0, true);
+        for (let offset = 0; offset < total; offset += chunkSize) {
+          if (cancelledJobs.has(jobId)) throw new Error('__CANCELLED__');
+          const end = Math.min(total, offset + chunkSize);
+          const buf = await file.slice(offset, end).arrayBuffer();
+          if (cancelledJobs.has(jobId)) throw new Error('__CANCELLED__');
+          hasher.update(new Uint8Array(buf));
+          inputBytes = end;
+          progress(end, total, end === total);
+        }
+        inputBytes = total;
+        hex = hasher.digestHex();
+      }
+    } else {
+      const source = text || '';
+      const total = source.length;
+      const encoder = new TextEncoder();
+
+      if (NATIVE_ALGORITHMS.has(algorithm) && total <= Math.floor(nativeMaxBytes / 2)) {
+        const bytes = encoder.encode(source);
+        inputBytes = bytes.length;
+        if (inputBytes <= nativeMaxBytes) {
+          hex = await nativeHex(algorithm, bytes);
+          progress(total, total, true);
+        } else {
+          inputBytes = 0;
+        }
+      }
+
+      if (hex === null) {
+        const hasher = createHasher(algorithm, shakeBits || 256);
+        const chunkChars = 1024 * 1024;
+        if (total === 0) progress(0, 0, true);
+        let chunks = 0;
+        for (let start = 0; start < total;) {
+          if (cancelledJobs.has(jobId)) throw new Error('__CANCELLED__');
+          let end = Math.min(total, start + chunkChars);
+          if (end < total) {
+            const a = source.charCodeAt(end - 1), b = source.charCodeAt(end);
+            if (a >= 0xD800 && a <= 0xDBFF && b >= 0xDC00 && b <= 0xDFFF) end++;
+          }
+          const bytes = encoder.encode(source.slice(start, end));
+          inputBytes += bytes.length;
+          hasher.update(bytes);
+          start = end;
+          chunks++;
+          progress(start, total, start === total);
+          if ((chunks & 7) === 0) await waitTurn();
+        }
+        hex = hasher.digestHex();
+      }
+    }
+
+    if (cancelledJobs.has(jobId)) throw new Error('__CANCELLED__');
+    postMessage({ type:'result', jobId, hex, inputBytes, elapsedMs: performance.now() - started });
+  } catch (err) {
+    if (String(err && err.message) === '__CANCELLED__') postMessage({ type:'cancelled', jobId });
+    else postMessage({ type:'error', jobId, message: err && err.message ? err.message : String(err) });
+  } finally {
+    cancelledJobs.delete(jobId);
+  }
+};
+  </script>
+
+  <script>
+
+  (() => {
+    'use strict';
+    const $ = id => document.getElementById(id);
+    const els = {
+      algorithm:$('algorithm'), shakeBox:$('shakeBox'), shakeBits:$('shakeBits'), textTab:$('textTab'), fileTab:$('fileTab'),
+      textPanel:$('textPanel'), filePanel:$('filePanel'), textInput:$('textInput'), charCount:$('charCount'), dropzone:$('dropzone'),
+      chooseBtn:$('chooseBtn'), fileInput:$('fileInput'), fileInfo:$('fileInfo'), fileName:$('fileName'), fileSize:$('fileSize'), uppercase:$('uppercase'),
+      clearBtn:$('clearBtn'), cancelBtn:$('cancelBtn'), hashBtn:$('hashBtn'), progressWrap:$('progressWrap'), progressText:$('progressText'), progressPct:$('progressPct'),
+      progressBar:$('progressBar'), status:$('status'), result:$('result'), copyBtn:$('copyBtn'), statAlgo:$('statAlgo'), statSize:$('statSize'),
+      statTime:$('statTime'), statSpeed:$('statSpeed'), algoNotice:$('algoNotice')
+    };
+
+    let mode='text', selectedFile=null, activeJob=null, rawResult='';
+    const workerURL = URL.createObjectURL(new Blob([$('worker-source').textContent], {type:'text/javascript'}));
+    const worker = new Worker(workerURL);
+    const lowMemory = (navigator.deviceMemory && navigator.deviceMemory <= 4) || matchMedia('(max-width:640px)').matches;
+    const nativeMaxBytes = (lowMemory ? 16 : 64) * 1024 * 1024;
+
+    const formatBytes = n => {
+      if (!Number.isFinite(n)) return '—';
+      if (n === 0) return '0 B';
+      const units=['B','KB','MB','GB','TB','PB'];
+      const i=Math.min(Math.floor(Math.log(n)/Math.log(1024)),units.length-1);
+      const v=n/Math.pow(1024,i);
+      return `${v >= 100 || i === 0 ? v.toFixed(0) : v >= 10 ? v.toFixed(1) : v.toFixed(2)} ${units[i]}`;
+    };
+    const formatTime = ms => ms < 1000 ? `${ms.toFixed(ms < 100 ? 1 : 0)} ms` : `${(ms/1000).toFixed(2)} s`;
+    const setStatus=(text,kind='')=>{els.status.textContent=text;els.status.className='status'+(kind?' '+kind:'');};
+    const resetProgress=()=>{els.progressBar.style.width='0%';els.progressPct.textContent='0%';els.progressText.textContent='处理中…';};
+    const renderResult=()=>{els.result.value=els.uppercase.checked?rawResult.toUpperCase():rawResult.toLowerCase();};
+
+    function setMode(next){
+      mode=next; const text=next==='text';
+      els.textPanel.hidden=!text; els.filePanel.hidden=text;
+      els.textTab.classList.toggle('active',text); els.fileTab.classList.toggle('active',!text);
+      els.textTab.setAttribute('aria-selected',String(text)); els.fileTab.setAttribute('aria-selected',String(!text));
+      setStatus(text?'文本仅在本地处理。':'文件仅在本地分块读取，不会上传。');
+    }
+
+    function updateAlgoUI(){
+      const a=els.algorithm.value, shake=a.startsWith('SHAKE');
+      els.shakeBox.hidden=!shake;
+      if(a==='SHAKE128'&&els.shakeBits.value==='512')els.shakeBits.value='256';
+      if(a==='SHAKE256'&&els.shakeBits.value==='256')els.shakeBits.value='512';
+      if(a==='SHA-1'){els.algoNotice.className='hint warn';els.algoNotice.textContent='SHA-1 仅建议用于兼容和历史校验，不适合新的安全设计。';}
+      else if(shake){els.algoNotice.className='hint';els.algoNotice.textContent='SHAKE 可自定义输出位数，范围 8–65536 bit。';}
+      else {els.algoNotice.className='hint';els.algoNotice.textContent='本地计算；常见算法优先使用浏览器原生加速，大文件自动切换为低内存分块模式。';}
+    }
+
+    function setSelectedFile(file){
+      selectedFile=file||null;
+      if(selectedFile){
+        els.fileName.textContent=selectedFile.name||'未命名文件';
+        els.fileSize.textContent=`${formatBytes(selectedFile.size)}${selectedFile.type?' · '+selectedFile.type:''}`;
+        els.fileInfo.classList.add('show'); setStatus('文件已选择。','ok');
+      }else{
+        els.fileInfo.classList.remove('show'); els.fileName.textContent=''; els.fileSize.textContent='';
+      }
+    }
+
+    function setRunning(running){
+      [els.hashBtn,els.clearBtn,els.algorithm,els.textInput,els.fileInput,els.chooseBtn,els.shakeBits,els.textTab,els.fileTab].forEach(el=>el.disabled=running);
+      els.cancelBtn.hidden=!running; els.progressWrap.classList.toggle('show',running);
+    }
+
+    els.textTab.addEventListener('click',()=>setMode('text'));
+    els.fileTab.addEventListener('click',()=>setMode('file'));
+    els.algorithm.addEventListener('change',updateAlgoUI);
+    els.uppercase.addEventListener('change',renderResult);
+    els.textInput.addEventListener('input',()=>{els.charCount.textContent=`${els.textInput.value.length.toLocaleString()} 字符`;});
+    els.chooseBtn.addEventListener('click',e=>{e.stopPropagation();els.fileInput.click();});
+    els.dropzone.addEventListener('click',e=>{if(!e.target.closest('#chooseBtn'))els.fileInput.click();});
+    els.dropzone.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();els.fileInput.click();}});
+    els.fileInput.addEventListener('change',()=>setSelectedFile(els.fileInput.files&&els.fileInput.files[0]));
+    ['dragenter','dragover'].forEach(t=>els.dropzone.addEventListener(t,e=>{e.preventDefault();els.dropzone.classList.add('drag');}));
+    ['dragleave','drop'].forEach(t=>els.dropzone.addEventListener(t,e=>{e.preventDefault();els.dropzone.classList.remove('drag');}));
+    els.dropzone.addEventListener('drop',e=>{const f=e.dataTransfer&&e.dataTransfer.files&&e.dataTransfer.files[0];if(f)setSelectedFile(f);});
+
+    els.clearBtn.addEventListener('click',()=>{
+      els.textInput.value='';els.charCount.textContent='0 字符';els.fileInput.value='';setSelectedFile(null);rawResult='';renderResult();els.copyBtn.disabled=true;
+      els.statAlgo.textContent=els.statSize.textContent=els.statTime.textContent=els.statSpeed.textContent='—';resetProgress();setStatus('已清空。');
+    });
+
+    els.cancelBtn.addEventListener('click',()=>{
+      if(!activeJob)return;worker.postMessage({type:'cancel',jobId:activeJob});els.cancelBtn.disabled=true;setStatus('正在取消…','warn');
+    });
+
+    els.hashBtn.addEventListener('click',()=>{
+      const algorithm=els.algorithm.value;
+      const shakeBits=Number(els.shakeBits.value||(algorithm==='SHAKE256'?512:256));
+      if(algorithm.startsWith('SHAKE')&&(!Number.isInteger(shakeBits)||shakeBits<8||shakeBits>65536||shakeBits%8!==0)){
+        setStatus('SHAKE 输出位数需为 8–65536 之间的 8 的倍数。','err');els.shakeBits.focus();return;
+      }
+      if(mode==='file'&&!selectedFile){setStatus('请先选择文件。','err');return;}
+      const jobId=`${Date.now()}-${Math.random().toString(36).slice(2)}`;
+      activeJob=jobId;rawResult='';renderResult();els.copyBtn.disabled=true;els.cancelBtn.disabled=false;resetProgress();setRunning(true);
+      els.statAlgo.textContent=algorithm+(algorithm.startsWith('SHAKE')?` / ${shakeBits} bit`:'');
+      els.statSize.textContent=els.statTime.textContent=els.statSpeed.textContent='—';setStatus('正在计算…');
+      const payload={type:'hash',jobId,algorithm,inputType:mode,shakeBits,nativeMaxBytes};
+      if(mode==='file')payload.file=selectedFile;else payload.text=els.textInput.value;
+      worker.postMessage(payload);
+    });
+
+    worker.onmessage=event=>{
+      const m=event.data||{};if(!activeJob||m.jobId!==activeJob)return;
+      if(m.type==='progress'){
+        const pct=Math.max(0,Math.min(100,m.percent||0));els.progressBar.style.width=`${pct}%`;els.progressPct.textContent=`${pct.toFixed(pct<10?1:0)}%`;
+        els.progressText.textContent=m.total?(mode==='file'?`${formatBytes(m.processed)} / ${formatBytes(m.total)}`:`${m.processed.toLocaleString()} / ${m.total.toLocaleString()} 字符`):'正在处理空输入';
+      }else if(m.type==='result'){
+        rawResult=m.hex;renderResult();els.copyBtn.disabled=false;els.progressBar.style.width='100%';els.progressPct.textContent='100%';
+        els.statSize.textContent=formatBytes(m.inputBytes);els.statTime.textContent=formatTime(m.elapsedMs);
+        const secs=m.elapsedMs/1000,speed=secs>0?m.inputBytes/secs:0;els.statSpeed.textContent=speed?`${formatBytes(speed)}/s`:'—';
+        setStatus('计算完成。','ok');setRunning(false);activeJob=null;
+      }else if(m.type==='cancelled'){
+        setStatus('已取消。','warn');setRunning(false);activeJob=null;els.cancelBtn.disabled=false;resetProgress();
+      }else if(m.type==='error'){
+        setStatus(`计算失败：${m.message}`,'err');setRunning(false);activeJob=null;els.cancelBtn.disabled=false;
+      }
+    };
+    worker.onerror=e=>{setStatus(`计算失败：${e.message||'Worker 错误'}`,'err');setRunning(false);activeJob=null;};
+
+    els.copyBtn.addEventListener('click',async()=>{
+      if(!els.result.value)return;
+      try{await navigator.clipboard.writeText(els.result.value);setStatus('已复制。','ok');}
+      catch{els.result.focus();els.result.select();const ok=document.execCommand('copy');setStatus(ok?'已复制。':'复制失败，请手动复制。',ok?'ok':'err');}
+    });
+
+    updateAlgoUI();
+  })();
+
+  </script>
+</body>
+</html>

@@ -1,0 +1,618 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#2a2119">
+<title>九子棋</title>
+  <link
+    rel="icon"
+    href="https://user-assets.sxlcdn.com/images/1209238/FlWuslNmGTHt1EipxUtq2GI6zqnN.png?imageMogr2/strip/auto-orient/thumbnail/1200x9000%3E/quality/90!/format/png"
+    type="image/png"
+  />
+<style>
+:root{
+  --ink:#2a2119;--ink2:#4b3929;--paper:#e7d7b3;--paper2:#cbb589;--wood:#735139;--wood2:#4e3829;
+  --ivory:#f3ead2;--red:#873f35;--gold:#b38a43;--muted:#7f6d55;--ok:#4c6b52;--danger:#9b4338;
+  --radius:16px;--shadow:0 10px 26px rgba(34,25,18,.16);
+}
+*{box-sizing:border-box}
+html,body{min-height:100%;margin:0}
+body{
+  color:var(--ink);background:#bda77f;
+  background-image:linear-gradient(rgba(255,255,255,.09),rgba(255,255,255,0)),repeating-linear-gradient(90deg,rgba(74,54,38,.035) 0 1px,transparent 1px 6px);
+  font-family:ui-serif,Georgia,"Noto Serif SC","Songti SC",serif;
+  -webkit-tap-highlight-color:transparent;
+}
+button,select{font:inherit}
+button{touch-action:manipulation}
+.app{min-height:100vh;display:flex;flex-direction:column}
+.topbar{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px clamp(14px,3vw,34px);background:var(--ink);color:var(--paper);border-bottom:3px double var(--gold)}
+.brand{display:flex;align-items:center;gap:11px;min-width:0}.seal{width:38px;height:38px;border:2px solid var(--gold);border-radius:50%;display:grid;place-items:center;color:var(--gold);font-weight:800;flex:0 0 auto}.brand h1{font-size:clamp(20px,2.6vw,30px);letter-spacing:.18em;margin:0;white-space:nowrap}.brand small{display:block;color:#cdbd9c;letter-spacing:.08em;margin-top:2px}
+.top-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.main{width:min(1220px,100%);margin:0 auto;padding:clamp(12px,2.5vw,28px);display:grid;grid-template-columns:minmax(0,1fr) 330px;gap:clamp(14px,2vw,24px);align-items:start;flex:1}
+.panel{background:rgba(239,225,194,.88);border:1px solid rgba(65,48,34,.3);border-radius:var(--radius);box-shadow:var(--shadow)}
+.game-panel{padding:clamp(10px,2vw,20px)}
+.status-row{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:10px;margin-bottom:12px}.player-card{padding:10px 12px;border:1px solid rgba(62,47,34,.25);border-radius:12px;background:rgba(255,255,255,.25);min-width:0}.player-card.right{text-align:right}.player-card.active{outline:2px solid var(--gold);background:rgba(255,247,226,.55)}.pname{font-weight:800;display:flex;align-items:center;gap:8px}.right .pname{justify-content:flex-end}.swatch{width:17px;height:17px;border-radius:50%;display:inline-block;border:1px solid rgba(0,0,0,.35);box-shadow:inset 0 0 0 2px rgba(255,255,255,.15)}.swatch.white{background:var(--ivory)}.swatch.black{background:var(--red)}.pmeta{color:var(--muted);font-size:12px;margin-top:3px}.turn-badge{text-align:center;border:1px solid var(--gold);border-radius:999px;padding:7px 10px;background:#2f261f;color:var(--paper);font-size:12px;white-space:nowrap}
+.board-shell{width:min(100%,720px);margin:auto;position:relative}.board-wrap{position:relative;width:100%;aspect-ratio:1;background:linear-gradient(135deg,#9a7351,#79563d 52%,#6a4935);border:9px ridge #5d412f;border-radius:18px;box-shadow:inset 0 0 0 2px rgba(231,211,172,.25),0 12px 28px rgba(49,34,23,.22);overflow:hidden}.board-wrap::before{content:"";position:absolute;inset:0;background:repeating-linear-gradient(4deg,transparent 0 20px,rgba(57,39,27,.035) 20px 21px);pointer-events:none}.board-lines,.move-overlay{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}.board-lines line,.board-lines rect{fill:none;stroke:#2e241c;stroke-width:9;stroke-linecap:round;stroke-linejoin:round}.board-lines .fine{stroke:#d1b57d;stroke-width:2;opacity:.42}.move-overlay .last-arrow{stroke:#f0d490;stroke-width:11;stroke-linecap:round;opacity:.85}.move-overlay .capture-mark{fill:none;stroke:#e8d29f;stroke-width:12;opacity:.92}.move-overlay .capture-x{stroke:#9b342d;stroke-width:12;stroke-linecap:round}.move-overlay .place-mark{fill:none;stroke:#f0d490;stroke-width:10;stroke-dasharray:18 12}.point{position:absolute;transform:translate(-50%,-50%);width:clamp(40px,6.3vw,50px);height:clamp(40px,6.3vw,50px);border-radius:50%;border:0;background:transparent;padding:0;display:grid;place-items:center;z-index:4;cursor:pointer}.point::before{content:"";width:clamp(12px,2.1vw,17px);height:clamp(12px,2.1vw,17px);border-radius:50%;background:#2f251d;border:2px solid #b99860;box-shadow:0 0 0 2px rgba(45,33,25,.32)}.point:hover::before,.point:focus-visible::before{box-shadow:0 0 0 5px rgba(239,214,158,.45)}.point:focus-visible{outline:2px dashed #f4d995;outline-offset:2px}.point.valid::after{content:"";position:absolute;width:70%;height:70%;border-radius:50%;border:3px solid #e8cf8f;box-shadow:0 0 0 3px rgba(34,27,21,.25)}.point.selected::after{content:"";position:absolute;inset:1px;border:3px solid #fff0b4;border-radius:50%}.piece{position:absolute;width:78%;height:78%;border-radius:50%;border:2px solid rgba(48,33,24,.66);box-shadow:inset 0 3px 4px rgba(255,255,255,.28),inset 0 -4px 5px rgba(0,0,0,.18),0 3px 5px rgba(35,24,17,.28)}.piece.white{background:radial-gradient(circle at 34% 28%,#fff8e6 0 22%,#e7d9bb 68%,#c6b48f 100%)}.piece.black{background:radial-gradient(circle at 34% 28%,#b56658 0 15%,#853f35 60%,#5c2a27 100%)}.point.captureable .piece{box-shadow:inset 0 3px 4px rgba(255,255,255,.28),inset 0 -4px 5px rgba(0,0,0,.18),0 0 0 5px rgba(232,207,143,.72)}.point.ai-target .piece{animation:aiCapture 1s ease-in-out infinite}.point.last-to .piece{box-shadow:inset 0 3px 4px rgba(255,255,255,.28),inset 0 -4px 5px rgba(0,0,0,.18),0 0 0 4px rgba(240,212,144,.88),0 3px 5px rgba(35,24,17,.28)}
+@keyframes breathe{50%{transform:scale(.82);opacity:.62}}@keyframes dangerPulse{50%{transform:scale(.87);filter:brightness(1.25)}}@keyframes aiCapture{0%,100%{transform:scale(1)}50%{transform:scale(.8);box-shadow:0 0 0 8px rgba(240,212,144,.35)}}
+.board-caption{display:flex;justify-content:space-between;gap:8px;color:#6f5b45;font-size:12px;margin-top:9px;padding:0 3px}.legend{display:flex;gap:10px;flex-wrap:wrap}.legend span::before{content:"";display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:4px;border:1px solid #7f6a4d}.legend .lvalid::before{background:#e8cf8f}.legend .llast::before{background:#9b4338}
+.side{display:grid;gap:14px}.side .panel{padding:15px}.section-title{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:15px;font-weight:900;letter-spacing:.06em;margin-bottom:11px;padding-bottom:8px;border-bottom:1px solid rgba(66,50,35,.22)}.setting{display:grid;gap:6px;margin:10px 0}.setting label{font-size:12px;color:#6e5b45}.seg{display:grid;grid-template-columns:repeat(2,1fr);gap:6px}.seg.three{grid-template-columns:repeat(3,1fr)}.choice{border:1px solid rgba(65,48,34,.33);background:rgba(255,255,255,.24);padding:9px 7px;border-radius:9px;cursor:pointer;color:var(--ink)}.choice.active{background:var(--ink);color:var(--paper);border-color:var(--ink)}.choice:disabled,select:disabled{opacity:.48;cursor:not-allowed}.select{width:100%;border:1px solid rgba(65,48,34,.33);background:#efe2c5;color:var(--ink);padding:9px;border-radius:9px}.hint{font-size:12px;color:#76624d;line-height:1.55}.lock-note{display:none;margin-top:8px;padding:8px;border-left:3px solid var(--gold);background:rgba(179,138,67,.12);font-size:12px;color:#67533d}.lock-note.show{display:block}.big-status{padding:12px;border:1px solid rgba(66,49,34,.25);background:rgba(255,255,255,.24);border-radius:10px;line-height:1.55;min-height:68px}.big-status strong{display:block;margin-bottom:2px}.micro{font-size:12px;color:#725f49}.progress{height:5px;border-radius:99px;overflow:hidden;background:rgba(45,34,26,.15);margin-top:8px}.progress>i{display:block;height:100%;width:0;background:var(--gold);transition:width .15s linear}.button-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}.btn{border:1px solid rgba(62,46,33,.35);background:#efe1c2;color:var(--ink);border-radius:9px;padding:9px 11px;cursor:pointer;font-weight:800}.btn:hover:not(:disabled){filter:brightness(1.04)}.btn.primary{background:var(--ink);color:var(--paper);border-color:var(--ink)}.btn.danger{background:#7e3d34;color:#f7ead0;border-color:#7e3d34}.btn.ghost{background:transparent;color:inherit;border-color:rgba(207,185,142,.45)}.btn:disabled{opacity:.42;cursor:not-allowed}.btn.full{width:100%}.stat-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}.stat{background:rgba(255,255,255,.22);border:1px solid rgba(66,49,34,.18);padding:8px;border-radius:9px}.stat b{display:block;font-size:18px}.stat span{font-size:11px;color:#77634c}
+.toast{position:fixed;left:50%;bottom:max(18px,env(safe-area-inset-bottom));transform:translate(-50%,16px);background:#29211a;color:#f1e3c6;border:1px solid #b58e4c;padding:10px 14px;border-radius:10px;box-shadow:var(--shadow);opacity:0;pointer-events:none;transition:.2s;z-index:30;max-width:min(92vw,560px);text-align:center}.toast.show{opacity:1;transform:translate(-50%,0)}
+.modal{position:fixed;inset:0;background:rgba(24,19,15,.72);display:none;place-items:center;padding:16px;z-index:40}.modal.show{display:grid}.modal-card{width:min(720px,100%);max-height:min(88vh,780px);overflow:auto;background:#ead9b4;border:2px solid #6a4d37;border-radius:18px;box-shadow:0 24px 60px rgba(0,0,0,.35)}.modal-head{position:sticky;top:0;background:#2b231c;color:#f0dfbd;padding:14px 16px;display:flex;align-items:center;justify-content:space-between;gap:10px;z-index:2}.modal-head h2{margin:0;font-size:18px;letter-spacing:.08em}.modal-body{padding:18px}.guide-step{display:none}.guide-step.active{display:block}.guide-step h3{margin:0 0 8px;font-size:22px}.guide-step p{line-height:1.75;margin:8px 0}.rule-card{border:1px solid rgba(69,51,36,.25);border-left:4px solid var(--gold);background:rgba(255,255,255,.26);border-radius:10px;padding:12px;margin:11px 0;line-height:1.65}.mini-board{width:min(250px,70vw);aspect-ratio:1;margin:14px auto;border:1px solid rgba(65,47,34,.22);border-radius:12px;display:grid;place-items:center;background:rgba(122,82,56,.14);font-size:54px}.guide-nav{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:16px}.dots{display:flex;gap:6px}.dots i{width:8px;height:8px;border-radius:50%;background:#aa9670}.dots i.on{background:#473527;transform:scale(1.25)}
+.result-banner{display:none;margin-bottom:12px;padding:12px;text-align:center;background:#2f261f;color:#f2dfb7;border-radius:12px;border:2px solid var(--gold)}.result-banner.show{display:block}.result-banner b{font-size:20px;display:block}
+.cache-chip{font-size:11px;color:#ccb990;border:1px solid rgba(208,185,141,.45);border-radius:999px;padding:5px 8px;white-space:nowrap}
+@media (max-width:900px){.main{grid-template-columns:1fr}.side{grid-template-columns:repeat(2,minmax(0,1fr))}.side .panel:first-child{grid-row:span 2}.board-shell{max-width:700px}.game-panel{order:0}}
+@media (max-width:640px){.topbar{align-items:flex-start}.brand small{display:none}.brand h1{font-size:20px}.seal{width:34px;height:34px}.top-actions .cache-chip{display:none}.main{padding:10px}.game-panel{padding:9px}.status-row{grid-template-columns:1fr 1fr}.turn-badge{grid-column:1/-1;grid-row:2}.player-card{padding:8px}.side{grid-template-columns:1fr}.side .panel:first-child{grid-row:auto}.board-wrap{border-width:6px;border-radius:12px}.board-caption{font-size:11px}.top-actions .btn{padding:8px 9px}.modal-body{padding:14px}}
+
+/* ===== Responsive layout refinement · v4 ===== */
+:root{
+  --page-gutter:clamp(12px,2.2vw,30px);
+  --panel-pad:clamp(13px,1.5vw,18px);
+}
+html{background:#b7a078}
+body{min-width:280px;overflow-x:hidden}
+.app{min-height:100dvh}
+.topbar{
+  padding-top:max(12px,env(safe-area-inset-top));
+  padding-right:max(var(--page-gutter),env(safe-area-inset-right));
+  padding-bottom:12px;
+  padding-left:max(var(--page-gutter),env(safe-area-inset-left));
+  box-shadow:0 4px 18px rgba(31,23,17,.14);
+}
+.brand h1{line-height:1.05}
+.top-actions{align-items:center}
+.main{
+  width:min(1380px,100%);
+  padding:var(--page-gutter);
+  grid-template-columns:minmax(0,1fr) clamp(320px,27vw,380px);
+  gap:clamp(14px,2vw,26px);
+}
+.game-panel{min-width:0;padding:clamp(10px,1.7vw,20px)}
+.side{min-width:0;gap:clamp(12px,1.4vw,16px)}
+.side .panel{padding:var(--panel-pad)}
+.status-row{gap:clamp(8px,1.3vw,12px)}
+.player-card{min-height:61px;display:flex;flex-direction:column;justify-content:center}
+.pname{font-size:clamp(13px,1.2vw,15px)}
+.pmeta{font-size:clamp(11px,1vw,12px);line-height:1.35}
+.turn-badge{max-width:240px;overflow:hidden;text-overflow:ellipsis;padding-inline:12px}
+.board-shell{
+  width:min(100%,720px);
+  width:min(100%,720px,calc(100dvh - 190px));
+}
+.board-wrap{isolation:isolate}
+.point{width:clamp(38px,4.2vw,52px);height:clamp(38px,4.2vw,52px)}
+.board-caption{align-items:flex-start;line-height:1.45}
+.board-caption>span:last-child{text-align:right}
+.choice,.btn{min-height:40px}
+.choice{line-height:1.2}
+.settings-panel .hint{margin-top:8px}
+.mobile-command-bar{display:none}
+.modal-card{overscroll-behavior:contain}
+.modal-body{padding-bottom:max(18px,env(safe-area-inset-bottom))}
+
+/* Medium desktop / landscape tablet: retain sidebar but let board fit short screens. */
+@media (min-width:901px) and (max-height:760px){
+  .main{padding-top:12px;padding-bottom:12px}
+  .topbar{padding-top:9px;padding-bottom:9px}
+  .seal{width:34px;height:34px}
+  .brand h1{font-size:21px}
+  .brand small{font-size:10px}
+  .board-shell{width:min(100%,650px,calc(100dvh - 155px))}
+  .side .panel{padding:12px 14px}
+  .setting{margin:7px 0}
+  .choice{padding:7px 6px;min-height:36px}
+  .hint,.micro{font-size:11px}
+}
+
+/* Tablet: board uses the full row, utility cards become a balanced two-column deck. */
+@media (max-width:900px){
+  .main{grid-template-columns:repeat(2,minmax(0,1fr));align-items:start}
+  .side{display:contents}
+  .game-panel{grid-column:1/-1;order:20}
+  .settings-panel,.status-panel,.info-panel{min-width:0}
+  .settings-panel{grid-column:1/-1;order:10}
+  .status-panel{grid-column:1;order:30}
+  .info-panel{grid-column:2;order:31}
+  body.game-live .game-panel{order:10}
+  body.game-live .status-panel{order:20}
+  body.game-live .info-panel{order:21}
+  body.game-live .settings-panel{order:30}
+  .board-shell{width:min(100%,700px)}
+  .settings-panel .seg{max-width:560px}
+  .settings-panel .hint{max-width:760px}
+  .stat-grid{grid-template-columns:repeat(4,1fr)}
+  .stat{text-align:center}
+  .modal-card{width:min(760px,100%)}
+}
+
+/* Phone / compact tablet portrait. */
+@media (max-width:680px){
+  :root{--page-gutter:10px;--panel-pad:12px}
+  .topbar{align-items:center;gap:10px;flex-wrap:wrap}
+  .brand{flex:1 1 auto}
+  .brand small{display:none}
+  .brand h1{font-size:20px;letter-spacing:.14em}
+  .seal{width:34px;height:34px;font-size:14px}
+  .top-actions{flex:0 0 auto;gap:6px}
+  .top-actions .cache-chip{display:none}
+  .top-actions .btn{min-height:36px;padding:7px 9px;font-size:12px}
+  .main{display:grid;grid-template-columns:1fr;gap:10px;padding-top:10px;padding-bottom:max(14px,env(safe-area-inset-bottom))}
+  .game-panel,.settings-panel,.status-panel,.info-panel{grid-column:1}
+  .settings-panel{order:10}
+  .game-panel{order:20}
+  .status-panel{order:30}
+  .info-panel{order:31}
+  body.game-live .game-panel{order:10}
+  body.game-live .status-panel{order:20}
+  body.game-live .info-panel{order:21}
+  body.game-live .settings-panel{order:30}
+  .panel{border-radius:13px;box-shadow:0 6px 16px rgba(34,25,18,.12)}
+  .game-panel{padding:8px}
+  .result-banner{margin-bottom:8px;padding:9px}
+  .result-banner b{font-size:17px}
+  .status-row{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:7px;margin-bottom:8px}
+  .player-card{min-height:54px;padding:7px 8px;border-radius:10px}
+  .pname{font-size:13px;gap:6px}
+  .pmeta{font-size:10.5px}
+  .swatch{width:14px;height:14px}
+  .turn-badge{grid-column:1/-1;grid-row:2;max-width:none;width:100%;padding:6px 9px;font-size:11px}
+  .board-shell{width:100%;max-width:620px}
+  .board-wrap{border-width:5px;border-radius:11px;box-shadow:inset 0 0 0 1px rgba(231,211,172,.22),0 7px 16px rgba(49,34,23,.18)}
+  .board-lines line,.board-lines rect{stroke-width:10}
+  .point{width:clamp(38px,12vw,48px);height:clamp(38px,12vw,48px)}
+  .piece{width:76%;height:76%}
+  .board-caption{margin-top:7px;padding:0 2px;font-size:10.5px;gap:6px}
+  .legend{gap:7px}
+  .mobile-command-bar{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:8px}
+  .mobile-command-bar .btn{min-height:42px;padding:8px 6px}
+  .section-title{font-size:14px;margin-bottom:9px;padding-bottom:7px}
+  .setting{margin:8px 0;gap:5px}
+  .setting label{font-size:11px}
+  .choice{min-height:42px;padding:8px 5px;font-size:13px}
+  .choice small{font-size:10px}
+  .btn{min-height:42px}
+  .big-status{min-height:62px;padding:10px;font-size:13px}
+  .hint{font-size:11px;line-height:1.5}
+  .stat-grid{grid-template-columns:repeat(4,1fr);gap:5px}
+  .stat{padding:7px 3px}
+  .stat b{font-size:16px}
+  .stat span{font-size:9.5px;white-space:nowrap}
+  .modal{align-items:end;padding:0}
+  .modal-card{width:100%;max-height:92dvh;border-radius:20px 20px 0 0;border-bottom:0}
+  .modal-head{padding:12px 14px}
+  .modal-head h2{font-size:16px}
+  .modal-body{padding:14px 14px max(16px,env(safe-area-inset-bottom))}
+  .guide-step h3{font-size:19px}
+  .guide-step p,.rule-card{font-size:13px;line-height:1.65}
+  .mini-board{width:min(210px,58vw);font-size:46px}
+}
+
+/* Very narrow phones: preserve comfortable controls without horizontal crowding. */
+@media (max-width:390px){
+  .topbar{padding-left:max(9px,env(safe-area-inset-left));padding-right:max(9px,env(safe-area-inset-right))}
+  .top-actions{width:100%;display:grid;grid-template-columns:1fr 1fr}
+  .top-actions .btn{width:100%}
+  .status-row{gap:5px}
+  .player-card{padding:6px}
+  .pname{font-size:12px}
+  .pmeta{font-size:10px}
+  .point{width:38px;height:38px}
+  .board-caption{display:grid;grid-template-columns:1fr;gap:3px}
+  .board-caption>span:last-child{text-align:left}
+  .seg.three{gap:4px}
+  .choice{font-size:12px}
+  .stat span{font-size:9px}
+}
+
+/* Landscape phones: cap board by viewport height and place status cards after it. */
+@media (max-width:900px) and (orientation:landscape) and (max-height:560px){
+  .topbar{padding-top:max(7px,env(safe-area-inset-top));padding-bottom:7px}
+  .brand small{display:none}
+  .main{grid-template-columns:minmax(0,1.3fr) minmax(250px,.7fr);gap:10px;padding:10px}
+  .side{display:contents}
+  .game-panel{grid-column:1;grid-row:1 / span 3;order:10}
+  .status-panel{grid-column:2;grid-row:1;order:20}
+  .info-panel{grid-column:2;grid-row:2;order:21}
+  .settings-panel{grid-column:2;grid-row:3;order:22}
+  body:not(.game-live) .settings-panel{grid-row:1;order:10}
+  body:not(.game-live) .game-panel{grid-row:1 / span 3;order:20}
+  body:not(.game-live) .status-panel{grid-row:2;order:30}
+  body:not(.game-live) .info-panel{grid-row:3;order:31}
+  .board-shell{width:min(100%,calc(100dvh - 126px));max-width:520px}
+  .status-row{margin-bottom:6px}
+  .player-card{min-height:48px}
+  .board-caption{margin-top:4px}
+  .mobile-command-bar{margin-top:5px}
+  .settings-panel,.status-panel,.info-panel{align-self:start}
+  .settings-panel .hint,.info-panel .hint{display:none}
+  .setting{margin:5px 0}
+  .choice{min-height:34px;padding:5px}
+  .side .panel{padding:9px 10px}
+}
+
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important}}
+</style>
+</head>
+<body>
+<div class="app">
+<header class="topbar">
+  <div class="brand"><div class="seal">九</div><div><h1>九子棋</h1><small>NINE MEN'S MORRIS</small></div></div>
+  <div class="top-actions"><span class="cache-chip" id="cacheChip">本地实时存档</span><button class="btn ghost" id="guideBtn">规则引导</button><button class="btn danger" id="restartTop">重新开始</button></div>
+</header>
+<main class="main">
+  <section class="panel game-panel">
+    <div class="result-banner" id="resultBanner"><b id="resultTitle"></b><span id="resultReason"></span></div>
+    <div class="status-row">
+      <div class="player-card" id="p1Card"><div class="pname"><span class="swatch white"></span><span id="p1Name">白方</span></div><div class="pmeta" id="p1Meta">未开始</div></div>
+      <div class="turn-badge" id="turnBadge">请选择设置并开始</div>
+      <div class="player-card right" id="p2Card"><div class="pname"><span id="p2Name">赤方</span><span class="swatch black"></span></div><div class="pmeta" id="p2Meta">未开始</div></div>
+    </div>
+    <div class="board-shell">
+      <div class="board-wrap" id="board" aria-label="九子棋棋盘">
+        <svg class="board-lines" viewBox="0 0 1000 1000" aria-hidden="true">
+          <rect x="100" y="100" width="800" height="800"/><rect x="220" y="220" width="560" height="560"/><rect x="350" y="350" width="300" height="300"/>
+          <line x1="500" y1="100" x2="500" y2="350"/><line x1="650" y1="500" x2="900" y2="500"/><line x1="500" y1="650" x2="500" y2="900"/><line x1="100" y1="500" x2="350" y2="500"/>
+          <rect class="fine" x="104" y="104" width="792" height="792"/><rect class="fine" x="224" y="224" width="552" height="552"/><rect class="fine" x="354" y="354" width="292" height="292"/>
+        </svg>
+        <svg class="move-overlay" id="moveOverlay" viewBox="0 0 1000 1000" aria-hidden="true"><defs><marker id="arrowHead" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 z" fill="#f0d490"/></marker></defs><g id="moveMarks"></g></svg>
+        <div id="points"></div>
+      </div>
+      <div class="board-caption"><div class="legend"><span class="lvalid">可落/可走</span><span class="llast">上一步</span></div><span id="phaseCaption">摆子阶段 · 每方 9 子</span></div>
+      <div class="mobile-command-bar" aria-label="对局快捷操作">
+        <button class="btn" id="mobileUndoBtn" disabled>悔棋</button>
+        <button class="btn" id="mobileGuideBtn">规则</button>
+        <button class="btn danger" id="mobileRestartBtn">重开</button>
+      </div>
+    </div>
+  </section>
+
+  <aside class="side">
+    <section class="panel settings-panel">
+      <div class="section-title"><span>对局设置</span><span class="micro" id="settingsState">未锁定</span></div>
+      <div class="setting"><label>模式</label><div class="seg"><button class="choice active" data-setting="mode" data-value="ai">AI 对弈</button><button class="choice" data-setting="mode" data-value="pvp">双人同屏</button></div></div>
+      <div class="setting" id="orderSetting"><label>AI 模式先后手</label><div class="seg"><button class="choice active" data-setting="order" data-value="human">玩家先手</button><button class="choice" data-setting="order" data-value="ai">AI 先手</button></div></div>
+      <div class="setting" id="difficultySetting"><label>AI 强度（最长思考）</label><div class="seg three"><button class="choice" data-setting="difficulty" data-value="quick">快速<br><small>1秒</small></button><button class="choice active" data-setting="difficulty" data-value="balanced">均衡<br><small>3秒</small></button><button class="choice" data-setting="difficulty" data-value="extreme">极限<br><small>5秒</small></button></div></div>
+      <div class="hint" id="aiHint">“极限”采用迭代加深、Alpha-Beta 剪枝、置换表与局面排序，并在 5 秒硬上限内尽量搜索更深。</div>
+      <div class="lock-note" id="lockNote">对局已经开始，设置已锁定。若要改模式、先后手或难度，请先点“重新开始”。</div>
+      <button class="btn primary full" id="startBtn" style="margin-top:12px">开始对局</button>
+    </section>
+
+    <section class="panel status-panel">
+      <div class="section-title"><span>当前提示</span><span class="micro" id="moveNo">第 0 手</span></div>
+      <div class="big-status" id="statusBox"><strong>准备就绪</strong><span>先查看规则引导，或直接开始。</span><div class="progress"><i id="aiProgress"></i></div></div>
+      <div class="button-row"><button class="btn" id="undoBtn" disabled>悔棋</button><button class="btn" id="guideSideBtn">规则说明</button></div>
+    </section>
+
+    <section class="panel info-panel">
+      <div class="section-title"><span>对局信息</span><span class="micro">自动保存</span></div>
+      <div class="stat-grid"><div class="stat"><b id="whiteBoard">0</b><span>白方在盘</span></div><div class="stat"><b id="redBoard">0</b><span>赤方在盘</span></div><div class="stat"><b id="whiteHand">9</b><span>白方待下</span></div><div class="stat"><b id="redHand">9</b><span>赤方待下</span></div></div>
+      <p class="hint" id="drawHint" style="margin:10px 0 0">和棋检测：三次同局面；走子阶段连续 50 个完整回合未成三；或整局达到 250 半回合仍未分胜负。</p>
+    </section>
+  </aside>
+</main>
+</div>
+
+<div class="toast" id="toast"></div>
+<div class="modal" id="guideModal" role="dialog" aria-modal="true" aria-labelledby="guideTitle">
+  <div class="modal-card">
+    <div class="modal-head"><h2 id="guideTitle">九子棋 · 5 步上手</h2><button class="btn ghost" id="guideClose" aria-label="关闭规则说明">关闭</button></div>
+    <div class="modal-body">
+      <section class="guide-step active" data-step="0"><h3>① 先摆满 9 枚棋子</h3><p>棋盘有 24 个交点。白方先行，双方轮流把手中的棋子放到任意空点，直到各自 9 枚都已经落到棋盘上。</p><div class="rule-card"><b>关键：</b>摆子阶段只能“放新棋”，不能移动已经落下的棋。主界面会实时显示双方“待下”还剩几枚。</div><div class="mini-board">9 ↔ 9</div></section>
+      <section class="guide-step" data-step="1"><h3>② 三子一线，就能吃一子</h3><p>自己的 3 枚棋沿棋盘的一条完整直线排成一组，叫“成三 / Mill”。每次新成三，立即吃掉对方 1 枚棋。</p><div class="rule-card"><b>吃子限制：</b>优先吃“不在对方成三中的棋”。只有当对方所有在盘棋都属于成三时，才允许吃成三里的棋。一次走法即使同时形成两组，也只吃 1 子。</div><div class="mini-board">●—●—●</div></section>
+      <section class="guide-step" data-step="2"><h3>③ 摆完以后，只能沿线走一步</h3><p>双方都没有待下棋子后，进入走子阶段。每回合选择自己一枚棋，只能沿棋盘线移动到“相邻的空点”；不能跨子，也没有斜线。</p><div class="rule-card">你可以把棋从一个成三中移开，之后再移回去重新成三；只要这一步确实重新闭合成三，就可以再次吃子。</div><div class="mini-board">● → ○</div></section>
+      <section class="guide-step" data-step="3"><h3>④ 仅剩 3 子时，可以“飞”</h3><p>进入走子阶段后，如果某一方恰好只剩 3 枚在盘棋，该方获得飞行能力：每回合可把任意一枚自己的棋移到任意空点，不再受相邻限制。</p><div class="rule-card"><b>注意：</b>飞行只属于“恰好 3 子”的那一方，不会让另一方一起飞。</div><div class="mini-board">● ⇢ ✦</div></section>
+      <section class="guide-step" data-step="4"><h3>⑤ 怎么赢？怎么和？</h3><p>走子阶段，若一方只剩 2 子，或轮到他时完全没有合法走法，则该方立即判负。</p><div class="rule-card"><b>自动和棋：</b>同一局面（含轮到谁走）出现 3 次；连续 50 个完整回合没有任何一方成三；或整局累计达到 250 个半回合仍未分出胜负。</div><p class="micro">本页面使用标准 24 点棋盘与常用 WMA 正式竞赛规则口径；无斜线、允许 3 子飞行、允许在敌方全部棋都被三连保护时吃三连中的棋。</p></section>
+      <div class="guide-nav"><button class="btn" id="guidePrev">上一步</button><div class="dots" id="guideDots"></div><button class="btn primary" id="guideNext">下一步</button></div>
+    </div>
+  </div>
+</div>
+
+<script>
+(() => {
+'use strict';
+const VERSION = 3;
+const CACHE_KEY = 'retro_nine_mens_morris_v3';
+const PTS = [[100,100],[500,100],[900,100],[900,500],[900,900],[500,900],[100,900],[100,500],[220,220],[500,220],[780,220],[780,500],[780,780],[500,780],[220,780],[220,500],[350,350],[500,350],[650,350],[650,500],[650,650],[500,650],[350,650],[350,500]];
+const ADJ = [
+ [1,7],[0,2,9],[1,3],[2,4,11],[3,5],[4,6,13],[5,7],[6,0,15],
+ [9,15],[8,10,1,17],[9,11],[10,12,3,19],[11,13],[12,14,5,21],[13,15],[14,8,7,23],
+ [17,23],[16,18,9],[17,19],[18,20,11],[19,21],[20,22,13],[21,23],[22,16,15]
+];
+const MILLS = [[0,1,2],[2,3,4],[4,5,6],[6,7,0],[8,9,10],[10,11,12],[12,13,14],[14,15,8],[16,17,18],[18,19,20],[20,21,22],[22,23,16],[1,9,17],[3,11,19],[5,13,21],[7,15,23]];
+const MILLS_BY_POINT = Array.from({length:24},()=>[]);
+MILLS.forEach((m,mi)=>m.forEach(p=>MILLS_BY_POINT[p].push(mi)));
+const NAMES = {1:'白方',2:'赤方'};
+const settingsDefault = {mode:'ai', order:'human', difficulty:'balanced'};
+let settings = {...settingsDefault};
+let state = freshState();
+let history = [];
+let selected = -1;
+let aiWorker = null;
+let aiWatchdog = null;
+let aiProgressTimer = null;
+let aiStartedAt = 0;
+let latestAiBest = null;
+let aiUndoLocked = false;
+let guideStep = 0;
+let toastTimer = null;
+let pendingCaptureTimer = null;
+let saveTimer = null;
+
+const $ = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+const el = {
+  points:$('#points'), board:$('#board'), moveMarks:$('#moveMarks'), turnBadge:$('#turnBadge'), phaseCaption:$('#phaseCaption'),
+  p1Card:$('#p1Card'),p2Card:$('#p2Card'),p1Name:$('#p1Name'),p2Name:$('#p2Name'),p1Meta:$('#p1Meta'),p2Meta:$('#p2Meta'),
+  statusBox:$('#statusBox'),undo:$('#undoBtn'),mobileUndo:$('#mobileUndoBtn'),start:$('#startBtn'),settingsState:$('#settingsState'),lockNote:$('#lockNote'),
+  orderSetting:$('#orderSetting'),difficultySetting:$('#difficultySetting'),aiHint:$('#aiHint'),whiteBoard:$('#whiteBoard'),redBoard:$('#redBoard'),whiteHand:$('#whiteHand'),redHand:$('#redHand'),moveNo:$('#moveNo'),
+  toast:$('#toast'),resultBanner:$('#resultBanner'),resultTitle:$('#resultTitle'),resultReason:$('#resultReason'),cacheChip:$('#cacheChip'),aiProgress:$('#aiProgress'),
+  guide:$('#guideModal'),guidePrev:$('#guidePrev'),guideNext:$('#guideNext'),guideDots:$('#guideDots')
+};
+
+function freshState(){return {started:false,board:Array(24).fill(0),inHand:[0,9,9],current:1,captureMode:false,pendingAction:null,lastAction:null,gameOver:false,result:null,halfMovesWithoutMill:0,movementPly:0,repetition:{},moveNumber:0,busy:false,aiPendingCapture:null,aiCaptureAt:0};}
+function countBoard(player,s=state){let n=0;for(const v of s.board)if(v===player)n++;return n}
+function other(p){return p===1?2:1}
+function isMovement(s=state){return s.inHand[1]===0&&s.inHand[2]===0}
+function inMill(board,player,pos){return MILLS_BY_POINT[pos].some(mi=>MILLS[mi].every(p=>board[p]===player))}
+function formsMill(board,player,pos){return inMill(board,player,pos)}
+function capturable(board,opp){const all=[];const free=[];for(let i=0;i<24;i++)if(board[i]===opp){all.push(i);if(!inMill(board,opp,i))free.push(i)}return free.length?free:all}
+function canMoveFrom(pos,player,s=state){if(s.board[pos]!==player||!isMovement(s))return false;const cnt=countBoard(player,s);if(cnt===3)return s.board.some(v=>v===0);return ADJ[pos].some(n=>s.board[n]===0)}
+function legalDests(pos,player,s=state){if(s.board[pos]!==player||!isMovement(s))return[];if(countBoard(player,s)===3){const out=[];for(let i=0;i<24;i++)if(s.board[i]===0)out.push(i);return out}return ADJ[pos].filter(n=>s.board[n]===0)}
+function hasAnyMove(player,s=state){if(!isMovement(s))return s.board.some(v=>v===0)&&s.inHand[player]>0;if(countBoard(player,s)===3)return s.board.some(v=>v===0);for(let i=0;i<24;i++)if(canMoveFrom(i,player,s))return true;return false}
+function positionKey(s=state){return s.board.join('')+'|'+s.current+'|'+s.inHand[1]+','+s.inHand[2]}
+function snapshot(){return JSON.parse(JSON.stringify({...state,busy:false,aiPendingCapture:null,aiCaptureAt:0}));}
+function restoreSnapshot(s){cancelAI();clearTimeout(pendingCaptureTimer);state=JSON.parse(JSON.stringify(s));state.busy=false;state.aiPendingCapture=null;state.aiCaptureAt=0;selected=-1;render();saveCache();maybeTriggerAI();}
+function pushHistory(){history.push(snapshot());if(history.length>320)history.shift();}
+
+function buildPoints(){el.points.innerHTML='';PTS.forEach(([x,y],i)=>{const b=document.createElement('button');b.className='point';b.dataset.i=i;b.style.left=(x/10)+'%';b.style.top=(y/10)+'%';b.setAttribute('aria-label','棋盘位置 '+(i+1));b.addEventListener('click',()=>onPoint(i));el.points.appendChild(b)});}
+function render(){
+  document.body.classList.toggle('game-live',state.started);document.body.classList.toggle('game-finished',state.gameOver);
+  const wb=countBoard(1), rb=countBoard(2);el.whiteBoard.textContent=wb;el.redBoard.textContent=rb;el.whiteHand.textContent=state.inHand[1];el.redHand.textContent=state.inHand[2];el.moveNo.textContent='第 '+state.moveNumber+' 手';
+  const movePhase=isMovement();el.phaseCaption.textContent=state.started?(movePhase?'走子阶段'+(countBoard(state.current)===3?' · 当前方可飞行':' · 沿线相邻移动'):'摆子阶段 · 白方待下 '+state.inHand[1]+' · 赤方待下 '+state.inHand[2]):'摆子阶段 · 每方 9 子';
+  const human=humanPlayer();
+  el.p1Name.textContent=settings.mode==='ai'?(human===1?'玩家 · 白方':'AI · 白方'):'白方';
+  el.p2Name.textContent=settings.mode==='ai'?(human===2?'玩家 · 赤方':'AI · 赤方'):'赤方';
+  el.p1Meta.textContent=state.started?playerMeta(1):'待下 9 · 在盘 0';el.p2Meta.textContent=state.started?playerMeta(2):'待下 9 · 在盘 0';
+  el.p1Card.classList.toggle('active',state.started&&!state.gameOver&&state.current===1);el.p2Card.classList.toggle('active',state.started&&!state.gameOver&&state.current===2);
+  if(!state.started)el.turnBadge.textContent='请选择设置并开始';else if(state.gameOver)el.turnBadge.textContent='对局结束';else if(state.aiPendingCapture)el.turnBadge.textContent='AI 成三 · 即将吃子';else if(state.captureMode)el.turnBadge.textContent=NAMES[state.current]+'成三 · 请选择吃子';else if(state.busy)el.turnBadge.textContent='AI 思考中';else el.turnBadge.textContent=NAMES[state.current]+'回合';
+  const valid=new Set(getValidTargets());
+  $$('.point').forEach((b,i)=>{b.className='point';const p=state.board[i];b.innerHTML=p?'<span class="piece '+(p===1?'white':'black')+'"></span>':'';if(valid.has(i))b.classList.add(state.captureMode?'captureable':'valid');if(i===selected)b.classList.add('selected');if(state.aiPendingCapture&&i===state.aiPendingCapture.capture)b.classList.add('ai-target');if(state.lastAction&&i===state.lastAction.to)b.classList.add('last-to');b.disabled=!state.started||state.gameOver||state.busy||!!state.aiPendingCapture||!isHumanTurnInteractive();});
+  renderMoveMarks();renderStatus();renderSettings();renderResult();updateUndo();scheduleSave();
+}
+function playerMeta(p){const b=countBoard(p);if(!isMovement())return '待下 '+state.inHand[p]+' · 在盘 '+b;return '在盘 '+b+(b===3?' · 可飞行':' · 常规走子')}
+function humanPlayer(){if(settings.mode!=='ai')return 0;return settings.order==='human'?1:2}
+function aiPlayer(){if(settings.mode!=='ai')return 0;return other(humanPlayer())}
+function isHumanTurnInteractive(){return settings.mode==='pvp'||state.current===humanPlayer()}
+function getValidTargets(){if(!state.started||state.gameOver||state.busy||state.aiPendingCapture)return[];if(!isHumanTurnInteractive())return[];if(state.captureMode)return capturable(state.board,other(state.current));if(!isMovement()){const a=[];for(let i=0;i<24;i++)if(state.board[i]===0)a.push(i);return a}if(selected>=0)return legalDests(selected,state.current);const a=[];for(let i=0;i<24;i++)if(canMoveFrom(i,state.current))a.push(i);return a}
+function renderMoveMarks(){const a=state.lastAction;let html='';if(a){if(a.from!=null&&a.from>=0&&a.to!=null){const [x1,y1]=PTS[a.from],[x2,y2]=PTS[a.to];html+=`<line class="last-arrow" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" marker-end="url(#arrowHead)"/>`}else if(a.to!=null){const [x,y]=PTS[a.to];html+=`<circle class="place-mark" cx="${x}" cy="${y}" r="42"/>`}if(a.capture!=null&&a.capture>=0){const [x,y]=PTS[a.capture];html+=`<circle class="capture-mark" cx="${x}" cy="${y}" r="42"/><line class="capture-x" x1="${x-25}" y1="${y-25}" x2="${x+25}" y2="${y+25}"/><line class="capture-x" x1="${x+25}" y1="${y-25}" x2="${x-25}" y2="${y+25}"/>`}}el.moveMarks.innerHTML=html}
+
+function onPoint(i){
+  if(!state.started||state.gameOver||state.busy||state.aiPendingCapture||!isHumanTurnInteractive())return;
+  const p=state.current;
+  if(state.captureMode){if(capturable(state.board,other(p)).includes(i)){const wasMove=!!(state.pendingAction&&state.pendingAction.from>=0);state.board[i]=0;state.pendingAction.capture=i;state.lastAction={...state.pendingAction};state.captureMode=false;state.pendingAction=null;finishTurn(true,wasMove);tapEffect();}else toast('这个棋子当前不能吃：应优先吃不在三连中的棋。');return}
+  if(!isMovement()){
+    if(state.board[i]!==0){toast('这里已经有棋子。');return}
+    aiUndoLocked=false;pushHistory();state.board[i]=p;state.inHand[p]--;state.pendingAction={from:-1,to:i,capture:null};
+    if(formsMill(state.board,p,i)){state.captureMode=true;state.lastAction={from:-1,to:i,capture:null};render();toast('成三！请选择一枚可吃的对方棋。');}
+    else{state.lastAction={from:-1,to:i,capture:null};state.pendingAction=null;finishTurn(false,false)}return;
+  }
+  if(selected<0){if(state.board[i]===p&&canMoveFrom(i,p)){selected=i;render()}else if(state.board[i]===p)toast('这枚棋当前没有合法落点。');return}
+  if(i===selected){selected=-1;render();return}
+  if(state.board[i]===p&&canMoveFrom(i,p)){selected=i;render();return}
+  const dests=legalDests(selected,p);
+  if(!dests.includes(i)){toast(countBoard(p)===3?'飞行时也必须落在空点。':'只能沿棋盘线走到相邻空点。');return}
+  aiUndoLocked=false;pushHistory();const from=selected;selected=-1;state.board[from]=0;state.board[i]=p;state.pendingAction={from,to:i,capture:null};
+  if(formsMill(state.board,p,i)){state.captureMode=true;state.lastAction={from,to:i,capture:null};render();toast('成三！请选择一枚可吃的对方棋。');}
+  else{state.lastAction={from,to:i,capture:null};state.pendingAction=null;finishTurn(false,true)}
+}
+
+function finishTurn(madeMill,wasMovementAction=false){
+  const mover=state.current;
+  if(wasMovementAction){state.movementPly++;state.halfMovesWithoutMill=madeMill?0:state.halfMovesWithoutMill+1;}
+  state.moveNumber++;state.current=other(mover);selected=-1;
+  const end=detectEnd();if(end){endGame(end);return}
+  if(isMovement()){
+    const k=positionKey();state.repetition[k]=(state.repetition[k]||0)+1;
+    if(state.repetition[k]>=3){endGame({draw:true,reason:'同一局面（含轮到谁走）已经出现 3 次。'});return}
+    if(state.halfMovesWithoutMill>=100){endGame({draw:true,reason:'连续 50 个完整回合（100 个半回合）没有任何一方再成三。'});return}
+    if(state.moveNumber>=250){endGame({draw:true,reason:'整局已达到 250 个半回合仍未分出胜负。'});return}
+  }
+  render();maybeTriggerAI();
+}
+function detectEnd(){if(!isMovement())return null;const p=state.current,op=other(p),c=countBoard(p),oc=countBoard(op);if(c<3)return{winner:op,reason:NAMES[p]+'只剩 '+c+' 枚棋，无法再成三。'};if(oc<3)return{winner:p,reason:NAMES[op]+'只剩 '+oc+' 枚棋，无法再成三。'};if(!hasAnyMove(p))return{winner:op,reason:NAMES[p]+'已经没有任何合法走法。'};return null}
+function endGame(r){cancelAI();state.gameOver=true;state.result=r;state.busy=false;state.aiPendingCapture=null;state.aiCaptureAt=0;render();toast(r.draw?'对局和棋。':NAMES[r.winner]+'获胜！')}
+
+function renderStatus(){
+  let title='准备就绪',msg='先查看规则引导，或直接开始。';
+  if(state.started){
+    if(state.gameOver){title=state.result.draw?'和棋':'对局结束';msg=state.result.reason}
+    else if(state.aiPendingCapture){title='AI 已经成三';msg='吃子目标已锁定，1 秒后执行吃子。'}
+    else if(state.busy){title='AI 正在思考';const d=diffInfo();msg=`${d.label}模式，单次思考最长 ${d.sec} 秒。棋盘仍保持流畅。`}
+    else if(state.captureMode){title=NAMES[state.current]+'完成三连';msg='请点选高亮的对方棋子完成吃子。'}
+    else if(!isMovement()){title=NAMES[state.current]+'落子';msg=`${NAMES[1]}还可下 ${state.inHand[1]} 子，${NAMES[2]}还可下 ${state.inHand[2]} 子。`}
+    else if(countBoard(state.current)===3){title=NAMES[state.current]+'进入飞行';msg='只剩 3 子：可从任意己方棋飞到任意空点。'}
+    else{title=NAMES[state.current]+'走子';msg='先选一枚己棋，再选择沿线相邻的空点。'}
+  }
+  el.statusBox.querySelector('strong').textContent=title;el.statusBox.querySelector('span').textContent=msg;
+}
+function renderSettings(){const locked=state.started;$$('.choice').forEach(b=>{const key=b.dataset.setting,val=b.dataset.value;b.classList.toggle('active',settings[key]===val);b.disabled=locked});el.start.disabled=locked;el.start.textContent=locked?'对局进行中':'开始对局';el.settingsState.textContent=locked?'已锁定':'未锁定';el.lockNote.classList.toggle('show',locked);const isAI=settings.mode==='ai';el.orderSetting.style.display=isAI?'grid':'none';el.difficultySetting.style.display=isAI?'grid':'none';el.aiHint.style.display=isAI?'block':'none'}
+function renderResult(){el.resultBanner.classList.toggle('show',state.gameOver);if(state.gameOver){el.resultTitle.textContent=state.result.draw?'和棋':NAMES[state.result.winner]+'获胜';el.resultReason.textContent=state.result.reason}}
+function updateUndo(){let ok=state.started&&history.length>0;if(settings.mode==='ai'){ok=ok&&!aiUndoLocked&&history.some(s=>s.current===humanPlayer());}el.undo.disabled=!ok;if(el.mobileUndo)el.mobileUndo.disabled=!ok}
+function tapEffect(){if(navigator.vibrate)navigator.vibrate(18)}
+
+function startGame(){if(state.started)return;state=freshState();state.started=true;history=[];selected=-1;aiUndoLocked=false;state.repetition={};state.repetition[positionKey()]=1;render();toast('对局已开始，设置已锁定。');maybeTriggerAI()}
+function restartGame(){if(!state.started&&!localStorage.getItem(CACHE_KEY)){settings={...settingsDefault};render();return}if(!confirm('重新开始会清空当前对局、本地存档，并把所有设置恢复默认。确定吗？'))return;cancelAI();clearTimeout(pendingCaptureTimer);localStorage.removeItem(CACHE_KEY);settings={...settingsDefault};state=freshState();history=[];selected=-1;aiUndoLocked=false;render();toast('已重置。可重新选择设置并开始。')}
+function undo(){if(el.undo.disabled)return;cancelAI();clearTimeout(pendingCaptureTimer);if(settings.mode==='pvp'){const s=history.pop();if(s)restoreSnapshot(s);return}const hp=humanPlayer();let idx=-1;for(let i=history.length-1;i>=0;i--){if(history[i].current===hp&&!history[i].captureMode){idx=i;break}}if(idx<0){toast('目前没有可撤回的玩家步骤。');return}const s=history[idx];history=history.slice(0,idx);aiUndoLocked=true;restoreSnapshot(s);toast('已回到你上一步操作前；请先走一步，才能再次悔棋。')}
+
+function diffInfo(){return settings.difficulty==='quick'?{ms:1000,sec:1,label:'快速',depth:24}:settings.difficulty==='extreme'?{ms:5000,sec:5,label:'极限',depth:80}:{ms:3000,sec:3,label:'均衡',depth:48}}
+function maybeTriggerAI(){if(!state.started||state.gameOver||settings.mode!=='ai'||state.current!==aiPlayer()||state.captureMode||state.aiPendingCapture)return;setTimeout(requestAI,80)}
+function requestAI(){
+  if(!state.started||state.gameOver||state.current!==aiPlayer()||state.busy||state.aiPendingCapture)return;
+  const d=diffInfo();state.busy=true;latestAiBest=null;aiStartedAt=performance.now();render();startAiProgress(d.ms);
+  const code='('+aiWorkerMain.toString()+')()';
+  try{const workerUrl=URL.createObjectURL(new Blob([code],{type:'text/javascript'}));aiWorker=new Worker(workerUrl);URL.revokeObjectURL(workerUrl);}catch(e){state.busy=false;render();fallbackAI();return}
+  aiWorker.onmessage=e=>{const data=e.data||{};if(data.type==='progress'){latestAiBest=data.move;return}if(data.type==='done'){const mv=data.move||latestAiBest;cancelAI(false);state.busy=false;if(mv)applyAIMove(mv);else{const end=detectEnd();if(end)endGame(end);else fallbackAI()}}};
+  aiWorker.onerror=()=>{const mv=latestAiBest;cancelAI(false);state.busy=false;if(mv)applyAIMove(mv);else fallbackAI()};
+  aiWorker.postMessage({state:{board:state.board,inHand:state.inHand,current:state.current,halfMovesWithoutMill:state.halfMovesWithoutMill,movementPly:state.movementPly,moveNumber:state.moveNumber},player:aiPlayer(),limit:d.ms,maxDepth:d.depth,rootRep:state.repetition[positionKey()]||1});
+  aiWatchdog=setTimeout(()=>{const mv=latestAiBest;cancelAI(false);state.busy=false;if(mv)applyAIMove(mv);else fallbackAI()},d.ms);
+}
+function startAiProgress(ms){clearInterval(aiProgressTimer);el.aiProgress.style.width='0%';aiProgressTimer=setInterval(()=>{const x=Math.min(100,(performance.now()-aiStartedAt)/ms*100);el.aiProgress.style.width=x+'%'},80)}
+function cancelAI(resetBusy=true){if(aiWorker){aiWorker.terminate();aiWorker=null}clearTimeout(aiWatchdog);aiWatchdog=null;clearInterval(aiProgressTimer);aiProgressTimer=null;el.aiProgress.style.width='0%';if(resetBusy)state.busy=false}
+function fallbackAI(){const acts=generateFullActionsMain(state,state.current);if(!acts.length){const e=detectEnd();if(e)endGame(e);return}acts.sort((a,b)=>(b.capture!=null)-(a.capture!=null));applyAIMove(acts[0])}
+function generateFullActionsMain(s,p){const out=[];if(!isMovement(s)){for(let to=0;to<24;to++)if(s.board[to]===0){const b=s.board.slice();b[to]=p;if(formsMill(b,p,to)){const caps=capturable(b,other(p));if(caps.length)caps.forEach(c=>out.push({from:-1,to,capture:c,mill:true}));else out.push({from:-1,to,capture:null,mill:true})}else out.push({from:-1,to,capture:null,mill:false})}return out}for(let from=0;from<24;from++)if(s.board[from]===p){for(const to of legalDests(from,p,s)){const b=s.board.slice();b[from]=0;b[to]=p;if(formsMill(b,p,to)){const caps=capturable(b,other(p));if(caps.length)caps.forEach(c=>out.push({from,to,capture:c,mill:true}));else out.push({from,to,capture:null,mill:true})}else out.push({from,to,capture:null,mill:false})}}return out}
+function applyAIMove(mv){
+  if(state.gameOver||state.current!==aiPlayer())return;pushHistory();const p=state.current;
+  if(mv.from==null||mv.from<0){state.board[mv.to]=p;state.inHand[p]--}else{state.board[mv.from]=0;state.board[mv.to]=p}
+  state.lastAction={from:mv.from,to:mv.to,capture:null};
+  if(mv.capture!=null&&mv.capture>=0){state.aiPendingCapture={...mv};state.aiCaptureAt=Date.now()+1000;state.busy=false;render();pendingCaptureTimer=setTimeout(completeAICapture,1000);return}
+  finishTurn(!!mv.mill,mv.from>=0)
+}
+function completeAICapture(){if(!state.aiPendingCapture||state.gameOver)return;const mv=state.aiPendingCapture;state.board[mv.capture]=0;state.lastAction={from:mv.from,to:mv.to,capture:mv.capture};state.aiPendingCapture=null;state.aiCaptureAt=0;tapEffect();finishTurn(true,mv.from>=0)}
+
+function aiWorkerMain(){
+  const ADJ=[[1,7],[0,2,9],[1,3],[2,4,11],[3,5],[4,6,13],[5,7],[6,0,15],[9,15],[8,10,1,17],[9,11],[10,12,3,19],[11,13],[12,14,5,21],[13,15],[14,8,7,23],[17,23],[16,18,9],[17,19],[18,20,11],[19,21],[20,22,13],[21,23],[22,16,15]];
+  const MILLS=[[0,1,2],[2,3,4],[4,5,6],[6,7,0],[8,9,10],[10,11,12],[12,13,14],[14,15,8],[16,17,18],[18,19,20],[20,21,22],[22,23,16],[1,9,17],[3,11,19],[5,13,21],[7,15,23]];
+  const PTS=[[100,100],[500,100],[900,100],[900,500],[900,900],[500,900],[100,900],[100,500],[220,220],[500,220],[780,220],[780,500],[780,780],[500,780],[220,780],[220,500],[350,350],[500,350],[650,350],[650,500],[650,650],[500,650],[350,650],[350,500]];
+  const FULL=(1<<24)-1, INF=1000000000, MATE=10000000;
+  const MB=Array.from({length:24},()=>[]), MM=MILLS.map(m=>m.reduce((z,x)=>z|(1<<x),0)), AM=ADJ.map(a=>a.reduce((z,x)=>z|(1<<x),0)), DEG=ADJ.map(a=>a.length);
+  MILLS.forEach((m,mi)=>m.forEach(p=>MB[p].push(mi)));
+  const POW3=new Array(25);POW3[0]=1;for(let i=1;i<=24;i++)POW3[i]=POW3[i-1]*3;const BOARD_BASE=POW3[24];
+  const coord=new Map();PTS.forEach(([x,y],i)=>coord.set(x+','+y,i));
+  const TF=[(x,y)=>[x,y],(x,y)=>[1000-y,x],(x,y)=>[1000-x,1000-y],(x,y)=>[y,1000-x],(x,y)=>[1000-x,y],(x,y)=>[x,1000-y],(x,y)=>[y,x],(x,y)=>[1000-y,1000-x]];
+  const SYM=TF.map(f=>PTS.map(([x,y])=>coord.get(f(x,y)[0]+','+f(x,y)[1])));
+  let deadline=0,nodes=0,lastBest=0,prevScore=0,rootState=null,rootMovesCache=[],rootRepBase=1,rootRepKey=0;
+  let historyScore=new Int32Array(600),killer1=new Uint16Array(128),killer2=new Uint16Array(128),pathKeys=new Array(160);
+  let TT_SIZE=1<<18,TT_MASK=TT_SIZE-1,ttLock=null,ttDepth=null,ttValue=null,ttFlag=null,ttMove=null;
+  const oth=p=>p===1?2:1;
+  function popcnt(x){x>>>=0;x=x-((x>>>1)&0x55555555);x=(x&0x33333333)+((x>>>2)&0x33333333);return (((x+(x>>>4))&0x0f0f0f0f)*0x01010101)>>>24}
+  const bitIndex=b=>31-Math.clz32(b);
+  const movement=s=>s.h1===0&&s.h2===0;
+  const bits=(s,p)=>p===1?s.b1:s.b2;
+  function makeState(r){let b1=0,b2=0,code=0;for(let i=0;i<24;i++){const v=r.board[i]|0;if(v===1){b1|=1<<i;code+=POW3[i]}else if(v===2){b2|=1<<i;code+=2*POW3[i]}}return{b1:b1>>>0,b2:b2>>>0,h1:r.inHand[1]|0,h2:r.inHand[2]|0,cur:r.current|0,hm:r.halfMovesWithoutMill|0,mp:r.movementPly|0,mn:r.moveNumber|0,code}}
+  function formsMill(bb,pos){for(const mi of MB[pos]){const m=MM[mi];if((bb&m)===m)return true}return false}
+  function protectedBits(bb){let z=0;for(const m of MM)if((bb&m)===m)z|=m;return z>>>0}
+  function capturableBits(ob){const prot=protectedBits(ob),free=(ob&(~prot))&FULL;return (free||ob)>>>0}
+  function packMove(from,to,cap,mill){return 1+(to|((from+1)<<5)|((cap+1)<<10)|(mill?32768:0))}
+  function rawMove(m){return m-1}
+  function mTo(m){return rawMove(m)&31}
+  function mFrom(m){return ((rawMove(m)>>>5)&31)-1}
+  function mCap(m){return ((rawMove(m)>>>10)&31)-1}
+  function mMill(m){return (rawMove(m)&32768)!==0}
+  function unpackMove(m){return{from:mFrom(m),to:mTo(m),capture:mCap(m),mill:mMill(m)}}
+  function actions(s,tacticalOnly=false){
+    const p=s.cur,my=bits(s,p),ob=bits(s,oth(p)),occ=(my|ob)>>>0,empty=(FULL&(~occ))>>>0,out=[];
+    if(!movement(s)){
+      const hand=p===1?s.h1:s.h2;if(hand<=0)return out;let e=empty;
+      while(e){const lb=(e&-e)>>>0,to=bitIndex(lb),my2=(my|lb)>>>0,mill=formsMill(my2,to);e=(e^lb)>>>0;if(tacticalOnly&&!mill)continue;if(mill){let cs=capturableBits(ob);if(cs){while(cs){const cb=(cs&-cs)>>>0,c=bitIndex(cb);cs=(cs^cb)>>>0;out.push(packMove(-1,to,c,true))}}else out.push(packMove(-1,to,-1,true))}else out.push(packMove(-1,to,-1,false))}
+      return out;
+    }
+    const fly=popcnt(my)===3;let fs=my;
+    while(fs){const fb=(fs&-fs)>>>0,from=bitIndex(fb);fs=(fs^fb)>>>0;let ds=fly?empty:(AM[from]&empty);while(ds){const tb=(ds&-ds)>>>0,to=bitIndex(tb);ds=(ds^tb)>>>0;const my2=((my&(~fb))|tb)>>>0,mill=formsMill(my2,to);if(tacticalOnly&&!mill)continue;if(mill){let cs=capturableBits(ob);if(cs){while(cs){const cb=(cs&-cs)>>>0,c=bitIndex(cb);cs=(cs^cb)>>>0;out.push(packMove(from,to,c,true))}}else out.push(packMove(from,to,-1,true))}else out.push(packMove(from,to,-1,false))}}
+    return out;
+  }
+  function apply(s,m){
+    const p=s.cur,op=oth(p),from=mFrom(m),to=mTo(m),cap=mCap(m),wasMovement=movement(s),tb=1<<to;
+    let b1=s.b1,b2=s.b2,h1=s.h1,h2=s.h2,code=s.code;
+    if(from<0){if(p===1){b1=(b1|tb)>>>0;h1--}else{b2=(b2|tb)>>>0;h2--}code+=p*POW3[to]}
+    else{const fb=1<<from;if(p===1)b1=((b1&(~fb))|tb)>>>0;else b2=((b2&(~fb))|tb)>>>0;code+=p*(POW3[to]-POW3[from])}
+    if(cap>=0){const cb=1<<cap;if(op===1)b1=(b1&(~cb))>>>0;else b2=(b2&(~cb))>>>0;code-=op*POW3[cap]}
+    return{b1,b2,h1,h2,cur:op,hm:wasMovement?(mMill(m)?0:s.hm+1):s.hm,mp:wasMovement?s.mp+1:s.mp,mn:s.mn+1,code};
+  }
+  function hasMove(s,p){
+    if(!movement(s))return (p===1?s.h1:s.h2)>0&&((FULL&(~(s.b1|s.b2)))!==0);
+    const my=bits(s,p),empty=(FULL&(~(s.b1|s.b2)))>>>0;if(popcnt(my)===3)return empty!==0;let x=my;while(x){const lb=(x&-x)>>>0,i=bitIndex(lb);x=(x^lb)>>>0;if(AM[i]&empty)return true}return false;
+  }
+  function terminal(s,ply){if(!movement(s))return null;const p=s.cur;if(popcnt(bits(s,p))<3)return-MATE+ply;if(!hasMove(s,p))return-MATE+ply;if(s.hm>=100||s.mn>=250)return 0;return null}
+  function patternStats(bb,ob){let mills=0,two=0,one=0,prot=0;for(const m of MM){const c=popcnt(bb&m),o=popcnt(ob&m);if(c===3){mills++;prot|=m}else if(o===0&&c===2)two++;else if(o===0&&c===1)one++}return[mills,two,one,popcnt(prot)]}
+  function forkCount(bb,empty){let f=0,e=empty;while(e){const lb=(e&-e)>>>0,i=bitIndex(lb);e=(e^lb)>>>0;let n=0;for(const mi of MB[i])if(popcnt(bb&MM[mi])===2)n++;if(n>1)f+=n-1}return f}
+  function doubleClosed(bb){let n=0,x=bb;while(x){const lb=(x&-x)>>>0,i=bitIndex(lb);x=(x^lb)>>>0;let c=0;for(const mi of MB[i])if((bb&MM[mi])===MM[mi])c++;if(c>1)n+=c-1}return n}
+  function mobility(s,p){if(!movement(s))return 0;const my=bits(s,p),empty=(FULL&(~(s.b1|s.b2)))>>>0;if(popcnt(my)===3)return 0;let n=0,x=my;while(x){const lb=(x&-x)>>>0,i=bitIndex(lb);x=(x^lb)>>>0;n+=popcnt(AM[i]&empty)}return n}
+  function blocked(s,p){if(!movement(s))return 0;const my=bits(s,p);if(popcnt(my)===3)return 0;const empty=(FULL&(~(s.b1|s.b2)))>>>0;let n=0,x=my;while(x){const lb=(x&-x)>>>0,i=bitIndex(lb);x=(x^lb)>>>0;if(!(AM[i]&empty))n++}return n}
+  function positional(bb){let v=0,x=bb;while(x){const lb=(x&-x)>>>0,i=bitIndex(lb);x=(x^lb)>>>0;v+=DEG[i]}return v}
+  function evalState(s){
+    const e=(FULL&(~(s.b1|s.b2)))>>>0,c1=popcnt(s.b1),c2=popcnt(s.b2),a=patternStats(s.b1,s.b2),b=patternStats(s.b2,s.b1),f1=forkCount(s.b1,e),f2=forkCount(s.b2,e),d1=doubleClosed(s.b1),d2=doubleClosed(s.b2),mov=movement(s);let v;
+    if(!mov){const total1=c1+s.h1,total2=c2+s.h2;v=(total1-total2)*1200+(a[0]-b[0])*185+(a[1]-b[1])*105+(a[2]-b[2])*12+(f1-f2)*225+(a[3]-b[3])*18+(d1-d2)*175+(positional(s.b1)-positional(s.b2))*7}
+    else{const m1=mobility(s,1),m2=mobility(s,2),bl1=blocked(s,1),bl2=blocked(s,2);v=(c1-c2)*1450+(a[0]-b[0])*190+(a[1]-b[1])*135+(a[2]-b[2])*10+(f1-f2)*270+(a[3]-b[3])*22+(d1-d2)*235+(m1-m2)*17+(bl2-bl1)*58+(positional(s.b1)-positional(s.b2))*4;if(c1===3)v+=130;if(c2===3)v-=130;if(c2===4&&bl2>=2)v+=85;if(c1===4&&bl1>=2)v-=85}
+    return s.cur===1?v:-v;
+  }
+  function isThreatSquare(s,p,to){const bb=bits(s,p);for(const mi of MB[to])if(popcnt(bb&MM[mi])===2)return true;return false}
+  function victimBonus(s,p,cap){const bb=bits(s,p),ob=bits(s,oth(p));let v=DEG[cap]*18;for(const mi of MB[cap]){const m=MM[mi],c=popcnt(bb&m);if(c===3)v+=120;else if(c===2&&!(ob&m))v+=75}return v}
+  function moveHistIndex(m){const f=mFrom(m),t=mTo(m);return(f<0?24:f)*24+t}
+  function orderScore(s,m,ttm,ply){if(m===ttm)return 2000000000;let sc=0,cap=mCap(m),to=mTo(m);if(mMill(m))sc+=900000;if(cap>=0)sc+=650000+victimBonus(s,oth(s.cur),cap);if(isThreatSquare(s,oth(s.cur),to))sc+=105000;if(m===killer1[ply])sc+=76000;else if(m===killer2[ply])sc+=52000;sc+=historyScore[moveHistIndex(m)];sc+=DEG[to]*90;return sc}
+  function orderMoves(s,moves,ttm,ply){if(moves.length<2)return;const sc=new Int32Array(moves.length);for(let i=0;i<moves.length;i++)sc[i]=orderScore(s,moves[i],ttm,ply);for(let i=1;i<moves.length;i++){const mv=moves[i],sv=sc[i];let j=i-1;while(j>=0&&sc[j]<sv){moves[j+1]=moves[j];sc[j+1]=sc[j];j--}moves[j+1]=mv;sc[j+1]=sv}}
+  function repKey(s){return s.code+BOARD_BASE*(s.h1+10*s.h2+100*(s.cur-1))}
+  function ttPacked(s){
+    const lo=s.code>>>0,hi=Math.floor(s.code/4294967296)>>>0,meta=(s.h1|(s.h2<<4)|(s.cur<<8)|((Math.min(s.hm,127))<<10)|((Math.min(s.mn,255))<<17))>>>0;
+    let h=(Math.imul((lo^(lo>>>16))>>>0,0x45d9f3b)^Math.imul((hi^(hi>>>13))>>>0,0x119de1f3)^Math.imul(meta^0x9e3779b9,0x27d4eb2d))>>>0;h^=h>>>16;
+    let lock=(Math.imul(lo^0x85ebca6b,0xc2b2ae35)^Math.imul(hi^0x27d4eb2f,0x165667b1)^Math.imul(meta^0xa5a5a5a5,0x9e3779b1))>>>0;lock^=lock>>>15;if(lock===0)lock=1;
+    return lock*TT_SIZE+(h&TT_MASK);
+  }
+  function toTT(v,ply){if(v>MATE-1000)return v+ply;if(v<-MATE+1000)return v-ply;return v}
+  function fromTT(v,ply){if(v>MATE-1000)return v-ply;if(v<-MATE+1000)return v+ply;return v}
+  function checkTime(force=false){nodes++;if(force||(nodes&255)===0)if(performance.now()>=deadline)throw 1}
+  function quiesce(s,alpha,beta,ply,qd){checkTime();const t=terminal(s,ply);if(t!=null)return t;let stand=evalState(s);if(stand>=beta)return stand;if(stand>alpha)alpha=stand;if(qd<=0)return stand;let ms=actions(s,true);if(!ms.length)return stand;orderMoves(s,ms,0,ply);for(const m of ms){const v=-quiesce(apply(s,m),-beta,-alpha,ply+1,qd-1);if(v>=beta)return v;if(v>alpha)alpha=v}return alpha}
+  function negamax(s,depth,alpha,beta,ply,pv){
+    checkTime();const t=terminal(s,ply);if(t!=null)return t;if(depth<=0)return quiesce(s,alpha,beta,ply,3);
+    const rk=repKey(s);let reps=1;for(let i=0;i<ply;i++)if(pathKeys[i]===rk)reps++;if(rk===rootRepKey)reps+=rootRepBase-1;if(reps>=3)return 0;pathKeys[ply]=rk;const repSensitive=reps>1;
+    let ttm=0,origA=alpha,origB=beta,pk=0,idx=0,lock=0;
+    if(!repSensitive){pk=ttPacked(s);idx=pk%TT_SIZE;lock=Math.floor(pk/TT_SIZE)>>>0;if(ttLock[idx]===lock){ttm=ttMove[idx];const td=ttDepth[idx],tv=fromTT(ttValue[idx],ply),fl=ttFlag[idx];if(td>=depth){if(fl===1)return tv;if(fl===2&&tv>alpha)alpha=tv;else if(fl===3&&tv<beta)beta=tv;if(alpha>=beta)return tv}}}
+    let ms=actions(s,false);if(!ms.length)return-MATE+ply;orderMoves(s,ms,ttm,ply);let best=-INF,bm=ms[0];
+    for(let i=0;i<ms.length;i++){
+      const m=ms[i],child=apply(s,m),quiet=!mMill(m)&&mCap(m)<0,nd=depth-1;let red=0,v;
+      if(i>0&&quiet&&depth>=4&&!pv&&!repSensitive){red=1;if(depth>=7&&i>=7)red++;if(depth>=10&&i>=13)red++;red=Math.min(red,Math.max(0,nd-1))}
+      if(i===0)v=-negamax(child,nd,-beta,-alpha,ply+1,pv);
+      else{const rd=Math.max(0,nd-red);v=-negamax(child,rd,-alpha-1,-alpha,ply+1,false);if(red&&v>alpha)v=-negamax(child,nd,-alpha-1,-alpha,ply+1,false);if(v>alpha&&v<beta)v=-negamax(child,nd,-beta,-alpha,ply+1,true)}
+      if(v>best){best=v;bm=m}if(v>alpha)alpha=v;if(alpha>=beta){if(quiet){if(killer1[ply]!==m){killer2[ply]=killer1[ply];killer1[ply]=m}const hi=moveHistIndex(m),bonus=depth*depth*18;historyScore[hi]=Math.min(500000,historyScore[hi]+bonus)}break}
+    }
+    if(!repSensitive){if(!pk){pk=ttPacked(s);idx=pk%TT_SIZE;lock=Math.floor(pk/TT_SIZE)>>>0}const flag=best<=origA?3:best>=origB?2:1;if(ttLock[idx]!==lock||ttDepth[idx]<=depth||flag===1){ttLock[idx]=lock;ttDepth[idx]=Math.min(255,depth);ttValue[idx]=toTT(best,ply);ttFlag[idx]=flag;ttMove[idx]=bm}}
+    return best;
+  }
+  function canonicalBoardCode(s){let best=Infinity;for(const map of SYM){let c=0,x=s.b1;while(x){const lb=(x&-x)>>>0,i=bitIndex(lb);x=(x^lb)>>>0;c+=POW3[map[i]]}x=s.b2;while(x){const lb=(x&-x)>>>0,i=bitIndex(lb);x=(x^lb)>>>0;c+=2*POW3[map[i]]}if(c<best)best=c}return best}
+  function uniqueRootMoves(s,ms){if(ms.length<2||movement(s))return ms;const seen=new Set(),out=[];for(const m of ms){const n=apply(s,m),k=canonicalBoardCode(n);if(!seen.has(k)){seen.add(k);out.push(m)}}return out}
+  function rootSearch(s,depth,alpha,beta){
+    let ms=rootMovesCache.slice();if(!ms.length)return null;orderMoves(s,ms,lastBest,0);let best=-INF,bm=ms[0];pathKeys[0]=rootRepKey;
+    for(let i=0;i<ms.length;i++){
+      checkTime(true);const m=ms[i],child=apply(s,m),quiet=!mMill(m)&&mCap(m)<0,nd=depth-1;let red=0,v;
+      if(i>0&&quiet&&depth>=5){red=1;if(depth>=8&&i>=8)red++;red=Math.min(red,Math.max(0,nd-1))}
+      if(i===0)v=-negamax(child,nd,-beta,-alpha,1,true);
+      else{const rd=Math.max(0,nd-red);v=-negamax(child,rd,-alpha-1,-alpha,1,false);if(red&&v>alpha)v=-negamax(child,nd,-alpha-1,-alpha,1,false);if(v>alpha&&v<beta)v=-negamax(child,nd,-beta,-alpha,1,true)}
+      if(v>best){best=v;bm=m}if(v>alpha)alpha=v;if(alpha>=beta)break;
+    }
+    return{move:bm,score:best};
+  }
+  onmessage=e=>{
+    const d=e.data||{};rootState=makeState(d.state);rootRepBase=Math.max(1,d.rootRep|0);rootRepKey=repKey(rootState);nodes=0;historyScore=new Int32Array(600);killer1=new Uint16Array(128);killer2=new Uint16Array(128);pathKeys=new Array(160);lastBest=0;prevScore=0;
+    const bitsN=d.limit>=4500?20:d.limit>=2500?19:18;TT_SIZE=1<<bitsN;TT_MASK=TT_SIZE-1;ttLock=new Uint32Array(TT_SIZE);ttDepth=new Uint8Array(TT_SIZE);ttValue=new Int32Array(TT_SIZE);ttFlag=new Uint8Array(TT_SIZE);ttMove=new Uint16Array(TT_SIZE);
+    const margin=Math.min(90,Math.max(45,Math.floor(d.limit*.018)));deadline=performance.now()+Math.max(50,d.limit-margin);
+    const rootTerminal=terminal(rootState,0);if(rootTerminal!=null){postMessage({type:'done',move:null,depth:0,nodes,score:rootTerminal});return}rootMovesCache=uniqueRootMoves(rootState,actions(rootState,false));let completed=0;
+    try{
+      for(let depth=1;depth<=d.maxDepth;depth++){
+        let r=null;
+        if(depth>=4&&completed){let w=220,ok=false;for(let attempt=0;attempt<4;attempt++){const a=Math.max(-INF,prevScore-w),b=Math.min(INF,prevScore+w);r=rootSearch(rootState,depth,a,b);if(r.score>a&&r.score<b){ok=true;break}w*=4;checkTime(true)}if(!ok)r=rootSearch(rootState,depth,-INF,INF)}else r=rootSearch(rootState,depth,-INF,INF);
+        if(r){lastBest=r.move;prevScore=r.score;completed=depth;postMessage({type:'progress',move:unpackMove(lastBest),depth,score:r.score,nodes})}
+        if(Math.abs(prevScore)>MATE-1000)break;checkTime(true);
+      }
+    }catch(_e){}
+    if(!lastBest)lastBest=rootMovesCache[0]||0;postMessage({type:'done',move:lastBest?unpackMove(lastBest):null,depth:completed,nodes,score:prevScore});
+  };
+}
+
+function scheduleSave(){clearTimeout(saveTimer);saveTimer=setTimeout(()=>saveCache(),80)}
+function saveCache(){clearTimeout(saveTimer);saveTimer=null;try{if(!state.started){localStorage.removeItem(CACHE_KEY);return}const data={version:VERSION,settings,state:{...state,busy:false},history,aiUndoLocked,savedAt:Date.now()};localStorage.setItem(CACHE_KEY,JSON.stringify(data));el.cacheChip.textContent='已实时存档'}catch(e){el.cacheChip.textContent='存档不可用'}}
+function loadCache(){try{const raw=localStorage.getItem(CACHE_KEY);if(!raw)return false;const d=JSON.parse(raw);if(d.version!==VERSION||!d.state?.started)return false;settings={...settingsDefault,...d.settings};state=d.state;state.busy=false;history=Array.isArray(d.history)?d.history:[];aiUndoLocked=!!d.aiUndoLocked;selected=-1;return true}catch(e){localStorage.removeItem(CACHE_KEY);return false}}
+function resumePending(){if(state.aiPendingCapture){const wait=Math.max(0,(state.aiCaptureAt||Date.now())-Date.now());pendingCaptureTimer=setTimeout(completeAICapture,wait);return}maybeTriggerAI()}
+
+function toast(msg){clearTimeout(toastTimer);el.toast.textContent=msg;el.toast.classList.add('show');toastTimer=setTimeout(()=>el.toast.classList.remove('show'),2200)}
+function openGuide(){guideStep=state.started?(isMovement()?2:0):0;renderGuide();el.guide.classList.add('show')}
+function closeGuide(){el.guide.classList.remove('show')}
+function renderGuide(){const steps=$$('.guide-step');steps.forEach((s,i)=>s.classList.toggle('active',i===guideStep));el.guideDots.innerHTML=steps.map((_,i)=>`<i class="${i===guideStep?'on':''}"></i>`).join('');el.guidePrev.disabled=guideStep===0;el.guideNext.textContent=guideStep===steps.length-1?'完成':'下一步'}
+
+$$('.choice').forEach(b=>b.addEventListener('click',()=>{if(state.started)return;settings[b.dataset.setting]=b.dataset.value;render()}));
+el.start.addEventListener('click',startGame);$('#restartTop').addEventListener('click',restartGame);$('#mobileRestartBtn').addEventListener('click',restartGame);el.undo.addEventListener('click',undo);el.mobileUndo.addEventListener('click',undo);$('#guideBtn').addEventListener('click',openGuide);$('#guideSideBtn').addEventListener('click',openGuide);$('#mobileGuideBtn').addEventListener('click',openGuide);$('#guideClose').addEventListener('click',closeGuide);el.guide.addEventListener('click',e=>{if(e.target===el.guide)closeGuide()});el.guidePrev.addEventListener('click',()=>{guideStep=Math.max(0,guideStep-1);renderGuide()});el.guideNext.addEventListener('click',()=>{const n=$$('.guide-step').length;if(guideStep>=n-1)closeGuide();else{guideStep++;renderGuide()}});document.addEventListener('keydown',e=>{if(e.key==='Escape')closeGuide()});
+window.addEventListener('pagehide',saveCache);window.addEventListener('beforeunload',saveCache);
+buildPoints();const resumed=loadCache();render();renderGuide();if(resumed){toast('已恢复上次未结束的对局。');resumePending()}
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>404 - 页面未找到</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: #f0f2f5;
+            padding: clamp(16px, 4vw, 40px);
+        }
+
+        .card {
+            background: #fff;
+            border-radius: clamp(12px, 2vw, 20px);
+            padding: clamp(32px, 6vw, 60px) clamp(24px, 5vw, 56px);
+            text-align: center;
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08), 0 1px 4px rgba(0, 0, 0, 0.04);
+            max-width: 520px;
+            width: 100%;
+            animation: slideUp 0.6s ease-out;
+        }
+
+        .logo {
+            display: block;
+            margin: 0 auto 24px;
+            max-height: 52px;
+            width: auto;
+            object-fit: contain;
+        }
+
+        .status-code {
+            font-size: clamp(72px, 14vw, 120px);
+            font-weight: 800;
+            color: #1a1a2e;
+            line-height: 1;
+            letter-spacing: -2px;
+            margin-bottom: 8px;
+        }
+
+        .divider {
+            width: clamp(40px, 8vw, 60px);
+            height: 4px;
+            background: #3a7bd5;
+            border-radius: 2px;
+            margin: 0 auto clamp(16px, 3vw, 24px);
+        }
+
+        .card h1 {
+            font-size: clamp(18px, 3.5vw, 24px);
+            font-weight: 600;
+            color: #1a1a2e;
+            margin-bottom: 10px;
+        }
+
+        .card p {
+            font-size: clamp(14px, 2.5vw, 16px);
+            color: #6b7280;
+            line-height: 1.6;
+            margin-bottom: clamp(24px, 4vw, 36px);
+            max-width: 360px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: clamp(14px, 2.2vw, 16px);
+            font-weight: 500;
+            padding: 12px 28px;
+            border-radius: 8px;
+            text-decoration: none;
+            transition: all 0.25s ease;
+            cursor: pointer;
+            border: none;
+            background: #3a7bd5;
+            color: #fff;
+            white-space: nowrap;
+        }
+
+        .btn:hover {
+            background: #2e6bc4;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(58, 123, 213, 0.3);
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <!-- 品牌Logo，显示在页面上方 -->
+        <img src="https://user-assets.sxlcdn.com/images/1209238/FlWuslNmGTHt1EipxUtq2GI6zqnN.png?imageMogr2/strip/auto-orient/thumbnail/1200x9000%3E/quality/90!/format/png"
+             alt="Logo" class="logo">
+
+        <div class="status-code">404</div>
+        <div class="divider"></div>
+        <h1>页面未找到</h1>
+        <p>抱歉，您访问的页面不存在或已被移除。请检查链接是否正确，或返回首页继续浏览。</p>
+
+        <!-- 仅保留返回主页按钮 -->
+        <a href="../" class="btn">返回首页</a>
+    </div>
+</body>
+</html>

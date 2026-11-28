@@ -1,0 +1,1007 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="color-scheme" content="dark" />
+    <title>扫雷游戏</title>
+  <link
+    rel="icon"
+    href="https://user-assets.sxlcdn.com/images/1209238/FlWuslNmGTHt1EipxUtq2GI6zqnN.png?imageMogr2/strip/auto-orient/thumbnail/1200x9000%3E/quality/90!/format/png"
+    type="image/png"
+  />
+    <style>
+        :root {
+            --bg: #202119;
+            --panel: #d8d2b8;
+            --panel-deep: #b7b197;
+            --ink: #24251d;
+            --muted: #6f715e;
+            --screen: #7f8b5c;
+            --screen-dark: #27301f;
+            --board-max: 414px;
+            --gap: clamp(1px, 0.65vw, 3px);
+            --danger: #9a3d31;
+            --accent: #5b6641;
+            --line-dark: #5c5a4d;
+            --line-light: #f0ecd9;
+        }
+
+        * { box-sizing: border-box; }
+
+        html, body { min-height: 100%; }
+
+        html {
+            -webkit-text-size-adjust: 100%;
+            text-size-adjust: 100%;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100svh;
+            min-height: 100dvh;
+            padding:
+                max(14px, env(safe-area-inset-top))
+                max(10px, env(safe-area-inset-right))
+                max(14px, env(safe-area-inset-bottom))
+                max(10px, env(safe-area-inset-left));
+            display: grid;
+            place-items: center;
+            overflow-x: hidden;
+            color: var(--ink);
+            background:
+                radial-gradient(circle at 50% 18%, rgba(127, 139, 92, .13), transparent 38%),
+                var(--bg);
+            font-family: "Courier New", "SFMono-Regular", Consolas, monospace;
+        }
+
+        body::before {
+            content: "";
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            opacity: .08;
+            background: repeating-linear-gradient(
+                0deg,
+                transparent 0,
+                transparent 3px,
+                #fff 4px
+            );
+            mix-blend-mode: soft-light;
+        }
+
+        button, input { font: inherit; }
+        button {
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+        }
+
+        .console {
+            width: min(100%, 560px);
+            padding: clamp(12px, 3.5vw, 18px);
+            border: 2px solid #0d0e0b;
+            border-radius: 16px;
+            background: var(--panel);
+            box-shadow:
+                0 0 0 4px #34362b,
+                0 20px 55px rgba(0, 0, 0, .42),
+                inset 2px 2px 0 var(--line-light),
+                inset -3px -3px 0 #8d8974;
+        }
+
+        .masthead {
+            display: flex;
+            align-items: end;
+            justify-content: space-between;
+            gap: 14px;
+            margin-bottom: 12px;
+        }
+
+        .title-wrap { min-width: 0; text-align: left; }
+
+        h1 {
+            margin: 0;
+            color: #313329;
+            font-size: clamp(22px, 6vw, 32px);
+            line-height: .95;
+            letter-spacing: -.06em;
+            text-transform: uppercase;
+        }
+
+        .subtitle {
+            margin: 6px 0 0;
+            color: var(--muted);
+            font-size: 11px;
+            letter-spacing: .12em;
+        }
+
+        .status-lamp {
+            flex: 0 0 auto;
+            min-width: 84px;
+            padding: 7px 8px 6px;
+            border: 2px solid #47493c;
+            background: var(--screen);
+            color: var(--screen-dark);
+            box-shadow: inset 2px 2px 0 rgba(255,255,255,.18), inset -2px -2px 0 rgba(0,0,0,.18);
+            text-align: center;
+            font-weight: 700;
+            font-size: 12px;
+            letter-spacing: .08em;
+        }
+
+        .hud {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 6px;
+            margin-bottom: 10px;
+        }
+
+        .meter {
+            min-width: 0;
+            padding: 7px 8px 6px;
+            border: 2px solid #555746;
+            background: #929c6c;
+            color: #22291d;
+            box-shadow: inset 2px 2px 0 rgba(255,255,255,.18), inset -2px -2px 0 rgba(0,0,0,.16);
+            text-align: left;
+        }
+
+        .meter small {
+            display: block;
+            margin-bottom: 2px;
+            opacity: .72;
+            font-size: 9px;
+            letter-spacing: .08em;
+        }
+
+        .meter strong {
+            display: block;
+            overflow: hidden;
+            font-size: 18px;
+            line-height: 1;
+            text-overflow: ellipsis;
+        }
+
+        .board-shell {
+            width: 100%;
+            padding: clamp(6px, 2vw, 10px);
+            border: 3px solid var(--line-dark);
+            border-top-color: #8a866f;
+            border-left-color: #8a866f;
+            background: #9f9b84;
+            box-shadow: inset 2px 2px 0 #77735f, inset -2px -2px 0 var(--line-light);
+            overflow: hidden;
+        }
+
+        #game {
+            width: min(100%, var(--board-max));
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(9, minmax(0, 1fr));
+            gap: var(--gap);
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: manipulation;
+        }
+
+        .cell {
+            width: 100%;
+            min-width: 0;
+            aspect-ratio: 1 / 1;
+            height: auto;
+            padding: 0;
+            display: grid;
+            place-items: center;
+            border: 0;
+            border-top: 3px solid #efecd8;
+            border-left: 3px solid #efecd8;
+            border-right: 3px solid #686655;
+            border-bottom: 3px solid #686655;
+            border-radius: 1px;
+            background: #bdb89e;
+            color: var(--ink);
+            cursor: pointer;
+            font-size: clamp(14px, 4.8vw, 22px);
+            font-weight: 900;
+            line-height: 1;
+            text-align: center;
+        }
+
+        .cell:hover:not(.revealed):not(:disabled) { background: #c9c4aa; }
+        .cell:active:not(.revealed):not(:disabled) {
+            border-top-color: #686655;
+            border-left-color: #686655;
+            border-right-color: #efecd8;
+            border-bottom-color: #efecd8;
+            background: #aaa68f;
+        }
+
+        .cell:focus-visible {
+            outline: 2px dashed #2d3323;
+            outline-offset: -5px;
+        }
+
+        .cell.revealed {
+            border: 1px solid #9d9982;
+            background: #d9d4bb;
+            cursor: default;
+        }
+
+        .cell.flagged {
+            background: #b56d59;
+            color: #2c201b;
+        }
+
+        .cell.mine-cell { background: #c7b985; color: #2b251b; }
+        .cell.exploded { background: var(--danger); color: #f5e8cf; }
+        .cell.wrong-flag { background: #c78a77; color: #55271f; }
+        .cell:disabled { opacity: 1; -webkit-text-fill-color: currentColor; }
+
+        .n1 { color: #1d4b85; }
+        .n2 { color: #38652c; }
+        .n3 { color: #9b332a; }
+        .n4 { color: #4b3b79; }
+        .n5 { color: #7b431f; }
+        .n6 { color: #276c6b; }
+        .n7 { color: #24251d; }
+        .n8 { color: #666452; }
+
+        .controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .retro-btn {
+            min-height: 44px;
+            padding: 8px 10px;
+            border: 0;
+            border-top: 2px solid var(--line-light);
+            border-left: 2px solid var(--line-light);
+            border-right: 2px solid #666353;
+            border-bottom: 2px solid #666353;
+            border-radius: 2px;
+            background: #bdb89e;
+            color: #2b2c24;
+            cursor: pointer;
+            font-weight: 700;
+            letter-spacing: .02em;
+        }
+
+        .retro-btn:hover { background: #c8c3a9; }
+        .retro-btn:active,
+        .retro-btn[aria-pressed="true"] {
+            border-top-color: #666353;
+            border-left-color: #666353;
+            border-right-color: var(--line-light);
+            border-bottom-color: var(--line-light);
+            background: #959b70;
+        }
+
+        .hint {
+            margin: 9px 2px 0;
+            color: #676957;
+            font-size: 10px;
+            line-height: 1.55;
+            text-align: center;
+        }
+
+        #result {
+            margin-top: 10px;
+            padding: 9px 10px;
+            border: 1px solid #666855;
+            background: #c9c4aa;
+            color: #33352b;
+            font-size: 11px;
+            line-height: 1.55;
+            text-align: left;
+        }
+
+        #result[hidden] { display: none; }
+        #result strong { display: block; margin-bottom: 2px; font-size: 13px; }
+        #mineLocations { overflow-wrap: anywhere; color: #5c3b31; }
+
+        #modal {
+            position: fixed;
+            inset: 0;
+            z-index: 1000;
+            display: grid;
+            place-items: center;
+            padding:
+                max(12px, env(safe-area-inset-top))
+                max(10px, env(safe-area-inset-right))
+                max(12px, env(safe-area-inset-bottom))
+                max(10px, env(safe-area-inset-left));
+            background: rgba(10, 11, 8, .78);
+        }
+
+        #modal[hidden] { display: none; }
+
+        #modalContent {
+            width: min(100%, 390px);
+            max-height: min(92dvh, 620px);
+            overflow: auto;
+            overscroll-behavior: contain;
+            border: 3px solid #515345;
+            background: var(--panel);
+            box-shadow: 10px 12px 0 rgba(0,0,0,.26), inset 1px 1px 0 var(--line-light);
+            color: var(--ink);
+        }
+
+        .modal-titlebar {
+            min-height: 36px;
+            padding: 7px 9px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            background: #6e7850;
+            color: #f1edda;
+            border-bottom: 2px solid #515942;
+        }
+
+        .modal-titlebar h2 {
+            margin: 0;
+            font-size: 15px;
+            letter-spacing: .06em;
+        }
+
+        .modalClose {
+            width: 25px;
+            height: 23px;
+            padding: 0;
+            display: none;
+            place-items: center;
+            border: 1px solid #42483a;
+            background: #d8d2b8;
+            color: #292b23;
+            cursor: pointer;
+            font-size: 18px;
+            line-height: 1;
+        }
+
+        .modalClose.visible { display: grid; }
+
+        .modal-body { padding: 16px; text-align: left; }
+        .modal-body p { margin: 0 0 10px; color: #5f604f; font-size: 12px; line-height: 1.55; }
+
+        .field-label {
+            display: block;
+            margin-bottom: 6px;
+            font-size: 11px;
+            font-weight: 700;
+        }
+
+        #mineInput {
+            width: 100%;
+            height: 44px;
+            padding: 8px 10px;
+            border: 2px solid #76735f;
+            border-top-color: #565444;
+            border-left-color: #565444;
+            border-radius: 0;
+            outline: none;
+            background: #f0ecd8;
+            color: #25271f;
+            font-size: 20px;
+            font-weight: 700;
+        }
+
+        #mineInput:focus { box-shadow: 0 0 0 2px #7a8559; }
+
+        .input-help {
+            min-height: 18px;
+            margin-top: 6px;
+            color: #7d342d;
+            font-size: 10px;
+        }
+
+        .modalButtons {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 7px;
+            margin-top: 8px;
+        }
+
+        .modalButtons .retro-btn { width: 100%; }
+        .primary { background: #929c6c; }
+
+        /* 手机：棋盘严格收进可视宽度，按钮保持触控友好。 */
+        @media (max-width: 480px) {
+            .console {
+                border-radius: 12px;
+                box-shadow:
+                    0 0 0 3px #34362b,
+                    0 14px 34px rgba(0, 0, 0, .38),
+                    inset 2px 2px 0 var(--line-light),
+                    inset -3px -3px 0 #8d8974;
+            }
+
+            .masthead {
+                align-items: center;
+                gap: 8px;
+            }
+
+            .subtitle { font-size: 9px; }
+            .status-lamp { min-width: 68px; font-size: 11px; }
+            .hud { gap: 4px; }
+            .meter { padding-inline: 6px; }
+            .meter strong { font-size: 16px; }
+            .controls { grid-template-columns: 1fr; }
+            .hint { font-size: 9px; }
+        }
+
+        /* 极窄手机：进一步压缩非棋盘区域，不再依赖横向滚动。 */
+        @media (max-width: 340px) {
+            body { padding-inline: max(6px, env(safe-area-inset-left)); }
+            .console { padding: 10px 8px; }
+            .board-shell { padding: 5px; }
+            h1 { font-size: 20px; }
+            .status-lamp { min-width: 62px; padding-inline: 5px; }
+            .meter small { font-size: 8px; letter-spacing: 0; }
+            .cell {
+                border-top-width: 2px;
+                border-left-width: 2px;
+                border-right-width: 2px;
+                border-bottom-width: 2px;
+                font-size: 14px;
+            }
+        }
+
+        /* 平板：给棋盘和操作区更舒展的尺寸，同时维持单列沉浸式结构。 */
+        @media (min-width: 768px) {
+            :root { --board-max: 432px; }
+            .console { width: min(92vw, 590px); }
+            .retro-btn { min-height: 46px; }
+            .hint { font-size: 11px; }
+        }
+
+        /* 电脑端：控制最大宽度，避免在大屏上被拉得过散。 */
+        @media (min-width: 1200px) {
+            :root { --board-max: 450px; }
+            .console { width: 600px; }
+            .cell { font-size: 22px; }
+        }
+
+        /* 手机横屏：优先保证可滚动访问全部内容，并压缩头部垂直占用。 */
+        @media (orientation: landscape) and (max-height: 560px) {
+            body {
+                place-items: start center;
+                padding-top: max(8px, env(safe-area-inset-top));
+                padding-bottom: max(8px, env(safe-area-inset-bottom));
+            }
+
+            .console { margin-block: 0; }
+            .masthead { margin-bottom: 7px; }
+            .subtitle { display: none; }
+            .hud { margin-bottom: 7px; }
+            .controls { margin-top: 7px; }
+            .hint { margin-top: 6px; }
+        }
+
+        @media (hover: none), (pointer: coarse) {
+            .cell:hover:not(.revealed):not(:disabled),
+            .retro-btn:hover { background: #bdb89e; }
+            .primary:hover { background: #929c6c; }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after { scroll-behavior: auto !important; }
+        }
+    </style>
+</head>
+<body>
+    <main class="console" id="app" aria-label="扫雷游戏">
+        <header class="masthead">
+            <div class="title-wrap">
+                <h1>MINESWEEPER</h1>
+                <p class="subtitle">RETRO GRID / 09 × 09</p>
+            </div>
+            <div class="status-lamp" id="statusText" aria-live="polite">待机</div>
+        </header>
+
+        <section class="hud" aria-label="游戏状态">
+            <div class="meter"><small>MINES 雷数</small><strong id="mineCount">--</strong></div>
+            <div class="meter"><small>FLAGS 标记</small><strong id="flagCount">00</strong></div>
+            <div class="meter"><small>SAFE 剩余</small><strong id="safeCount">--</strong></div>
+        </section>
+
+        <div class="board-shell">
+            <div id="game" role="grid" aria-label="9乘9扫雷棋盘"></div>
+        </div>
+
+        <div class="controls">
+            <button type="button" class="retro-btn" id="flagMode" aria-pressed="false">⚑ 标记模式：关</button>
+            <button type="button" class="retro-btn" id="reset">重新开始</button>
+        </div>
+
+        <p class="hint">电脑：左键翻开 / 右键插旗 · 手机/平板：点按翻开 / 开启标记模式插旗 · 键盘：方向键移动，F 插旗</p>
+
+        <section id="result" aria-live="polite" hidden>
+            <strong id="resultTitle"></strong>
+            <span id="resultMessage"></span>
+            <div id="mineLocations"></div>
+        </section>
+    </main>
+
+    <div id="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+        <div id="modalContent">
+            <div class="modal-titlebar">
+                <h2 id="modalTitle">GAME SETUP / 设置雷数</h2>
+                <button type="button" id="closeModal" class="modalClose" aria-label="关闭设置窗口" title="关闭">×</button>
+            </div>
+            <form id="setupForm" class="modal-body" novalidate>
+                <p>棋盘固定为 9 × 9。首次有效翻格一定安全。</p>
+                <label class="field-label" for="mineInput">雷数（1–80）</label>
+                <input type="number" id="mineInput" min="1" max="80" step="1" inputmode="numeric" autocomplete="off" placeholder="例如 10" />
+                <div class="input-help" id="inputHelp" aria-live="polite"></div>
+                <div class="modalButtons">
+                    <button type="submit" class="retro-btn primary" id="setupBtn">完成设置</button>
+                    <button type="button" class="retro-btn" id="defaultBtn">使用默认设置（10 个雷）</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        (() => {
+            'use strict';
+
+            const ROWS = 9;
+            const COLS = 9;
+            const DEFAULT_MINES = 10;
+            const MAX_MINES = ROWS * COLS - 1;
+
+            let MINES = DEFAULT_MINES;
+            let grid = [];
+            let mineLocations = [];
+            let revealedCount = 0;
+            let flags = 0;
+            let gameOver = false;
+            let firstClick = true;
+            let flagMode = false;
+            let hasActiveGame = false;
+
+            const gameContainer = document.getElementById('game');
+            const resetButton = document.getElementById('reset');
+            const flagModeButton = document.getElementById('flagMode');
+            const statusText = document.getElementById('statusText');
+            const mineCount = document.getElementById('mineCount');
+            const flagCount = document.getElementById('flagCount');
+            const safeCount = document.getElementById('safeCount');
+            const result = document.getElementById('result');
+            const resultTitle = document.getElementById('resultTitle');
+            const resultMessage = document.getElementById('resultMessage');
+            const mineLocationsText = document.getElementById('mineLocations');
+
+            const modal = document.getElementById('modal');
+            const setupForm = document.getElementById('setupForm');
+            const defaultBtn = document.getElementById('defaultBtn');
+            const mineInput = document.getElementById('mineInput');
+            const inputHelp = document.getElementById('inputHelp');
+            const closeModalBtn = document.getElementById('closeModal');
+
+            function init() {
+                grid = [];
+                mineLocations = [];
+                revealedCount = 0;
+                flags = 0;
+                gameOver = false;
+                firstClick = true;
+                flagMode = false;
+                hasActiveGame = true;
+
+                gameContainer.replaceChildren();
+                const fragment = document.createDocumentFragment();
+
+                for (let r = 0; r < ROWS; r++) {
+                    const row = [];
+                    for (let c = 0; c < COLS; c++) {
+                        const cell = document.createElement('button');
+                        cell.type = 'button';
+                        cell.className = 'cell';
+                        cell.dataset.row = String(r);
+                        cell.dataset.col = String(c);
+                        cell.setAttribute('role', 'gridcell');
+                        cell.setAttribute('aria-label', `第 ${r + 1} 行，第 ${c + 1} 列，未翻开`);
+                        cell.tabIndex = r === 0 && c === 0 ? 0 : -1;
+                        fragment.appendChild(cell);
+
+                        row.push({
+                            isMine: false,
+                            revealed: false,
+                            flagged: false,
+                            adjacentMines: 0
+                        });
+                    }
+                    grid.push(row);
+                }
+
+                gameContainer.appendChild(fragment);
+                hideResult();
+                updateFlagMode(false);
+                updateHud('待机');
+            }
+
+            function placeMines(excludeR, excludeC) {
+                const candidates = [];
+
+                for (let r = 0; r < ROWS; r++) {
+                    for (let c = 0; c < COLS; c++) {
+                        if (r === excludeR && c === excludeC) continue;
+                        candidates.push({ r, c });
+                    }
+                }
+
+                if (!Number.isInteger(MINES) || MINES < 1 || MINES > candidates.length) {
+                    throw new RangeError('雷数超出可用棋盘范围。');
+                }
+
+                // Fisher-Yates 洗牌后直接截取，避免高雷数下随机 while 重试。
+                for (let i = candidates.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [candidates[i], candidates[j]] = [candidates[j], candidates[i]];
+                }
+
+                mineLocations = candidates.slice(0, MINES);
+                for (const { r, c } of mineLocations) {
+                    grid[r][c].isMine = true;
+                }
+
+                for (let r = 0; r < ROWS; r++) {
+                    for (let c = 0; c < COLS; c++) {
+                        if (!grid[r][c].isMine) {
+                            grid[r][c].adjacentMines = countAdjacentMines(r, c);
+                        }
+                    }
+                }
+            }
+
+            function countAdjacentMines(r, c) {
+                let count = 0;
+                for (let dr = -1; dr <= 1; dr++) {
+                    for (let dc = -1; dc <= 1; dc++) {
+                        if (dr === 0 && dc === 0) continue;
+                        const nr = r + dr;
+                        const nc = c + dc;
+                        if (isInside(nr, nc) && grid[nr][nc].isMine) count++;
+                    }
+                }
+                return count;
+            }
+
+            function handleReveal(r, c) {
+                if (gameOver || !hasActiveGame || !isInside(r, c)) return;
+
+                const cellData = grid[r][c];
+
+                // 先判断标记/已翻开状态，再消耗首次点击，修复“点到旗子仍完成布雷”的状态漏洞。
+                if (cellData.revealed || cellData.flagged) return;
+
+                if (firstClick) {
+                    try {
+                        placeMines(r, c);
+                    } catch (error) {
+                        console.error(error);
+                        showSystemError('棋盘初始化失败，请重新开始。');
+                        return;
+                    }
+                    firstClick = false;
+                    updateHud('进行中');
+                }
+
+                if (grid[r][c].isMine) {
+                    revealMine(r, c, true);
+                    finishGame(false, r, c);
+                    return;
+                }
+
+                revealSafeArea(r, c);
+                checkWin();
+            }
+
+            function revealSafeArea(startR, startC) {
+                const queue = [[startR, startC]];
+                let head = 0;
+
+                while (head < queue.length) {
+                    const [r, c] = queue[head++];
+                    const cellData = grid[r][c];
+
+                    if (cellData.revealed || cellData.flagged || cellData.isMine) continue;
+
+                    cellData.revealed = true;
+                    revealedCount++;
+                    renderRevealedCell(r, c);
+
+                    if (cellData.adjacentMines !== 0) continue;
+
+                    for (let dr = -1; dr <= 1; dr++) {
+                        for (let dc = -1; dc <= 1; dc++) {
+                            if (dr === 0 && dc === 0) continue;
+                            const nr = r + dr;
+                            const nc = c + dc;
+                            if (!isInside(nr, nc)) continue;
+
+                            const neighbor = grid[nr][nc];
+                            if (!neighbor.revealed && !neighbor.flagged && !neighbor.isMine) {
+                                queue.push([nr, nc]);
+                            }
+                        }
+                    }
+                }
+
+                updateHud('进行中');
+            }
+
+            function renderRevealedCell(r, c) {
+                const cellData = grid[r][c];
+                const cell = getCellElement(r, c);
+                if (!cell) return;
+
+                cell.classList.add('revealed');
+                cell.classList.remove('flagged');
+                cell.textContent = cellData.adjacentMines > 0 ? String(cellData.adjacentMines) : '';
+                cell.setAttribute(
+                    'aria-label',
+                    cellData.adjacentMines > 0
+                        ? `第 ${r + 1} 行，第 ${c + 1} 列，周围 ${cellData.adjacentMines} 个雷`
+                        : `第 ${r + 1} 行，第 ${c + 1} 列，空白`
+                );
+
+                if (cellData.adjacentMines > 0) {
+                    cell.classList.add(`n${cellData.adjacentMines}`);
+                }
+            }
+
+            function toggleFlag(r, c) {
+                if (gameOver || !hasActiveGame || !isInside(r, c)) return;
+
+                const cellData = grid[r][c];
+                if (cellData.revealed) return;
+
+                cellData.flagged = !cellData.flagged;
+                flags += cellData.flagged ? 1 : -1;
+
+                const cell = getCellElement(r, c);
+                if (!cell) return;
+
+                cell.classList.toggle('flagged', cellData.flagged);
+                cell.textContent = cellData.flagged ? '⚑' : '';
+                cell.setAttribute(
+                    'aria-label',
+                    `第 ${r + 1} 行，第 ${c + 1} 列，${cellData.flagged ? '已插旗' : '未翻开'}`
+                );
+
+                updateHud(firstClick ? '待机' : '进行中');
+            }
+
+            function checkWin() {
+                if (gameOver || firstClick) return;
+                const safeTotal = ROWS * COLS - MINES;
+                if (revealedCount === safeTotal) finishGame(true);
+            }
+
+            function finishGame(won, explodedR = -1, explodedC = -1) {
+                gameOver = true;
+                revealAllMines(won, explodedR, explodedC);
+                disableBoard();
+
+                const locations = mineLocations
+                    .map(({ r, c }) => `(${r + 1}, ${c + 1})`)
+                    .join(' · ');
+
+                result.hidden = false;
+                resultTitle.textContent = won ? 'CLEAR / 扫雷完成' : 'BOOM / 游戏结束';
+                resultMessage.textContent = won
+                    ? `已安全翻开全部 ${ROWS * COLS - MINES} 个非雷方格。`
+                    : '你踩到了地雷。所有地雷位置已显示。';
+                mineLocationsText.textContent = `地雷坐标：${locations}`;
+                updateHud(won ? '胜利' : '爆雷');
+            }
+
+            function revealAllMines(won, explodedR, explodedC) {
+                for (const { r, c } of mineLocations) {
+                    revealMine(r, c, !won && r === explodedR && c === explodedC);
+                }
+
+                if (!won) {
+                    for (let r = 0; r < ROWS; r++) {
+                        for (let c = 0; c < COLS; c++) {
+                            const data = grid[r][c];
+                            if (data.flagged && !data.isMine) {
+                                const cell = getCellElement(r, c);
+                                cell.classList.remove('flagged');
+                                cell.classList.add('wrong-flag');
+                                cell.textContent = '×';
+                                cell.setAttribute('aria-label', `第 ${r + 1} 行，第 ${c + 1} 列，错误标记`);
+                            }
+                        }
+                    }
+                }
+            }
+
+            function revealMine(r, c, exploded) {
+                const cell = getCellElement(r, c);
+                if (!cell) return;
+
+                cell.classList.remove('flagged');
+                cell.classList.add('revealed', 'mine-cell');
+                if (exploded) cell.classList.add('exploded');
+                cell.textContent = '✹';
+                cell.setAttribute(
+                    'aria-label',
+                    `第 ${r + 1} 行，第 ${c + 1} 列，${exploded ? '踩中的地雷' : '地雷'}`
+                );
+            }
+
+            function disableBoard() {
+                gameContainer.querySelectorAll('.cell').forEach(cell => {
+                    cell.disabled = true;
+                });
+            }
+
+            function updateHud(status) {
+                statusText.textContent = status;
+                mineCount.textContent = String(MINES).padStart(2, '0');
+                flagCount.textContent = String(flags).padStart(2, '0');
+                safeCount.textContent = String(Math.max(0, ROWS * COLS - MINES - revealedCount)).padStart(2, '0');
+            }
+
+            function updateFlagMode(forceValue) {
+                flagMode = typeof forceValue === 'boolean' ? forceValue : !flagMode;
+                flagModeButton.setAttribute('aria-pressed', String(flagMode));
+                flagModeButton.textContent = `⚑ 标记模式：${flagMode ? '开' : '关'}`;
+            }
+
+            function hideResult() {
+                result.hidden = true;
+                resultTitle.textContent = '';
+                resultMessage.textContent = '';
+                mineLocationsText.textContent = '';
+            }
+
+            function showSystemError(message) {
+                result.hidden = false;
+                resultTitle.textContent = 'ERROR / 系统提示';
+                resultMessage.textContent = message;
+                mineLocationsText.textContent = '';
+                statusText.textContent = '错误';
+            }
+
+            function getCellElement(r, c) {
+                return gameContainer.querySelector(`.cell[data-row="${r}"][data-col="${c}"]`);
+            }
+
+            function isInside(r, c) {
+                return r >= 0 && r < ROWS && c >= 0 && c < COLS;
+            }
+
+            function getCellPosition(cell) {
+                return {
+                    r: Number(cell.dataset.row),
+                    c: Number(cell.dataset.col)
+                };
+            }
+
+            function setRovingFocus(cell, focus = false) {
+                const previous = gameContainer.querySelector('.cell[tabindex="0"]');
+                if (previous && previous !== cell) previous.tabIndex = -1;
+                cell.tabIndex = 0;
+                if (focus) cell.focus();
+            }
+
+            function openSetup(isRestart) {
+                modal.hidden = false;
+                closeModalBtn.classList.toggle('visible', isRestart);
+                closeModalBtn.setAttribute('aria-hidden', String(!isRestart));
+                mineInput.value = '';
+                inputHelp.textContent = '';
+                window.setTimeout(() => mineInput.focus(), 0);
+            }
+
+            function closeSetup() {
+                modal.hidden = true;
+                inputHelp.textContent = '';
+                if (hasActiveGame) {
+                    const activeCell = gameContainer.querySelector('.cell[tabindex="0"]');
+                    activeCell?.focus();
+                }
+            }
+
+            function applyMineSetting(value) {
+                if (!Number.isInteger(value) || value < 1 || value > MAX_MINES) {
+                    inputHelp.textContent = `请输入 1 到 ${MAX_MINES} 之间的整数。`;
+                    mineInput.focus();
+                    mineInput.select();
+                    return false;
+                }
+
+                MINES = value;
+                init();
+                closeSetup();
+                return true;
+            }
+
+            gameContainer.addEventListener('click', event => {
+                const cell = event.target.closest('.cell');
+                if (!cell || !gameContainer.contains(cell)) return;
+
+                setRovingFocus(cell);
+                const { r, c } = getCellPosition(cell);
+                if (flagMode) toggleFlag(r, c);
+                else handleReveal(r, c);
+            });
+
+            gameContainer.addEventListener('contextmenu', event => {
+                const cell = event.target.closest('.cell');
+                if (!cell || !gameContainer.contains(cell)) return;
+                event.preventDefault();
+                setRovingFocus(cell);
+                const { r, c } = getCellPosition(cell);
+                toggleFlag(r, c);
+            });
+
+            gameContainer.addEventListener('keydown', event => {
+                const cell = event.target.closest('.cell');
+                if (!cell) return;
+                const { r, c } = getCellPosition(cell);
+
+                const moves = {
+                    ArrowUp: [-1, 0],
+                    ArrowDown: [1, 0],
+                    ArrowLeft: [0, -1],
+                    ArrowRight: [0, 1]
+                };
+
+                if (moves[event.key]) {
+                    event.preventDefault();
+                    const [dr, dc] = moves[event.key];
+                    const nr = Math.min(ROWS - 1, Math.max(0, r + dr));
+                    const nc = Math.min(COLS - 1, Math.max(0, c + dc));
+                    const next = getCellElement(nr, nc);
+                    if (next && !next.disabled) setRovingFocus(next, true);
+                    return;
+                }
+
+                if (event.key.toLowerCase() === 'f') {
+                    event.preventDefault();
+                    toggleFlag(r, c);
+                }
+            });
+
+            flagModeButton.addEventListener('click', () => updateFlagMode());
+            resetButton.addEventListener('click', () => openSetup(true));
+
+            setupForm.addEventListener('submit', event => {
+                event.preventDefault();
+                applyMineSetting(mineInput.valueAsNumber);
+            });
+
+            defaultBtn.addEventListener('click', () => applyMineSetting(DEFAULT_MINES));
+
+            closeModalBtn.addEventListener('click', () => {
+                if (closeModalBtn.classList.contains('visible')) closeSetup();
+            });
+
+            mineInput.addEventListener('input', () => {
+                inputHelp.textContent = '';
+            });
+
+            document.addEventListener('keydown', event => {
+                if (event.key === 'Escape' && !modal.hidden && closeModalBtn.classList.contains('visible')) {
+                    closeSetup();
+                }
+            });
+
+            // 初次进入：必须完成设置，保持原有“初次无关闭按钮”的行为。
+            closeModalBtn.classList.remove('visible');
+            closeModalBtn.setAttribute('aria-hidden', 'true');
+            mineCount.textContent = '--';
+            safeCount.textContent = '--';
+            window.setTimeout(() => mineInput.focus(), 0);
+        })();
+    </script>
+</body>
+</html>
